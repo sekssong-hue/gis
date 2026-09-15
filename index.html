@@ -1,0 +1,2360 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <!-- ============================================================= -->
+  <!-- [HTML-1] 메타 설정 및 뷰포트 (모바일 Safe Area 대응) -->
+  <!-- ============================================================= -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>남강 GPS 선박 운항 관제 및 충돌방지 시스템</title>
+
+  <!-- ============================================================= -->
+  <!-- [HTML-2] PWA (Progressive Web App) 메타 태그 -->
+  <!-- ============================================================= -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GPS 관제">
+  <meta name="theme-color" content="#0d1117">
+
+  <!-- ============================================================= -->
+  <!-- [HTML-3] 인라인 웹 앱 매니페스트 (PWA 설치용) -->
+  <!-- ============================================================= -->
+  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22GPS%20%EC%84%A0%EB%B0%95%20%EA%B4%80%EC%A0%9C%20%EC%8B%9C%EC%8A%A4%ED%85%9C%22%2C%22short_name%22%3A%22GPS%EA%B4%80%EC%A0%9C%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230d1117%22%2C%22theme_color%22%3A%22%230d1117%22%2C%22orientation%22%3A%22any%22%7D">
+
+  <!-- ============================================================= -->
+  <!-- [HTML-4] Leaflet 지도 라이브러리 및 지도 회전 플러그인 -->
+  <!-- ============================================================= -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate.js"></script>
+
+  <!-- ============================================================= -->
+  <!-- [HTML-5] Leaflet Draw (지구/구역 그리기 플러그인) -->
+  <!-- ============================================================= -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+
+  <!-- ============================================================= -->
+  <!-- [HTML-6] Firebase Realtime Database SDK -->
+  <!-- ============================================================= -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+  <!-- ============================================================= -->
+  <!-- CSS 스타일 시트 -->
+  <!-- ============================================================= -->
+  <style>
+    :root {
+      --bg-color: #0d1117;
+      --panel-bg: #161b22;
+      --accent-color: #00f2fe;
+      --accent-green: #2ea043;
+      --accent-red: #ff7b72;
+      --accent-yellow: #f59e0b;
+      --text-main: #ffffff;
+      --text-sub: #c9d1d9;
+      --border-color: #30363d;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    input, textarea, select, [contenteditable="true"] {
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+      touch-action: manipulation;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      padding: clamp(8px, 2vw, 15px);
+    }
+
+    .leaflet-div-icon {
+      background: transparent !important;
+      border: none !important;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--border-color);
+      flex-shrink: 0;
+    }
+
+    header h1 {
+      font-size: clamp(1.2rem, 2.2vw, 1.6rem);
+      letter-spacing: 1px;
+      color: var(--accent-color);
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+
+    .ship-select-bar {
+      background: rgba(0, 242, 254, 0.08);
+      border: 1.5px solid var(--accent-color);
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .ship-select-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .ship-select-group label { font-size: 1.0rem; font-weight: bold; color: var(--accent-color); }
+    .ship-select-group select {
+      background: #0d1117;
+      border: 1px solid var(--border-color);
+      color: #ffffff;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 1.0rem;
+      font-weight: bold;
+      outline: none;
+    }
+    .ship-select-group select option:disabled {
+      color: #6e7681;
+      background: #161b22;
+    }
+
+    .btn-op-start, .btn-op-stop {
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-weight: bold;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn-op-start { background: var(--accent-green); }
+    .btn-op-stop { background: var(--accent-red); }
+    .btn-op-start:hover, .btn-op-stop:hover { opacity: 0.85; }
+    .btn-op-start:disabled, .btn-op-stop:disabled {
+      background: #30363d !important;
+      color: #8b949e !important;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .online-ships-box { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .online-ships-title { font-size: 0.9rem; font-weight: bold; color: var(--text-sub); }
+    .online-ship-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .ship-badge {
+      background: rgba(46, 160, 67, 0.2);
+      border: 1px solid var(--accent-green);
+      color: #ffffff;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 0.82rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .ship-badge.my-ship {
+      background: rgba(0, 242, 254, 0.2);
+      border-color: var(--accent-color);
+      color: var(--accent-color);
+    }
+    .ship-badge.busy-ship {
+      background: rgba(255, 123, 114, 0.2);
+      border-color: var(--accent-red);
+      color: var(--accent-red);
+    }
+
+    .dashboard-container {
+      display: grid;
+      grid-template-columns: minmax(320px, 0.9fr) minmax(400px, 1.5fr);
+      gap: clamp(10px, 2vw, 15px);
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .panel {
+      background: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: clamp(10px, 2vw, 15px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .panel::-webkit-scrollbar { width: 6px; }
+    .panel::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.1); border-radius: 4px; }
+    .panel::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+    .panel::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
+
+    .left-panel-nav {
+      display: flex;
+      width: 100%;
+      gap: 6px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
+      flex-shrink: 0;
+    }
+    .panel-tab-btn {
+      flex: 1;
+      background: #0d1117;
+      color: var(--text-sub);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 8px;
+      font-weight: bold;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+    .panel-tab-btn:hover {
+      color: #fff;
+      border-color: var(--accent-color);
+    }
+    .panel-tab-btn.active {
+      background: rgba(0, 242, 254, 0.15);
+      color: var(--accent-color);
+      border-color: var(--accent-color);
+      box-shadow: 0 0 8px rgba(0, 242, 254, 0.2);
+    }
+    .tab-content {
+      width: 100%;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .tab-content.active {
+      display: flex;
+    }
+
+    .speedometer-box {
+      position: relative;
+      width: 100%;
+      max-width: clamp(260px, 32vw, 380px);
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+    }
+    canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .clock-box {
+      width: 100%;
+      background: rgba(0, 242, 254, 0.08);
+      border: 2px solid var(--accent-color);
+      border-radius: 14px;
+      padding: clamp(10px, 1.5vw, 14px) 10px;
+      margin-bottom: 12px;
+      text-align: center;
+      box-shadow: 0 0 15px rgba(0, 242, 254, 0.15);
+      flex-shrink: 0;
+    }
+    .clock-date {
+      font-size: clamp(1.1rem, 2.2vw, 1.5rem);
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 4px;
+      letter-spacing: 0.5px;
+    }
+    .clock-time {
+      font-size: clamp(1.4rem, 3.0vw, 2.1rem);
+      font-weight: 900;
+      color: var(--accent-color);
+      font-family: 'Consolas', 'Courier New', monospace;
+      letter-spacing: 1.5px;
+    }
+
+    .trip-control-box {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: clamp(10px, 1.5vw, 14px);
+      margin-bottom: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .active-timer-box {
+      display: none;
+      background: rgba(0, 242, 254, 0.1);
+      border: 2px solid var(--accent-green);
+      border-radius: 12px;
+      padding: 12px 14px;
+      text-align: center;
+      animation: pulse-border 2s infinite;
+    }
+    @keyframes pulse-border {
+      0%, 100% { border-color: var(--accent-green); box-shadow: 0 0 12px rgba(46, 160, 67, 0.4); }
+      50% { border-color: #3fb950; box-shadow: 0 0 22px rgba(46, 160, 67, 0.8); }
+    }
+    .duration-label {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 6px;
+      display: block;
+      letter-spacing: 0.5px;
+    }
+    .timer-val {
+      font-size: 2.0rem;
+      font-weight: 900;
+      color: var(--accent-color);
+      font-family: 'Consolas', 'Courier New', monospace;
+      text-shadow: 0 0 10px rgba(0, 242, 254, 0.5);
+      letter-spacing: 1px;
+    }
+
+    .trip-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .input-field { display: flex; flex-direction: column; gap: 4px; }
+    .input-field label { font-size: 0.95rem; font-weight: bold; color: var(--accent-color); }
+    .input-field input {
+      width: 100%;
+      background: #0d1117;
+      border: 1px solid var(--border-color);
+      color: #ffffff;
+      padding: 8px;
+      border-radius: 8px;
+      font-size: 1.1rem; 
+      font-weight: bold;
+      text-align: center;
+      font-family: 'Consolas', 'Courier New', monospace;
+      outline: none;
+      color-scheme: dark;
+    }
+
+    .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .btn {
+      border: none;
+      border-radius: 8px;
+      padding: 12px 10px;
+      font-weight: bold;
+      font-size: 1.0rem;
+      cursor: pointer;
+      color: #fff;
+      transition: opacity 0.2s, transform 0.1s;
+      min-height: 48px;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn:hover { opacity: 0.85; }
+    button:disabled, .btn:disabled {
+      background-color: #30363d !important;
+      color: #8b949e !important;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+    .btn-start { background: var(--accent-green); }
+    .btn-stop { background: var(--accent-red); }
+
+    .log-header-bar { width: 100%; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; flex-shrink: 0; }
+    .log-title-row { display: flex; justify-content: space-between; align-items: center; }
+    .log-title { font-size: 1.1rem; font-weight: bold; color: var(--accent-color); }
+    .search-box { display: flex; gap: 6px; width: 100%; }
+    .search-box input[type="date"] {
+      flex: 1;
+      background: #0d1117;
+      border: 1px solid var(--border-color);
+      color: #ffffff;
+      padding: 6px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      color-scheme: dark;
+      outline: none;
+    }
+    .btn-search, .btn-reset-search, .btn-action-sm {
+      border: none;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-weight: bold;
+      font-size: 0.85rem;
+      cursor: pointer;
+      min-height: 38px;
+    }
+    .btn-search { background: var(--accent-color); color: #000; }
+    .btn-reset-search { background: #30363d; color: #fff; }
+    .btn-action-sm { background: #238636; color: #fff; }
+    .btn-action-sm.blue { background: #1f6beb; }
+
+    .log-list-box { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+    .log-date-group {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .log-date-header {
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: var(--accent-color);
+      padding-bottom: 6px;
+      margin-bottom: 8px;
+      border-bottom: 1px dashed var(--border-color);
+    }
+    .log-item {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .log-item:hover { background: rgba(0, 242, 254, 0.15); border-color: var(--accent-color); }
+    .log-item-title { font-size: 1.0rem; font-weight: bold; color: #ffffff; }
+    .log-item-sub { font-size: 0.85rem; color: #79c0ff; margin-top: 2px; font-family: sans-serif; }
+    .log-item-right-top { color: var(--accent-color); font-weight: bold; font-size: 1.0rem; }
+    .log-item-right-bottom { font-size: 0.8rem; color: #ff7b72; margin-top: 2px; font-weight: bold; }
+
+    .location-badge {
+      display: none;
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background-color: red;
+      border-radius: 50%;
+      border: 2px solid white;
+      z-index: 1000;
+    }
+
+    .data-panel { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+    .status-display-box {
+      width: 100%;
+      background: rgba(0, 242, 254, 0.06);
+      border: 1px solid var(--accent-color);
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .guide-text { font-size: 0.95rem; font-weight: bold; color: var(--accent-color); flex: 1; }
+    .guide-text.warning-alert {
+      color: #ffffff;
+      background: var(--accent-red);
+      padding: 6px 12px;
+      border-radius: 6px;
+      animation: blink 1s infinite;
+    }
+    .guide-text.safe-alert {
+      color: #ffffff;
+      background: var(--accent-green);
+      padding: 6px 12px;
+      border-radius: 6px;
+    }
+
+    .route-control-bar {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.02);
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      flex-wrap: wrap;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .btn-reset {
+      background: #30363d;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+      min-height: 38px;
+    }
+    .btn-reset:hover { background: #484f58; }
+    .btn-center-mode { background: #30363d; color: #fff; }
+    .btn-center-mode.active-tracking { background: var(--accent-green); color: #fff; }
+    .btn-center-mode.active-tracking-norotate { background: #8957e5; color: #fff; }
+    .btn-calibrate { background: #e3b341; color: #000; }
+    .btn-calibrate.active { background: #ff7b72; color: #fff; animation: blink 1.2s infinite; }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    .alarm-switch-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      color: var(--text-sub);
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+    .switch input { 
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #30363d;
+      transition: .3s;
+      border-radius: 24px;
+      border: 1px solid var(--border-color);
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: var(--accent-green);
+    }
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    .grid-info {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      width: 100%;
+      flex-shrink: 0;
+    }
+    .info-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1.5px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .info-label { font-size: 1.0rem; color: var(--text-sub); margin-bottom: 6px; font-weight: 800; }
+    .info-value { font-size: 1.45rem; font-weight: 900; color: #ffffff; font-family: monospace; letter-spacing: -0.5px; }
+    .info-value.highlight { color: var(--accent-color); }
+    .info-value.track { color: #ff7b72; }
+
+    #map {
+      position: relative;
+      width: 100%;
+      height: 520px;
+      min-height: 400px;
+      border-radius: 12px;
+      border: 2px solid var(--border-color);
+      cursor: crosshair;
+      z-index: 1;
+      flex-shrink: 0;
+    }
+
+    .leaflet-control-layers {
+      background: rgba(22, 27, 34, 0.95) !important;
+      color: #fff !important;
+      border: 1px solid var(--border-color) !important;
+      border-radius: 8px !important;
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.88);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      padding: 15px;
+      overflow-y: auto;
+    }
+    .modal-content {
+      background: var(--panel-bg);
+      border: 1px solid var(--accent-color);
+      border-radius: 14px;
+      padding: 20px;
+      width: 100%;
+      max-width: 680px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9);
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow-y: auto;
+    }
+    .modal-header {
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: var(--accent-color);
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .modal-card { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 12px; }
+    .modal-card.full-width { grid-column: span 3; }
+    .modal-card .m-label { font-size: 0.85rem; color: #79c0ff; font-weight: bold; margin-bottom: 4px; }
+    .modal-card .m-val { font-size: 1.15rem; font-weight: bold; color: #ffffff; font-family: sans-serif; }
+    .modal-card .m-val.highlight { color: var(--accent-color); }
+    .modal-card .m-val.track { color: #ff7b72; }
+    .modal-section-title { font-size: 0.95rem; font-weight: bold; color: var(--accent-color); margin-bottom: 6px; }
+    #modal-map { width: 100%; height: 300px; border-radius: 10px; border: 1px solid var(--border-color); }
+    .modal-btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
+    .modal-close-btn, .modal-delete-btn {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 0.95rem;
+      cursor: pointer;
+      min-height: 44px;
+    }
+    .modal-close-btn { background: #30363d; color: #fff; }
+    .modal-delete-btn { background: var(--accent-red); color: #fff; }
+
+    /* 선박 아이콘 및 마커 스타일 개선 */
+    .my-ship-icon-box, .other-ship-icon {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      transition: transform 0.2s ease;
+      cursor: pointer;
+    }
+    .other-ship-icon:hover {
+      transform: scale(1.15);
+      z-index: 99999 !important;
+    }
+    .my-ship-badge, .other-ship-badge {
+      background: rgba(13, 17, 23, 0.95);
+      color: #00f2fe;
+      border: 2px solid #00f2fe;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 14px; 
+      font-weight: 900;
+      margin-bottom: 2px;
+      box-shadow: 0 0 12px rgba(0, 242, 254, 0.8);
+      text-align: center;
+      line-height: 1.2;
+    }
+    .other-ship-badge {
+      color: #ffab70;
+      border-color: #ffab70;
+      box-shadow: 0 0 12px rgba(255, 171, 112, 0.6);
+    }
+    .other-ship-badge.danger { background: #ff7b72; color: #fff; border-color: #fff; animation: blink 0.8s infinite; }
+    .cruise-ship-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(13, 17, 23, 0.85);
+      border: 2px solid #00f2fe;
+      border-radius: 50%;
+      box-shadow: 0 0 12px rgba(0, 242, 254, 0.8);
+      width: 36px;
+      height: 36px;
+      font-size: 20px;
+    }
+    .other-ship-symbol { font-size: 24px; }
+
+    .pwa-install-banner {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 30px);
+      max-width: 500px;
+      background: #161b22;
+      border: 2px solid var(--accent-color);
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      z-index: 10000;
+      gap: 12px;
+    }
+    .pwa-install-info { display: flex; align-items: center; gap: 10px; }
+    .pwa-install-icon { font-size: 1.8rem; }
+    .pwa-install-text { display: flex; flex-direction: column; }
+    .pwa-install-title { font-size: 0.95rem; font-weight: bold; color: #ffffff; }
+    .pwa-install-desc { font-size: 0.8rem; color: var(--text-sub); }
+    .pwa-btn-group { display: flex; gap: 6px; }
+    .pwa-btn-install {
+      background: var(--accent-color);
+      color: #000;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 0.85rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .pwa-btn-close { background: transparent; color: var(--text-sub); border: none; padding: 8px; font-size: 1rem; cursor: pointer; }
+
+    @media (max-width: 900px) {
+      html, body {
+        height: auto;
+        min-height: 100vh;
+        overflow: auto;
+      }
+      .dashboard-container { 
+         grid-template-columns: 1fr;
+         overflow: visible;
+      }
+      .panel {
+        height: auto;
+        overflow: visible;
+      }
+      #map { height: 420px; }
+      .modal-grid { grid-template-columns: 1fr 1fr; }
+      .modal-card.full-width { grid-column: span 2; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 헤더 -->
+  <header>
+    <h1>남강 GPS 선박 운항 관제 및 충돌방지 시스템</h1>
+  </header> 
+
+  <!-- 선박 선택 바 -->
+  <div class="ship-select-bar">
+    <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+      <div class="ship-select-group">
+        <label for="shipSelect">선박 선택 : </label>
+        <select id="shipSelect" onchange="handleShipSelectChange()">
+          <option value="">-- 선박을 선택하세요 --</option>
+          <option value="김시민 1호">김시민 1호</option>
+          <option value="김시민 2호">김시민 2호</option>
+          <option value="남강 3호">남강 3호</option>
+          <option value="남강 4호">남강 4호</option>
+          <option value="남강 5호">남강 5호</option>
+          <option value="인명구조선">인명구조선</option>
+          <option value="안전관리선">안전관리선</option>
+          <option value="기타작업선">기타작업선</option>
+        </select>
+        <button class="btn-op-start" id="btn-ship-start" onclick="startShipOperation()" disabled>운항 등록</button>
+        <button class="btn-op-stop" id="btn-ship-stop" onclick="stopShipOperation()" disabled>운항 해제</button>
+      </div>
+      <div class="online-ships-box">
+        <span class="online-ships-title">온라인 선박 :</span>
+        <div id="online-ship-badges" class="online-ship-badges">
+          <span class="ship-badge my-ship">선택 안됨</span>
+        </div>
+      </div>
+    </div>
+    <div id="connection-status" style="font-size:0.9rem; font-weight:bold; color:var(--accent-green);">서버 연결 확인 중...</div>
+  </div>
+
+  <input type="file" id="log-backup-input" accept=".json" style="display:none;" onchange="importLogsBackup(event)">
+
+  <!-- 메인 대시보드 -->
+  <div class="dashboard-container">
+    <div class="panel">
+      <div class="left-panel-nav">
+        <button class="panel-tab-btn active" onclick="switchLeftTab('control')">⚙️ 운항 제어 및 계측</button>
+        <button class="panel-tab-btn" onclick="switchLeftTab('logs')">📜 운항 기록 내역</button>
+      </div>
+
+      <!-- 탭 1: 계측 제어 -->
+      <div id="tab-control" class="tab-content active">
+        <div class="speedometer-box">
+          <canvas id="speedometer" width="400" height="400"></canvas>
+        </div>
+
+        <div class="clock-box">
+          <div class="clock-date" id="live-date">2026년 00월 00일 (월)</div>
+          <div class="clock-time" id="live-time">00시 00분 00초</div>
+        </div>
+
+        <div class="trip-control-box">
+          <div class="active-timer-box" id="active-timer-box">
+            <span class="duration-label">운항 시간</span>
+            <span class="timer-val" id="timer">00시 00분 00초</span>
+          </div>
+          <div class="trip-inputs">
+            <div class="input-field">
+              <label for="start-time-input">출항 시각</label>
+              <input type="text" id="start-time-input" placeholder="00:00:00" readonly>
+            </div>
+            <div class="input-field">
+              <label for="end-time-input">입항 시각</label>
+              <input type="text" id="end-time-input" placeholder="00:00:00" readonly>
+            </div>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-start" id="btnStart" onclick="startTracking()" disabled>출항 시작</button>
+            <button class="btn btn-stop" id="btnStopSave" onclick="stopAndSaveTracking()" disabled>도착 종료 및 저장</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 탭 2: 기록 관리 -->
+      <div id="tab-logs" class="tab-content">
+        <div class="log-header-bar">
+          <div class="log-title-row">
+            <div class="log-title">운항 기록 내역</div>
+            <div style="display:flex; gap:4px;">
+              <button class="btn-action-sm" onclick="exportLogsToCSV()" title="CSV 내보내기">CSV</button>
+              <button class="btn-action-sm blue" onclick="exportLogsBackup()" title="백업 다운로드">백업</button>
+              <button class="btn-action-sm" style="background:#8957e5" onclick="triggerLogBackupInput()" title="복원하기">복원</button>
+            </div>
+          </div>
+          <div class="search-box">
+            <input type="date" id="search-date-input">
+            <button class="btn-search" onclick="filterLogsByDate()">검색</button>
+            <button class="btn-reset-search" onclick="resetLogFilter()">초기화</button>
+          </div>
+        </div>
+        <div class="log-list-box" id="log-list-container"></div>
+      </div>
+    </div>
+
+    <!-- 우측 GIS 및 지도 패널 -->
+    <div class="panel data-panel">
+      <div class="status-display-box">
+        <div class="guide-text" id="status-guide-text">[상태] 정상 운항 중 - 안전 운항하세요.</div>
+      </div>
+
+      <div class="route-control-bar" style="flex-wrap: nowrap; overflow-x: auto; gap: 12px; justify-content: flex-start;">
+        <div style="display:flex; gap:6px; align-items:center; flex-shrink: 0;">
+          <button class="btn-reset btn-center-mode active-tracking" id="btn-center-mode-toggle" onclick="toggleCenterMode()">중심 추적(회전)</button>
+          <button class="btn-reset btn-calibrate" id="btn-calibrate-toggle" onclick="toggleCalibrationMode()">위치 수동보정</button>
+          <button class="btn-reset" onclick="resetCalibration()">GPS 원복</button>
+          <button class="btn-reset" onclick="resetTrack()">궤적 초기화</button>
+          <button class="btn-reset" onclick="resetRoute()">항로 초기화</button>
+          <button class="btn-reset" onclick="resetZones()">구역 초기화</button>
+        </div>
+
+        <div style="width: 1px; background: var(--border-color); flex-shrink: 0; align-self: stretch; margin: 2px 0;"></div>
+
+        <div class="alarm-switch-container" style="flex-shrink: 0; margin-left: auto;">
+          <span>🔔 알람소리</span>
+          <label class="switch">
+            <input type="checkbox" id="alarmToggle" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="grid-info">
+        <div class="info-card">
+          <div class="info-label">현재 속도</div>
+          <div class="info-value highlight" id="dual-speed-display">0.0 Kts (0.0 km/h)</div>
+        </div>
+        <div class="info-card">
+          <div class="info-label">GPS 좌표</div>
+          <div class="info-value" id="gps-coords" style="font-size: 1.15rem;">GPS 수신 중...</div>
+        </div>
+        <div class="info-card">
+          <div class="info-label">이동 거리</div>
+          <div class="info-value track" id="track-distance">0.00 NM</div>
+        </div>
+        <div class="info-card">
+          <div class="info-label">목적지 잔여거리</div>
+          <div class="info-value" id="dist-remaining">-- NM</div>
+        </div>
+      </div>
+
+      <div id="map">
+        <div id="currentLocationBadge" class="location-badge"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 상세 정보 모달 -->
+  <div class="modal-overlay" id="detail-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span id="modal-title">운항 상세 정보</span>
+        <span style="cursor:pointer; font-size:1.5rem;" onclick="closeModal()">✖</span>
+      </div>
+      <div class="modal-grid">
+        <div class="modal-card full-width">
+          <div class="m-label">운항 일자</div>
+          <div class="m-val highlight" id="m-date">--</div>
+        </div>
+        <div class="modal-card">
+          <div class="m-label">소요 시간</div>
+          <div class="m-val" id="m-duration">--</div>
+        </div>
+        <div class="modal-card">
+          <div class="m-label">출항 시각</div>
+          <div class="m-val" id="m-start-time">--</div>
+        </div>
+        <div class="modal-card">
+          <div class="m-label">입항 시각</div>
+          <div class="m-val" id="m-end-time">--</div>
+        </div>
+        <div class="modal-card">
+          <div class="m-label">운항 거리</div>
+          <div class="m-val" id="m-distance">--</div>
+        </div>
+        <div class="modal-card">
+          <div class="m-label">평균 속도</div>
+          <div class="m-val highlight" id="m-avg-speed">--</div>
+        </div>
+        <div class="modal-card">
+          <div class="m-label">최고 속도</div>
+          <div class="m-val track" id="m-max-speed">--</div>
+        </div>
+      </div>
+      <div>
+        <div class="modal-section-title">운항 궤적 지형도</div>
+        <div id="modal-map"></div>
+      </div>
+      <div class="modal-btn-group">
+        <button class="modal-close-btn" onclick="closeModal()">닫기</button>
+        <button class="modal-delete-btn" id="modal-delete-btn">기록 삭제</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PWA 설치 배너 -->
+  <div id="pwa-install-banner" class="pwa-install-banner" style="display: none;">
+    <div class="pwa-install-info">
+      <span class="pwa-install-icon">📱</span>
+      <div class="pwa-install-text">
+        <span class="pwa-install-title">앱 설치하기</span>
+        <span class="pwa-install-desc" id="pwa-install-desc">홈 화면에 추가하여 빠르게 앱으로 실행하세요.</span>
+      </div>
+    </div>
+    <div class="pwa-btn-group">
+      <button class="pwa-btn-install" id="pwa-install-btn" onclick="installPWA()">설치</button>
+      <button class="pwa-btn-close" onclick="closePWABanner()">✕</button>
+    </div>
+  </div>
+
+  <!-- 스크립트 로직 -->
+  <script>
+    function switchLeftTab(tabName) {
+      const tabBtns = document.querySelectorAll('.panel-tab-btn');
+      const tabContents = document.querySelectorAll('.tab-content');
+
+      tabBtns.forEach(btn => btn.classList.remove('active'));
+      tabContents.forEach(content => content.classList.remove('active'));
+
+      if (tabName === 'control') {
+        tabBtns[0].classList.add('active');
+        document.getElementById('tab-control').classList.add('active');
+        drawSpeedometer(currentSpeedKts, currentSpeedKmh);
+      } else if (tabName === 'logs') {
+        tabBtns[1].classList.add('active');
+        document.getElementById('tab-logs').classList.add('active');
+      }
+
+      if (typeof map !== 'undefined' && map) {
+        setTimeout(() => { map.invalidateSize(); }, 200);
+      }
+    }
+
+    let isDrivingStarted = false;
+    let hasSaved = false;
+    let modalMap = null;
+    let modalPolyline = null;
+    let autoStopTimer = null;
+
+    let isNavigating = false;
+    let tripStartTime = null;
+    let tripSpeedList = [];
+    let tripMaxSpeed = 0;
+
+    const STOP_THRESHOLD_SPEED = 0.5;
+    const STOP_HOLD_TIME_MS = 60000;
+
+    let audioCtx = null;
+    let lastAlertTime = 0;
+    const ALERT_INTERVAL_MS = 2500;
+
+    function initAudioContext() {
+      if (!audioCtx) {
+        const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtxClass) audioCtx = new AudioCtxClass();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function playAlertSound(type = 'danger') {
+      const alarmToggle = document.getElementById('alarmToggle');
+      if (alarmToggle && !alarmToggle.checked) return;
+
+      const now = Date.now();
+      if (now - lastAlertTime < ALERT_INTERVAL_MS) return;
+      lastAlertTime = now;
+
+      try {
+        initAudioContext();
+        if (!audioCtx) return;
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        if (type === 'danger') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+          osc.frequency.setValueAtTime(440, audioCtx.currentTime + 0.15);
+          osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.3);
+
+          gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+
+          osc.start(audioCtx.currentTime);
+          osc.stop(audioCtx.currentTime + 0.5);
+        } else {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+          gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+
+          osc.start(audioCtx.currentTime);
+          osc.stop(audioCtx.currentTime + 0.4);
+        }
+      } catch (e) {
+        console.warn("경고음 재생 실패:", e);
+      }
+    }
+
+    /* 통합 Firebase 설정을 연결 */
+    const firebaseConfig = {
+      apiKey: "AIzaSyDzW_k1PnrnaELM5Zp2Ipi3HUBo1ICPiVM",
+      authDomain: "namkangboat-8d51c.firebaseapp.com",
+      databaseURL: "https://namkangboat-8d51c-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "namkangboat-8d51c",
+      storageBucket: "namkangboat-8d51c.firebasestorage.app",
+      messagingSenderId: "574114481972",
+      appId: "1:574114481972:web:70eec04622ad51f0cc4761"
+    };
+
+    let isFirebaseReady = false;
+    let shipsRefListener = null;
+    let forceStopListener = null;
+
+    try {
+      if (typeof firebase !== 'undefined') {
+        firebase.initializeApp(firebaseConfig);
+        isFirebaseReady = true;
+        document.getElementById('connection-status').innerText = "서버 연결됨";
+      }
+    } catch(e) {
+      document.getElementById('connection-status').innerText = "통신 연결 오류";
+    }
+
+    const shipSelect = document.getElementById('shipSelect');
+    const btnStart = document.getElementById('btnStart');
+    const btnStopSave = document.getElementById('btnStopSave');
+    const btnShipStart = document.getElementById('btn-ship-start');
+    const locationBadge = document.getElementById('currentLocationBadge');
+
+    let currentShipName = "";
+    let isMyShipOperating = false;
+    const otherShipMarkers = {};
+    const PROXIMITY_WARN_DISTANCE_M = 100;
+
+    function formatHHMMSS(date) {
+      if (!(date instanceof Date) || isNaN(date)) return "00:00:00";
+      const h = String(date.getHours()).padStart(2, '0');
+      const m = String(date.getMinutes()).padStart(2, '0');
+      const s = String(date.getSeconds()).padStart(2, '0');
+      return `${h}:${m}:${s}`;
+    }
+
+    function setMapBearingSafe(deg) {
+      if (typeof map !== 'undefined' && map && typeof map.setBearing === 'function') {
+        try { map.setBearing(deg); } catch(e){}
+      }
+    }
+
+    function handleShipSelectChange() {
+      const selectedShip = shipSelect.value;
+      currentShipName = selectedShip;
+
+      if (typeof shipMarker !== 'undefined' && shipMarker) {
+        shipMarker.setIcon(createMyShipIcon(currentShipName, currentSpeedKts));
+      }
+
+      if (!selectedShip) {
+        btnShipStart.disabled = true;
+        btnStart.disabled = true;
+        btnStopSave.disabled = true;
+        locationBadge.style.display = 'none';
+      } else {
+        btnShipStart.disabled = isMyShipOperating;
+        btnStart.disabled = !isMyShipOperating || isDrivingStarted;
+        btnStopSave.disabled = !isMyShipOperating || !isDrivingStarted;
+        if (isDrivingStarted) {
+          locationBadge.style.display = 'block';
+        }
+      }
+      updateOnlineShipBadges();
+    }
+
+    function startTracking() {
+      if (!shipSelect.value) {
+        alert("선박을 먼저 선택해주세요.");
+        return;
+      }
+      if (!isMyShipOperating) {
+        alert("'운항 등록'을 먼저 진행해주세요.");
+        return;
+      }
+
+      resetTrack();
+      tripSpeedList = [];
+      tripMaxSpeed = 0;
+
+      isDrivingStarted = true;
+      hasSaved = false;
+      isNavigating = true;
+
+      if (currentLat && currentLng) {
+        trackPoints.push([currentLat, currentLng]);
+        if (trackPolyline) trackPolyline.addLatLng([currentLat, currentLng]);
+      }
+
+      tripStartTime = new Date();
+      const startTimeStr = formatHHMMSS(tripStartTime);
+      document.getElementById('start-time-input').value = startTimeStr;
+      document.getElementById('end-time-input').value = ""; 
+
+      document.getElementById('active-timer-box').style.display = 'block';
+      btnStart.disabled = true;
+      btnStopSave.disabled = false;
+      locationBadge.style.display = 'block';
+
+      // Firebase 상태 업데이트: 출항 시작 시 '운항 중'으로 변경
+      if (isFirebaseReady && currentShipName) {
+        firebase.database().ref('ships/' + currentShipName).update({
+          tripStatus: '운항 중',
+          startTime: startTimeStr,
+          endTime: ''
+        });
+      }
+
+      alert(`[${currentShipName}] 운항 트립 측정이 시작되었습니다. (${startTimeStr})`);
+      requestWakeLock();
+    }
+
+    function stopAndSaveTracking(isAuto = false) {
+      if (!isDrivingStarted || !tripStartTime || !document.getElementById('start-time-input').value) {
+        if(!isAuto) alert("진행 중인 트립이 없습니다.");
+        return;
+      }
+      if (hasSaved) {
+        if(!isAuto) alert("이미 저장된 트립입니다.");
+        return;
+      }
+
+      if (autoStopTimer) {
+        clearTimeout(autoStopTimer);
+        autoStopTimer = null;
+      }
+
+      stopAndSaveTrip(); 
+
+      hasSaved = true;
+      isDrivingStarted = false;
+
+      btnStopSave.disabled = true;
+      btnStart.disabled = !isMyShipOperating;
+      locationBadge.style.display = 'none';
+
+      // Firebase 상태 업데이트: 도착 종료 시 '대기 중'으로 변경
+      if (isFirebaseReady && currentShipName) {
+        const endTimeStr = document.getElementById('end-time-input').value;
+        firebase.database().ref('ships/' + currentShipName).update({
+          tripStatus: '대기 중',
+          endTime: endTimeStr
+        });
+      }
+
+      if (isAuto) {
+        alert(`장시간 정지 상태가 감지되어 운항 트립이 자동 종료되었습니다.`);
+      } else {
+        alert(`[${currentShipName}] 운항 트립이 종료되고 저장되었습니다.`);
+      }
+    }
+
+    function checkAutoStop(speedKts) {
+      if (!isDrivingStarted || hasSaved) {
+        if (autoStopTimer) {
+          clearTimeout(autoStopTimer);
+          autoStopTimer = null;
+        }
+        return;
+      }
+
+      if (speedKts < STOP_THRESHOLD_SPEED) {
+        if (!autoStopTimer) {
+          autoStopTimer = setTimeout(() => {
+            stopAndSaveTracking(true);
+          }, STOP_HOLD_TIME_MS);
+        }
+      } else {
+        if (autoStopTimer) {
+          clearTimeout(autoStopTimer);
+          autoStopTimer = null;
+        }
+      }
+    }
+
+    function updateGPSPosition(lat, lng) {
+      if (shipSelect.value && isDrivingStarted) {
+        locationBadge.style.display = 'block';
+      } else {
+        locationBadge.style.display = 'none';
+      }
+    }
+
+    /* 실시간 관리자 강제 운항 해제 수신 로직 */
+    function listenToForceStop() {
+      if (!currentShipName || !isFirebaseReady) return;
+
+      const shipRef = firebase.database().ref('ships/' + currentShipName);
+      if (forceStopListener) shipRef.off('value', forceStopListener);
+
+      forceStopListener = shipRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data && (data.forceStop === true || data.isOperating === false)) {
+          if (!isMyShipOperating) return;
+
+          cleanUpOperation();
+          alert(`[⚠️ 경고] 관리자에 의해 [${currentShipName}]의 운항이 강제로 해제되었습니다.`);
+          shipRef.remove();
+        }
+      });
+    }
+
+    async function startShipOperation() {
+      if (!shipSelect.value) {
+        alert("선박을 먼저 선택하세요.");
+        return;
+      }
+      currentShipName = shipSelect.value;
+      if (isMyShipOperating) return;
+
+      if (isFirebaseReady) {
+        try {
+          const targetRef = firebase.database().ref('ships/' + currentShipName);
+          const snapshot = await targetRef.once('value');
+          const data = snapshot.val();
+          if (data && data.isOperating) {
+            alert(`[${currentShipName}] 은(는) 이미 다른 단말기에서 운항 등록 중입니다.`);
+            return;
+          }
+          // 운항 등록 시 상태를 '대기 중'으로 저장
+          await targetRef.set({
+            shipName: currentShipName,
+            lat: currentLat,
+            lng: currentLng,
+            speedKts: currentSpeedKts || 0,
+            speedKmh: currentSpeedKmh || 0,
+            isOperating: true,
+            forceStop: false,
+            tripStatus: '대기 중',
+            startTime: '',
+            endTime: '',
+            updatedAt: Date.now()
+          });
+          targetRef.onDisconnect().remove();
+        } catch (err) {
+          console.error("Firebase 등록 실패:", err);
+          alert("서버 연결에 실패했습니다.");
+          return;
+        }
+      }
+
+      isMyShipOperating = true;
+      shipSelect.disabled = true;
+      btnShipStart.disabled = true;
+      document.getElementById('btn-ship-stop').disabled = false;
+      btnStart.disabled = isDrivingStarted;
+      btnStopSave.disabled = !isDrivingStarted;
+
+      shipMarker.setIcon(createMyShipIcon(currentShipName, currentSpeedKts));
+      if (!map.hasLayer(shipMarker)) shipMarker.addTo(map);
+
+      updateOnlineShipBadges();
+      broadcastMyLocation();
+      listenToForceStop();
+      alert(`선박 [${currentShipName}] 운항 등록이 완료되었습니다.`);
+    }
+
+    async function stopShipOperation() {
+      if (!isMyShipOperating) return;
+
+      if (isFirebaseReady && currentShipName) {
+        try {
+          await firebase.database().ref('ships/' + currentShipName).remove();
+        } catch(err) {
+          console.error("Firebase 해제 실패:", err);
+        }
+      }
+
+      cleanUpOperation();
+      alert(`선박 [${currentShipName}] 운항 등록이 해제되었습니다.`);
+    }
+
+    /* 운항 해제 시 완벽한 초기화 및 경고 리셋 함수 */
+    function cleanUpOperation() {
+      if (isDrivingStarted) {
+        stopAndSaveTracking(false);
+      } else if (autoStopTimer) {
+        clearTimeout(autoStopTimer);
+        autoStopTimer = null;
+      }
+
+      if (forceStopListener && currentShipName && isFirebaseReady) {
+        firebase.database().ref('ships/' + currentShipName).off('value', forceStopListener);
+        forceStopListener = null;
+      }
+
+      isMyShipOperating = false;
+      shipSelect.disabled = false;
+      btnShipStart.disabled = false;
+      document.getElementById('btn-ship-stop').disabled = true;
+
+      btnStart.disabled = true;
+      btnStopSave.disabled = true;
+
+      if (map.hasLayer(shipMarker)) map.removeLayer(shipMarker);
+      updateOnlineShipBadges();
+
+      // 우측 상단 상태 창 및 경고 박스 초기화
+      const guide = document.getElementById('status-guide-text');
+      if (guide) {
+        guide.className = "guide-text";
+        guide.innerText = "[상태] 정상 운항 중 - 안전 운항하세요.";
+      }
+    }
+
+    function formatClockTime(date) {
+      if (!(date instanceof Date) || isNaN(date)) return "00시 00분 00초";
+      const h = String(date.getHours()).padStart(2, '0');
+      const m = String(date.getMinutes()).padStart(2, '0');
+      const s = String(date.getSeconds()).padStart(2, '0');
+      return `${h}시 ${m}분 ${s}초`;
+    }
+
+    function formatDurationText(diffSec) {
+      const sec = Math.max(0, Math.floor(diffSec));
+      const h = Math.floor(sec / 3600);
+      const m = Math.floor((sec % 3600) / 60);
+      const s = sec % 60;
+      if (h > 0) return `${h}시간 ${m}분 ${s}초`;
+      return `${m}분 ${s}초`;
+    }
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        try {
+          const swCode = `
+            self.addEventListener('install', e => self.skipWaiting());
+            self.addEventListener('activate', e => self.clients.claim());
+            self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));
+          `;
+          const blob = new Blob([swCode], { type: 'text/javascript' });
+          const swUrl = URL.createObjectURL(blob);
+          navigator.serviceWorker.register(swUrl)
+            .then(() => URL.revokeObjectURL(swUrl))
+            .catch(() => {});
+        } catch (e) {}
+      });
+    }
+
+    let deferredPrompt = null;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      showPWABanner();
+    });
+
+    function showPWABanner() {
+      const banner = document.getElementById('pwa-install-banner');
+      if (banner) {
+        if (isIOS) {
+          document.getElementById('pwa-install-desc').innerText = '사파리 공유 버튼 -> [홈 화면에 추가]를 눌러 설치하세요.';
+          document.getElementById('pwa-install-btn').style.display = 'none';
+        }
+        banner.style.display = 'flex';
+      }
+    }
+
+    function installPWA() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(() => { deferredPrompt = null; closePWABanner(); });
+      }
+    }
+
+    function closePWABanner() {
+      const banner = document.getElementById('pwa-install-banner');
+      if (banner) banner.style.display = 'none';
+    }
+
+    let wakeLock = null;
+    async function requestWakeLock() {
+      try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {}
+    }
+    function releaseWakeLock() {
+      if (wakeLock !== null) wakeLock.release().then(() => { wakeLock = null; }).catch(() => {});
+    }
+
+    function updateClock() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const date = String(now.getDate()).padStart(2, '0');
+      const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
+      const day = weekDays[now.getDay()];
+
+      document.getElementById('live-date').innerText = `${year}년 ${month}월 ${date}일 (${day})`;
+      document.getElementById('live-time').innerText = formatClockTime(now);
+
+      if (isNavigating && tripStartTime) {
+        const diffSec = Math.floor((now - tripStartTime) / 1000);
+        document.getElementById('timer').innerText = formatDurationText(diffSec);
+      }
+    }
+    setInterval(updateClock, 1000);
+
+    const KM_TO_NM = 0.539957;
+    const MPS_TO_KTS = 1.943844;
+
+    function getDistanceInKm(lat1, lon1, lat2, lon2) {
+      if (!lat1 || !lon1 || !lat2 || !lon2) return 0;
+      if (lat1 === lat2 && lon1 === lon2) return 0;
+      const R = 6371.0088;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(Math.max(0, 1 - a)));
+    }
+
+    function getDistanceInMeters(lat1, lon1, lat2, lon2) {
+      return getDistanceInKm(lat1, lon1, lat2, lon2) * 1000;
+    }
+
+    function calculateBearing(lat1, lng1, lat2, lng2) {
+      const radLat1 = lat1 * Math.PI / 180;
+      const radLat2 = lat2 * Math.PI / 180;
+      const dLng = (lng2 - lng1) * Math.PI / 180;
+      const y = Math.sin(dLng) * Math.cos(radLat2);
+      const x = Math.cos(radLat1) * Math.sin(radLat2) - Math.sin(radLat1) * Math.cos(radLat2) * Math.cos(dLng);
+      return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+    }
+
+    function isPointInPolygon(point, vs) {
+      if (!vs || !Array.isArray(vs) || vs.length < 3) return false;
+      const x = point[0], y = point[1];
+      let inside = false;
+      for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+        const xi = vs[i][0], yi = vs[i][1];
+        const xj = vs[j][0], yj = vs[j][1];
+        const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi + 0.0000000001) + xi);
+        if (intersect) inside = !inside;
+      }
+      return inside;
+    }
+
+    let currentLat = 35.1880, currentLng = 128.0838;
+    let actualGpsLat = currentLat, actualGpsLng = currentLng;
+    let currentHeading = 0; 
+    let mapMode = 0;
+    let isCalibratedMode = false, isFirstGps = true;
+
+    let trackPoints = [];
+    let trackPolyline = null;
+    let totalTrackDistKm = 0;
+
+    let waypoints = [], waypointMarkers = [], routePolyline = null;
+    let currentSpeedKts = 0, currentSpeedKmh = 0;
+
+    let tripLogs = [];
+    try { tripLogs = JSON.parse(localStorage.getItem('ship_trip_logs') || '[]'); } catch (e) { tripLogs = []; }
+
+    let lastGpsTime = null, lastLat = null, lastLng = null;
+
+    const baseMapLayer = L.tileLayer('https://xdworld.vworld.kr/2d/Base/service/{z}/{x}/{y}.png', { maxZoom: 19, minZoom: 6 });
+    const satelliteLayer = L.tileLayer('https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg', { maxZoom: 19, minZoom: 6 });
+    const hybridLayer = L.tileLayer('https://xdworld.vworld.kr/2d/Hybrid/service/{z}/{x}/{y}.png', { maxZoom: 19, minZoom: 6 });
+
+    const map = L.map('map', {
+      center: [currentLat, currentLng],
+      zoom: 16,
+      layers: [baseMapLayer],
+      rotate: true,
+      rotateControl: false,
+      bearing: 0
+    });
+
+    L.control.layers({ "일반지도": baseMapLayer, "항공지도": satelliteLayer }, { "하이브리드": hybridLayer }, { position: 'topleft' }).addTo(map);
+
+    function createMyShipIcon(shipName, speedKts) {
+      const displayName = shipName ? `🚢 ${shipName}` : "📍 내 위치";
+      const speedText = (typeof speedKts === 'number' && !isNaN(speedKts)) ? speedKts.toFixed(1) : "0.0";
+      const iconHtml = `
+        <div class="my-ship-icon-box">
+          <div class="my-ship-badge">
+            <div>${displayName}</div>
+            <div style="font-size: 0.8em; color: #ffffff;">속도: ${speedText} Kts</div>
+          </div>
+          <div class="cruise-ship-icon">⚓</div>
+        </div>
+      `;
+      return L.divIcon({ className: '', html: iconHtml, iconSize: [160, 90], iconAnchor: [80, 65] });
+    }
+
+    const shipMarker = L.marker([currentLat, currentLng], {
+      icon: createMyShipIcon(currentShipName, 0),
+      draggable: true,
+      zIndexOffset: 1000 // 내 선박이 항상 위에 표시되도록 높임
+    }).addTo(map).bindPopup("<b>현재 내 위치</b>");
+
+    trackPolyline = L.polyline([], { color: '#ff4d4d', weight: 5, opacity: 0.85 }).addTo(map);
+
+    map.on('dragstart', function() { if (mapMode !== 2) setMapMode(2); });
+
+    function toggleCenterMode() { setMapMode((mapMode + 1) % 3); }
+
+    function setMapMode(mode) {
+      mapMode = mode;
+      const btn = document.getElementById('btn-center-mode-toggle');
+      const guide = document.getElementById('status-guide-text');
+      btn.classList.remove('active-tracking', 'active-tracking-norotate');
+
+      if (mapMode === 0) {
+        btn.classList.add('active-tracking');
+        btn.innerText = "중심 추적(회전)";
+        guide.innerText = "[상태] 중심 추적 모드 (진행 방향 회전)";
+        map.panTo([currentLat, currentLng]);
+        setMapBearingSafe(-currentHeading);
+      } else if (mapMode === 1) {
+        btn.classList.add('active-tracking-norotate');
+        btn.innerText = "중심 추적(정북)";
+        guide.innerText = "[상태] 중심 추적 모드 (정북 고정)";
+        map.panTo([currentLat, currentLng]);
+        setMapBearingSafe(0);
+      } else {
+        btn.innerText = "자유 이동 모드";
+        guide.innerText = "[상태] 자유 지도 이동 모드";
+        setMapBearingSafe(0);
+      }
+    }
+
+    const drawnItems = new L.FeatureGroup().addTo(map);
+    const drawControl = new L.Control.Draw({
+      position: 'topright',
+      draw: { polygon: true, circle: true, rectangle: true, marker: true, polyline: false, circlemarker: false },
+      edit: { featureGroup: drawnItems, remove: true }
+    });
+    map.addControl(drawControl);
+
+    /* 도형 생성 및 선착장 Safe Zone 설정 기능 포함 */
+    map.on(L.Draw.Event.CREATED, function (e) {
+      const layer = e.layer;
+      const isSafeZone = confirm("이 영역을 지정 선착장(정박 안전 구역 - Safe Zone)으로 설정하시겠습니까?\n[확인]: 선착장(알람 차단 Mute)\n[취소]: 일반 경고 구역");
+      
+      if (isSafeZone) {
+        const safeColor = '#2ea043';
+        layer.zoneMeta = { type: 'safe', reason: '지정 선착장', label: '정박 영역', color: safeColor };
+        if (layer.setStyle) layer.setStyle({ color: safeColor, fillColor: safeColor, fillOpacity: 0.35, weight: 2 });
+        layer.bindPopup(`<b>[지정 선착장 (Safe Zone)]</b><br>정박 시 알람 자동 차단`);
+      } else {
+        const color = '#ff7b72';
+        layer.zoneMeta = { type: 'danger', reason: '지정 구역', label: '경고', color: color };
+        if (layer.setStyle) layer.setStyle({ color: color, fillColor: color, fillOpacity: 0.35, weight: 2 });
+        layer.bindPopup(`<b>[지정 경고 구역]</b>`);
+      }
+
+      drawnItems.addLayer(layer);
+      checkZoneGeofencing(currentLat, currentLng);
+    });
+
+    function toggleCalibrationMode() {
+      isCalibratedMode = !isCalibratedMode;
+      const btn = document.getElementById('btn-calibrate-toggle');
+      btn.classList.toggle('active', isCalibratedMode);
+      btn.innerText = isCalibratedMode ? "보정 모드 중" : "위치 수동보정";
+    }
+
+    map.on('click', function(e) {
+      if (isCalibratedMode) calibratePosition(e.latlng.lat, e.latlng.lng);
+      else addWaypoint([e.latlng.lat, e.latlng.lng]);
+    });
+
+    function addWaypoint(latlng) {
+      waypoints.push(latlng);
+      const markerIcon = L.divIcon({
+        className: '',
+        html: `<div style="background:#00f2fe; color:#000; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:10px; border:2px solid #fff;">${waypoints.length}</div>`,
+        iconSize: [20, 20], iconAnchor: [10, 10]
+      });
+      const marker = L.marker(latlng, { icon: markerIcon }).addTo(map);
+      waypointMarkers.push(marker);
+      renderRoute();
+    }
+
+    function calibratePosition(lat, lng) {
+      const heading = calculateBearing(currentLat, currentLng, lat, lng);
+      currentLat = lat; currentLng = lng;
+      if (heading !== 0) currentHeading = heading;
+      shipMarker.setLatLng([currentLat, currentLng]);
+      updateShipPosition(currentLat, currentLng, true);
+    }
+
+    function resetCalibration() {
+      if (isCalibratedMode) toggleCalibrationMode();
+      currentLat = actualGpsLat; currentLng = actualGpsLng;
+      shipMarker.setLatLng([currentLat, currentLng]);
+      checkZoneGeofencing(currentLat, currentLng);
+    }
+
+    function broadcastMyLocation() {
+      if (!isFirebaseReady || !isMyShipOperating || !currentShipName) return;
+      const shipRef = firebase.database().ref('ships/' + currentShipName);
+      shipRef.update({
+        shipName: currentShipName,
+        lat: currentLat,
+        lng: currentLng,
+        speedKts: currentSpeedKts || 0,
+        speedKmh: currentSpeedKmh || 0,
+        isOperating: true,
+        updatedAt: Date.now()
+      }).catch(err => console.error("위치 방송 오류:", err));
+      shipRef.onDisconnect().remove();
+    }
+
+    function updateOnlineShipBadges(operatingShipsMap = {}) {
+      const container = document.getElementById('online-ship-badges');
+      if (!container || !shipSelect) return;
+      container.innerHTML = "";
+
+      Array.from(shipSelect.options).forEach(opt => {
+        const name = opt.value;
+        if (!name) return;
+        const isOperatingByOther = operatingShipsMap[name] && name !== currentShipName;
+        opt.disabled = isOperatingByOther;
+      });
+
+      // online-ship-badges에 수신된 tripStatus 값을 실시간 표시
+      const myBadge = document.createElement('span');
+      myBadge.className = isMyShipOperating ? "ship-badge my-ship" : "ship-badge";
+      let statusText = '대기 중';
+      if (isDrivingStarted) {
+        statusText = '운항 중';
+      }
+      myBadge.innerText = currentShipName ? `⚓ ${currentShipName} (${isMyShipOperating ? statusText : '미등록'})` : `선택 안됨`;
+      container.appendChild(myBadge);
+
+      Object.keys(operatingShipsMap).forEach(shipName => {
+        if (shipName !== currentShipName) {
+          const badge = document.createElement('span');
+          badge.className = "ship-badge busy-ship";
+          const otherStatus = operatingShipsMap[shipName].tripStatus || '운항중';
+          badge.innerText = `🚢 ${shipName} (${otherStatus})`;
+          container.appendChild(badge);
+        }
+      });
+    }
+
+    /* 실시간 주변 선박 감지 및 지정 선착장(In Safe Zone) 차단 로직 연동 */
+    function listenToOtherShips() {
+      if (!isFirebaseReady) { updateOnlineShipBadges({}); return; }
+      const shipsRef = firebase.database().ref('ships');
+      if (shipsRefListener) shipsRef.off('value', shipsRefListener);
+
+      shipsRefListener = shipsRef.on('value', (snapshot) => {
+        const shipsData = snapshot.val() || {};
+        let closestDangerShip = null;
+        let minDistance = 999999;
+        const currentActiveShips = new Set();
+        const operatingShipsMap = {};
+
+        const activeShipsArray = [];
+        Object.keys(shipsData).forEach(shipKey => {
+          const ship = shipsData[shipKey];
+          if (!ship || !ship.isOperating) return;
+          if (Date.now() - (ship.updatedAt || 0) > 300000) return;
+
+          operatingShipsMap[ship.shipName || shipKey] = ship;
+          if (shipKey === currentShipName) return; 
+
+          currentActiveShips.add(shipKey);
+          activeShipsArray.push({ key: shipKey, ...ship });
+        });
+
+        // 지정 선착장 정박 감지 판별
+        const isCurrentlyInSafeZone = checkIsInSafeZone(currentLat, currentLng);
+
+        // 선박 간의 위치가 거의 겹칠 때 시각적 오프셋 계산 (겹침 현상 방지)
+        activeShipsArray.forEach((ship, index) => {
+          const shipKey = ship.key;
+          
+          let displayLat = ship.lat;
+          let displayLng = ship.lng;
+
+          // 나와의 거리 체크
+          const distM = getDistanceInMeters(currentLat, currentLng, ship.lat, ship.lng);
+
+          // 선박 간 너무 비슷하면 마커 위치를 미세하게 분산 배치 (약 5m 내 분산)
+          activeShipsArray.forEach((otherShip, otherIndex) => {
+            if (index > otherIndex) {
+              const distBetween = getDistanceInMeters(ship.lat, ship.lng, otherShip.lat, otherShip.lng);
+              if (distBetween < 10) { // 10미터 이내 오버랩 판정시
+                displayLat += (index * 0.00008); 
+                displayLng += (index * 0.00008);
+              }
+            }
+          });
+
+          // 지정 선착장에 안전 정박 중일 때는 주변 선박 충돌 경고 판단에서 제외
+          const isDanger = isMyShipOperating && !isCurrentlyInSafeZone && (distM <= PROXIMITY_WARN_DISTANCE_M);
+
+          if (distM < minDistance) {
+            minDistance = distM;
+            if (isDanger) closestDangerShip = { name: ship.shipName || shipKey, dist: distM };
+          }
+
+          const speedText = (ship.speedKts || 0).toFixed(1);
+          const iconHtml = `
+            <div class="other-ship-icon" title="${ship.shipName || shipKey}">
+              <div class="other-ship-badge ${isDanger ? 'danger' : ''}">
+                <div>${ship.shipName || shipKey}</div>
+                <div style="font-size: 0.8em; color: #ffffff;">${speedText} Kts</div>
+              </div>
+              <div class="other-ship-symbol">🚢</div>
+            </div>
+          `;
+          const customIcon = L.divIcon({ className: '', html: iconHtml, iconSize: [160, 90], iconAnchor: [80, 65] });
+
+          if (otherShipMarkers[shipKey]) {
+            otherShipMarkers[shipKey].setLatLng([displayLat, displayLng]);
+            otherShipMarkers[shipKey].setIcon(customIcon);
+          } else {
+            const marker = L.marker([displayLat, displayLng], { 
+              icon: customIcon,
+              riseOnHover: true // 마우스 호버 시 최상단 레벨로 올리기
+            }).addTo(map);
+
+            // 클릭 시 Z-Index 최고치 상승
+            marker.on('click', function() {
+              this.setZIndexOffset(2000);
+            });
+
+            otherShipMarkers[shipKey] = marker;
+          }
+        });
+
+        updateOnlineShipBadges(operatingShipsMap);
+
+        Object.keys(otherShipMarkers).forEach(key => {
+          if (!currentActiveShips.has(key)) {
+            map.removeLayer(otherShipMarkers[key]);
+            delete otherShipMarkers[key];
+          }
+        });
+
+        const guide = document.getElementById('status-guide-text');
+        
+        // 내 선박이 지정 선착장에 위치하거나 근접 선박 감지 조건 체크
+        if (isMyShipOperating && closestDangerShip && !isCurrentlyInSafeZone) {
+          guide.className = "guide-text warning-alert";
+          guide.innerText = `[충돌 주의] 근접 선박 감지! (${closestDangerShip.name} 거리: ${Math.round(closestDangerShip.dist)}m)`;
+          playAlertSound('danger');
+        } else {
+          checkZoneGeofencing(currentLat, currentLng); 
+        }
+      });
+    }
+
+    /* 지정 선착장 감지 보조 함수 */
+    function checkIsInSafeZone(lat, lng) {
+      let inSafe = false;
+      drawnItems.eachLayer(layer => {
+        if (!layer.zoneMeta || layer.zoneMeta.type !== 'safe') return;
+        if (layer instanceof L.Circle) {
+          if (getDistanceInMeters(lat, lng, layer.getLatLng().lat, layer.getLatLng().lng) <= layer.getRadius()) inSafe = true;
+        } else if (layer instanceof L.Polygon || layer instanceof L.Rectangle) {
+          try {
+            const rawLatLngs = layer.getLatLngs();
+            let polyPoints = rawLatLngs;
+            while (Array.isArray(polyPoints) && polyPoints.length > 0 && Array.isArray(polyPoints[0])) {
+              polyPoints = polyPoints[0];
+            }
+            if (polyPoints && Array.isArray(polyPoints)) {
+              const formattedPoints = polyPoints.map(p => [p.lat, p.lng]);
+              if (isPointInPolygon([lat, lng], formattedPoints)) inSafe = true;
+            }
+          } catch (err) {}
+        }
+      });
+      return inSafe;
+    }
+
+    /* 구역 체크 지오펜싱 및 Safe Zone Mute 제어 로직 */
+    function checkZoneGeofencing(lat, lng) {
+      const guide = document.getElementById('status-guide-text');
+      if (!guide) return;
+
+      if (!isMyShipOperating) {
+        guide.className = "guide-text";
+        guide.innerText = "[상태] 정상 운항 중 - 안전 운항하세요.";
+        return;
+      }
+
+      let activeWarning = null;
+      let inSafeZone = false;
+
+      drawnItems.eachLayer(layer => {
+        if (!layer.zoneMeta) return;
+        let inside = false;
+        if (layer instanceof L.Circle) {
+          if (getDistanceInMeters(lat, lng, layer.getLatLng().lat, layer.getLatLng().lng) <= layer.getRadius()) inside = true;
+        } else if (layer instanceof L.Marker) {
+          if (getDistanceInMeters(lat, lng, layer.getLatLng().lat, layer.getLatLng().lng) <= 50) inside = true; 
+        } else if (layer instanceof L.Polygon || layer instanceof L.Rectangle) {
+          try {
+            const rawLatLngs = layer.getLatLngs();
+            let polyPoints = rawLatLngs;
+            while (Array.isArray(polyPoints) && polyPoints.length > 0 && Array.isArray(polyPoints[0])) {
+              polyPoints = polyPoints[0];
+            }
+            if (polyPoints && Array.isArray(polyPoints)) {
+              const formattedPoints = polyPoints.map(p => [p.lat, p.lng]);
+              inside = isPointInPolygon([lat, lng], formattedPoints);
+            }
+          } catch (err) {
+            console.warn("지오펜싱 계산 오류:", err);
+          }
+        }
+
+        if (inside) {
+          if (layer.zoneMeta.type === 'safe') {
+            inSafeZone = true;
+          } else {
+            activeWarning = layer.zoneMeta;
+          }
+        }
+      });
+
+      // 지정 선착장(In Safe Zone) 영역 감지 시 알람 차단 및 상태 안내
+      if (inSafeZone) {
+        guide.className = "guide-text safe-alert";
+        guide.innerText = "[안전] 지정 선착장 정박 중 (충돌/구역 알람 Mute)";
+        return;
+      }
+
+      if (guide.classList.contains('warning-alert') && guide.innerText.includes('근접 선박')) return;
+
+      if (activeWarning) {
+        guide.className = "guide-text warning-alert";
+        guide.innerText = `[구역 경고] 지정 구역 진입`;
+        playAlertSound('danger');
+      } else {
+        guide.className = "guide-text";
+        guide.style.color = "var(--accent-color)";
+        guide.innerText = "[상태] 정상 운항 중 - 안전 운항하세요.";
+      }
+    }
+
+    function updateShipPosition(lat, lng, isManual = false) {
+      if (!lat || !lng || isNaN(lat) || isNaN(lng)) return;
+
+      if (isDrivingStarted) {
+        if (trackPoints.length > 0) {
+          const lastPoint = trackPoints[trackPoints.length - 1];
+          const distKm = getDistanceInKm(lastPoint[0], lastPoint[1], lat, lng);
+          if (distKm > 0.003) {
+            const heading = calculateBearing(lastPoint[0], lastPoint[1], lat, lng);
+            if (heading !== 0) currentHeading = heading;
+            trackPoints.push([lat, lng]);
+            totalTrackDistKm += distKm;
+            trackPolyline.addLatLng([lat, lng]);
+          }
+        } else {
+          trackPoints.push([lat, lng]);
+          trackPolyline.addLatLng([lat, lng]);
+        }
+      }
+
+      currentLat = lat; currentLng = lng;
+      if (!isManual) shipMarker.setLatLng([currentLat, currentLng]);
+      shipMarker.setIcon(createMyShipIcon(currentShipName, currentSpeedKts));
+
+      if (mapMode === 0) {
+        map.panTo([currentLat, currentLng]);
+        setMapBearingSafe(-currentHeading);
+      } else if (mapMode === 1) {
+        map.panTo([currentLat, currentLng]);
+        setMapBearingSafe(0);
+      }
+
+      document.getElementById('gps-coords').innerText = `${currentLat.toFixed(5)} N, ${currentLng.toFixed(5)} E`;
+      document.getElementById('track-distance').innerText = `${(totalTrackDistKm * KM_TO_NM).toFixed(2)} NM (${totalTrackDistKm.toFixed(2)} km)`;
+
+      updateGPSPosition(lat, lng);
+      if (waypoints.length > 0) renderRoute();
+      checkZoneGeofencing(currentLat, currentLng);
+      broadcastMyLocation();
+    }
+
+    if ("geolocation" in navigator) {
+      navigator.geolocation.watchPosition((position) => {
+        if (!position || !position.coords) return;
+        actualGpsLat = position.coords.latitude;
+        actualGpsLng = position.coords.longitude;
+        const currentTime = Date.now();
+
+        let mps = position.coords.speed; 
+        if ((mps === null || mps === 0) && lastLat !== null && lastLng !== null && lastGpsTime !== null) {
+          const timeDiffSec = (currentTime - lastGpsTime) / 1000;
+          if (timeDiffSec > 0.5) {
+            const calculatedMps = (getDistanceInKm(lastLat, lastLng, actualGpsLat, actualGpsLng) * 1000) / timeDiffSec;
+            mps = (calculatedMps > 0.3 && calculatedMps < 20) ? calculatedMps : 0;
+          }
+        } else if (mps === null) mps = 0;
+
+        if (position.coords.heading !== null && !isNaN(position.coords.heading)) {
+          currentHeading = position.coords.heading;
+        }
+
+        lastLat = actualGpsLat; lastLng = actualGpsLng; lastGpsTime = currentTime;
+        currentSpeedKts = mps * MPS_TO_KTS; 
+        currentSpeedKmh = mps * 3.6;     
+
+        document.getElementById('dual-speed-display').innerText = `${currentSpeedKts.toFixed(1)} Kts (${currentSpeedKmh.toFixed(1)} km/h)`;
+
+        if (isFirstGps) {
+          map.setView([actualGpsLat, actualGpsLng], 16);
+          isFirstGps = false;
+        }
+
+        if (!isCalibratedMode) updateShipPosition(actualGpsLat, actualGpsLng, false);
+        drawSpeedometer(currentSpeedKts, currentSpeedKmh);
+
+        checkAutoStop(currentSpeedKts);
+
+        if (isNavigating) {
+          tripSpeedList.push(currentSpeedKts);
+          if (currentSpeedKts > tripMaxSpeed) tripMaxSpeed = currentSpeedKts;
+        }
+      }, (err) => console.warn("GPS 수신 에러:", err.message), { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 });
+    }
+
+    function drawSpeedometer(kts, kmh) {
+      const canvas = document.getElementById('speedometer');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const targetWidth = rect.width || 400;
+      const targetHeight = rect.height || 400;
+
+      if (canvas.width !== targetWidth * dpr || canvas.height !== targetHeight * dpr) {
+        canvas.width = targetWidth * dpr;
+        canvas.height = targetHeight * dpr;
+      }
+
+      ctx.save();
+      ctx.scale(dpr, dpr);
+
+      const w = targetWidth, h = targetHeight;
+      const cx = w / 2, cy = h / 2, radius = Math.min(cx, cy) - 20;
+
+      ctx.clearRect(0, 0, w, h);
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
+      ctx.fillStyle = '#161b22';
+      ctx.fill();
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = '#30363d';
+      ctx.stroke();
+
+      const maxKts = 30;
+      const startAngle = 0.75 * Math.PI;
+      const endAngle = 2.25 * Math.PI;
+      const currentAngle = startAngle + (Math.min(kts, maxKts) / maxKts) * (endAngle - startAngle);
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius - 15, startAngle, endAngle);
+      ctx.lineWidth = 12;
+      ctx.strokeStyle = '#30363d';
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius - 15, startAngle, currentAngle);
+      ctx.lineWidth = 12;
+      ctx.strokeStyle = '#00f2fe';
+      ctx.stroke();
+
+      ctx.font = 'bold 16px Segoe UI, sans-serif'; 
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      
+      const tickValues = [0, 5, 10, 15, 20, 25, 30];
+      tickValues.forEach(val => {
+        const ratio = val / maxKts;
+        const angle = startAngle + ratio * (endAngle - startAngle);
+        
+        const tickRadius = radius - 38;
+        const tx = cx + tickRadius * Math.cos(angle);
+        const ty = cy + tickRadius * Math.sin(angle);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(val, tx, ty);
+      });
+
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(currentAngle);
+
+      ctx.beginPath();
+      ctx.moveTo(-3, -10);
+      ctx.lineTo(radius - 45, 0); 
+      ctx.lineTo(-3, 10);
+      ctx.closePath();
+      ctx.fillStyle = '#ff7b72'; 
+      ctx.shadowColor = 'rgba(255, 123, 114, 0.8)';
+      ctx.shadowBlur = 10;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(0, 0, 10, 0, 2 * Math.PI);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#ff7b72';
+      ctx.stroke();
+
+      ctx.restore();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 44px Consolas, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(kts.toFixed(1), cx, cy + 12);
+
+      ctx.fillStyle = '#00f2fe';
+      ctx.font = 'bold 18px Segoe UI, sans-serif';
+      ctx.fillText('KNOTS', cx, cy + 40);
+
+      ctx.fillStyle = '#c9d1d9';
+      ctx.font = 'bold 15px Segoe UI, sans-serif';
+      ctx.fillText(`(${kmh.toFixed(1)} km/h)`, cx, cy + 64);
+
+      ctx.restore();
+    }
+
+    function resetTrack() {
+      trackPoints = []; totalTrackDistKm = 0;
+      if (trackPolyline) trackPolyline.setLatLngs([]);
+      document.getElementById('track-distance').innerText = `0.00 NM (0.00 km)`;
+    }
+
+    function renderRoute() {
+      if (routePolyline) map.removeLayer(routePolyline);
+      if (waypoints.length === 0) {
+        document.getElementById('dist-remaining').innerText = `-- NM`;
+        return;
+      }
+      const pathCoords = [[currentLat, currentLng], ...waypoints];
+      routePolyline = L.polyline(pathCoords, { color: '#00f2fe', weight: 3, dashArray: '6, 8' }).addTo(map);
+
+      let totalDistKm = 0;
+      for (let i = 0; i < pathCoords.length - 1; i++) {
+        totalDistKm += getDistanceInKm(pathCoords[i][0], pathCoords[i][1], pathCoords[i+1][0], pathCoords[i+1][1]);
+      }
+      document.getElementById('dist-remaining').innerText = `${(totalDistKm * KM_TO_NM).toFixed(2)} NM (${totalDistKm.toFixed(2)} km)`;
+    }
+
+    function resetRoute() {
+      waypoints = [];
+      waypointMarkers.forEach(m => map.removeLayer(m));
+      waypointMarkers = [];
+      renderRoute();
+    }
+
+    function resetZones() {
+      drawnItems.clearLayers();
+      checkZoneGeofencing(currentLat, currentLng);
+    }
+
+    function stopAndSaveTrip() {
+      const endTime = new Date();
+      const endTimeStr = formatHHMMSS(endTime);
+      document.getElementById('end-time-input').value = endTimeStr;
+
+      const durationSec = Math.max(1, Math.round((endTime - tripStartTime) / 1000));
+      const actualDistNM = totalTrackDistKm * KM_TO_NM;
+
+      const avgSpeedKts = tripSpeedList.length > 0
+        ? tripSpeedList.reduce((a, b) => a + b, 0) / tripSpeedList.length
+        : (durationSec > 0 ? (actualDistNM / (durationSec / 3600)) : 0);
+
+      const startTimeStr = document.getElementById('start-time-input').value || formatHHMMSS(tripStartTime);
+
+      const logEntry = {
+        id: Date.now(),
+        shipName: currentShipName || '미지정 선박',
+        dateStr: `${tripStartTime.getFullYear()}-${String(tripStartTime.getMonth() + 1).padStart(2, '0')}-${String(tripStartTime.getDate()).padStart(2, '0')}`,
+        tripIndex: tripLogs.filter(log => log.dateStr === `${tripStartTime.getFullYear()}-${String(tripStartTime.getMonth() + 1).padStart(2, '0')}-${String(tripStartTime.getDate()).padStart(2, '0')}`).length + 1,
+        startTime: startTimeStr,
+        endTime: endTimeStr,
+        durationSec: durationSec,
+        distanceNM: actualDistNM,
+        distanceKm: totalTrackDistKm,
+        avgSpeedKts: avgSpeedKts,
+        maxSpeedKts: tripMaxSpeed,
+        trackPoints: [...trackPoints] 
+      };
+
+      tripLogs.unshift(logEntry);
+      try {
+        localStorage.setItem('ship_trip_logs', JSON.stringify(tripLogs));
+      } catch (err) {
+        console.error("LocalStorage 저장 에러:", err);
+      }
+
+      isNavigating = false; 
+      tripStartTime = null;
+      tripSpeedList = [];
+      tripMaxSpeed = 0;
+      document.getElementById('active-timer-box').style.display = 'none';
+
+      renderLogList();
+      releaseWakeLock();
+    }
+
+    function renderLogList(filteredLogs = null) {
+      const container = document.getElementById('log-list-container');
+      container.innerHTML = "";
+      const logsToRender = filteredLogs || tripLogs;
+
+      if (logsToRender.length === 0) {
+        container.innerHTML = `<div style="color:var(--text-sub); font-size:0.9rem; padding:12px; text-align:center;">저장된 운항 기록이 없습니다.</div>`;
+        return;
+      }
+
+      const grouped = {};
+      logsToRender.forEach(log => {
+        if (!grouped[log.dateStr]) grouped[log.dateStr] = [];
+        grouped[log.dateStr].push(log);
+      });
+
+      Object.keys(grouped).forEach(dateKey => {
+        const groupEl = document.createElement('div');
+        groupEl.className = 'log-date-group';
+        groupEl.innerHTML = `<div class="log-date-header">📅 ${dateKey} (${grouped[dateKey].length}건)</div>`;
+
+        grouped[dateKey].forEach(log => {
+          const item = document.createElement('div');
+          item.className = 'log-item';
+          item.onclick = () => openModal(log);
+          item.innerHTML = `
+            <div>
+              <div class="log-item-title">🚢 [${log.shipName || '선박'}] #${log.tripIndex}차 운항</div>
+              <div class="log-item-sub">${log.startTime} ~ ${log.endTime}</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="log-item-right-top">${(log.distanceNM || 0).toFixed(2)} NM</div>
+              <div class="log-item-right-bottom">⏱ ${formatDurationText(log.durationSec || 0)}</div>
+            </div>
+          `;
+          groupEl.appendChild(item);
+        });
+        container.appendChild(groupEl);
+      });
+    }
+
+    function filterLogsByDate() {
+      const selectedDate = document.getElementById('search-date-input').value;
+      if (selectedDate) renderLogList(tripLogs.filter(log => log.dateStr === selectedDate));
+    }
+
+    function resetLogFilter() {
+      document.getElementById('search-date-input').value = "";
+      renderLogList();
+    }
+
+    function exportLogsToCSV() {
+      if (tripLogs.length === 0) {
+        alert("내보낼 운항 기록 데이터가 없습니다.");
+        return;
+      }
+      let csvContent = "\uFEFF"; 
+      csvContent += "선박명,운항일자,회차,출항시각,입항시각,소요시간(초),운항거리(NM),운항거리(km),평균속도(Kts),최고속도(Kts)\n";
+      tripLogs.forEach(log => {
+        csvContent += `"${log.shipName || '선박'}","${log.dateStr}",${log.tripIndex},"${log.startTime}","${log.endTime}",${log.durationSec},${(log.distanceNM || 0).toFixed(2)},${(log.distanceKm || 0).toFixed(2)},${(log.avgSpeedKts || 0).toFixed(1)},${(log.maxSpeedKts || 0).toFixed(1)}\n`;
+      });
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.setAttribute('href', url);
+      a.setAttribute('download', `운항기록_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function exportLogsBackup() {
+      if (tripLogs.length === 0) { alert("백업할 기록이 없습니다."); return; }
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tripLogs, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `운항기록백업_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function triggerLogBackupInput() { document.getElementById('log-backup-input').click(); }
+
+    function importLogsBackup(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const importedLogs = JSON.parse(e.target.result);
+          if (Array.isArray(importedLogs)) {
+            if (confirm("백업 파일을 기존 데이터와 병합하시겠습니까?")) {
+              tripLogs = [...importedLogs, ...tripLogs];
+              localStorage.setItem('ship_trip_logs', JSON.stringify(tripLogs));
+              renderLogList();
+              alert("성공적으로 복원되었습니다.");
+            }
+          }
+        } catch (err) { alert("올바르지 않은 JSON 백업 파일입니다."); }
+      };
+      reader.readAsText(file);
+      event.target.value = "";
+    }
+
+    function openModal(log) {
+      document.getElementById('modal-title').innerText = `🚢 [${log.shipName || '선박'}] #${log.tripIndex}차 운항 상세`;
+      document.getElementById('m-date').innerText = log.dateStr;
+      document.getElementById('m-duration').innerText = formatDurationText(log.durationSec || 0);
+      document.getElementById('m-start-time').innerText = log.startTime;
+      document.getElementById('m-end-time').innerText = log.endTime;
+      document.getElementById('m-distance').innerText = `${(log.distanceNM || 0).toFixed(2)} NM (${(log.distanceKm || 0).toFixed(2)} km)`;
+      document.getElementById('m-avg-speed').innerText = `${(log.avgSpeedKts || 0).toFixed(1)} Kts`;
+      document.getElementById('m-max-speed').innerText = `${(log.maxSpeedKts || 0).toFixed(1)} Kts`;
+
+      const deleteBtn = document.getElementById('modal-delete-btn');
+      deleteBtn.onclick = () => deleteLog(log.id);
+
+      document.getElementById('detail-modal').style.display = 'flex';
+
+      setTimeout(() => {
+        if (!modalMap) {
+          modalMap = L.map('modal-map', { zoomControl: false, attributionControl: false });
+          L.tileLayer('https://xdworld.vworld.kr/2d/Base/service/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(modalMap);
+        }
+
+        if (modalPolyline) {
+          modalMap.removeLayer(modalPolyline);
+          modalPolyline = null;
+        }
+
+        if (log.trackPoints && log.trackPoints.length > 0) {
+          modalPolyline = L.polyline(log.trackPoints, { color: '#00f2fe', weight: 4 }).addTo(modalMap);
+          modalMap.fitBounds(modalPolyline.getBounds(), { padding: [20, 20] });
+        } else {
+          modalMap.setView([currentLat, currentLng], 14);
+        }
+        modalMap.invalidateSize();
+      }, 200);
+    }
+
+    function closeModal() {
+      document.getElementById('detail-modal').style.display = 'none';
+    }
+
+    function deleteLog(logId) {
+      if (confirm("이 운항 기록을 삭제하시겠습니까?")) {
+        tripLogs = tripLogs.filter(item => item.id !== logId);
+        try {
+          localStorage.setItem('ship_trip_logs', JSON.stringify(tripLogs));
+        } catch(err) {}
+        renderLogList();
+        closeModal();
+      }
+    }
+
+    // 페이지 초기화 실행
+    window.onload = function() {
+      renderLogList();
+      drawSpeedometer(0, 0);
+      listenToOtherShips();
+    };
+  </script>
+</body>
+</html>
