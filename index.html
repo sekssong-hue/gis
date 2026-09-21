@@ -789,7 +789,7 @@
           <option value="남강 3호">남강 3호</option>
           <option value="남강 4호">남강 4호</option>
           <option value="남강 5호">남강 5호</option>
-          <option value="남강 5호">남강 6호</option>
+          <option value="남강 6호">남강 6호</option>
           <option value="인명구조선">인명구조선</option>
           <option value="안전관리선">안전관리선</option>
           <option value="기타작업선">기타작업선</option>
@@ -1464,23 +1464,24 @@
       if (wakeLock !== null) wakeLock.release().then(() => { wakeLock = null; }).catch(() => {});
     }
 
-    function updateClock() {
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const date = String(now.getDate()).padStart(2, '0');
-      const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
-      const day = weekDays[now.getDay()];
+ // [수정 제안] 시계 업데이트 함수 보완
+function updateClock() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const date = String(now.getDate()).padStart(2, '0');
+  const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
+  const day = weekDays[now.getDay()];
 
-      document.getElementById('live-date').innerText = `${year}년 ${month}월 ${date}일 (${day})`;
-      document.getElementById('live-time').innerText = formatClockTime(now);
+  document.getElementById('live-date').innerText = `${year}년 ${month}월 ${date}일 (${day})`;
+  document.getElementById('live-time').innerText = formatClockTime(now);
 
-      if (isNavigating && tripStartTime) {
-        const diffSec = Math.floor((now - tripStartTime) / 1000);
-        document.getElementById('timer').innerText = formatDurationText(diffSec);
-      }
-    }
-    setInterval(updateClock, 1000);
+  if (isDrivingStarted && tripStartTime) {
+    const diffSec = (now.getTime() - tripStartTime.getTime()) / 1000;
+    document.getElementById('timer').innerText = formatDurationText(diffSec);
+  }
+}
+setInterval(updateClock, 1000);
 
     const KM_TO_NM = 0.539957;
     const MPS_TO_KTS = 1.943844;
