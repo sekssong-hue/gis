@@ -85,8 +85,8 @@
 
     header {
       text-align: center;
-      margin-bottom: 10px;
-      padding-bottom: 8px;
+      margin-bottom: 8px;
+      padding-bottom: 6px;
       border-bottom: 2px solid var(--border-color);
       flex-shrink: 0;
     }
@@ -103,8 +103,8 @@
       background: rgba(0, 242, 254, 0.08);
       border: 1.5px solid var(--accent-color);
       border-radius: 12px;
-      padding: 10px 14px;
-      margin-bottom: 12px;
+      padding: 8px 12px;
+      margin-bottom: 10px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -114,14 +114,14 @@
     }
 
     .ship-select-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .ship-select-group label { font-size: 1.0rem; font-weight: bold; color: var(--accent-color); }
+    .ship-select-group label { font-size: 0.95rem; font-weight: bold; color: var(--accent-color); }
     .ship-select-group select {
       background: #0d1117;
       border: 1px solid var(--border-color);
       color: #ffffff;
-      padding: 6px 12px;
+      padding: 5px 10px;
       border-radius: 8px;
-      font-size: 1.0rem;
+      font-size: 0.95rem;
       font-weight: bold;
       outline: none;
     }
@@ -134,9 +134,9 @@
       color: #fff;
       border: none;
       border-radius: 8px;
-      padding: 6px 14px;
+      padding: 6px 12px;
       font-weight: bold;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       cursor: pointer;
       transition: opacity 0.2s;
     }
@@ -151,7 +151,7 @@
     }
 
     .online-ships-box { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-    .online-ships-title { font-size: 0.9rem; font-weight: bold; color: var(--text-sub); }
+    .online-ships-title { font-size: 0.85rem; font-weight: bold; color: var(--text-sub); }
     .online-ship-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
     .ship-badge {
       background: rgba(46, 160, 67, 0.2);
@@ -159,7 +159,7 @@
       color: #ffffff;
       padding: 3px 8px;
       border-radius: 12px;
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       font-weight: bold;
       display: flex;
       align-items: center;
@@ -178,8 +178,8 @@
 
     .dashboard-container {
       display: grid;
-      grid-template-columns: minmax(320px, 0.9fr) minmax(400px, 1.5fr);
-      gap: clamp(10px, 2vw, 15px);
+      grid-template-columns: minmax(360px, 1.1fr) minmax(380px, 1.4fr);
+      gap: clamp(10px, 1.5vw, 15px);
       flex: 1;
       min-height: 0;
       width: 100%;
@@ -190,7 +190,7 @@
       background: var(--panel-bg);
       border: 1px solid var(--border-color);
       border-radius: 16px;
-      padding: clamp(10px, 2vw, 15px);
+      padding: clamp(10px, 1.5vw, 14px);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -210,7 +210,7 @@
       display: flex;
       width: 100%;
       gap: 6px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       border-bottom: 1px solid var(--border-color);
       padding-bottom: 8px;
       flex-shrink: 0;
@@ -223,7 +223,7 @@
       border-radius: 8px;
       padding: 8px;
       font-weight: bold;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       cursor: pointer;
       transition: all 0.2s ease;
       text-align: center;
@@ -243,21 +243,77 @@
       display: none;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
     .tab-content.active {
       display: flex;
     }
 
-    .speedometer-box {
+    /* ============================================================= */
+    /* [새로운 레이아웃] 중앙 속도계 & 4개 모서리 계측기 GRID 레이아웃 */
+    /* ============================================================= */
+    .dashboard-center-layout {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr minmax(200px, 260px) 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 10px;
+      align-items: center;
+      justify-items: center;
+      margin-bottom: 10px;
+      flex-shrink: 0;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 10px;
+    }
+
+    /* 4개 모서리 위젯 카드 */
+    .corner-card {
+      width: 100%;
+      height: 100%;
+      min-height: 85px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
+    }
+    .corner-card .corner-title {
+      font-size: 0.8rem;
+      font-weight: bold;
+      color: var(--text-sub);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .corner-card .corner-value {
+      font-size: 1.15rem;
+      font-weight: 900;
+      color: #ffffff;
+      font-family: 'Consolas', monospace;
+      text-align: right;
+    }
+    .corner-card .corner-sub {
+      font-size: 0.75rem;
+      color: var(--accent-color);
+      text-align: right;
+    }
+
+    /* 중앙 계측기 (속도계 영역) */
+    .speedometer-box-center {
+      grid-column: 2;
+      grid-row: 1 / span 2;
       position: relative;
       width: 100%;
-      max-width: clamp(260px, 32vw, 380px);
+      max-width: 260px;
       aspect-ratio: 1;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-bottom: 12px;
       flex-shrink: 0;
     }
     canvas {
@@ -268,27 +324,27 @@
     .clock-box {
       width: 100%;
       background: rgba(0, 242, 254, 0.08);
-      border: 2px solid var(--accent-color);
-      border-radius: 14px;
-      padding: clamp(10px, 1.5vw, 14px) 10px;
-      margin-bottom: 12px;
+      border: 1.5px solid var(--accent-color);
+      border-radius: 12px;
+      padding: 8px 10px;
+      margin-bottom: 10px;
       text-align: center;
-      box-shadow: 0 0 15px rgba(0, 242, 254, 0.15);
+      box-shadow: 0 0 12px rgba(0, 242, 254, 0.15);
       flex-shrink: 0;
     }
     .clock-date {
-      font-size: clamp(1.1rem, 2.2vw, 1.5rem);
+      font-size: clamp(0.95rem, 1.8vw, 1.2rem);
       font-weight: 800;
       color: #ffffff;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
       letter-spacing: 0.5px;
     }
     .clock-time {
-      font-size: clamp(1.4rem, 3.0vw, 2.1rem);
+      font-size: clamp(1.2rem, 2.5vw, 1.7rem);
       font-weight: 900;
       color: var(--accent-color);
       font-family: 'Consolas', 'Courier New', monospace;
-      letter-spacing: 1.5px;
+      letter-spacing: 1px;
     }
 
     .trip-control-box {
@@ -296,11 +352,11 @@
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid var(--border-color);
       border-radius: 12px;
-      padding: clamp(10px, 1.5vw, 14px);
-      margin-bottom: 14px;
+      padding: 10px;
+      margin-bottom: 10px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
       flex-shrink: 0;
     }
 
@@ -308,43 +364,43 @@
       display: none;
       background: rgba(0, 242, 254, 0.1);
       border: 2px solid var(--accent-green);
-      border-radius: 12px;
-      padding: 12px 14px;
+      border-radius: 10px;
+      padding: 8px 10px;
       text-align: center;
       animation: pulse-border 2s infinite;
     }
     @keyframes pulse-border {
-      0%, 100% { border-color: var(--accent-green); box-shadow: 0 0 12px rgba(46, 160, 67, 0.4); }
-      50% { border-color: #3fb950; box-shadow: 0 0 22px rgba(46, 160, 67, 0.8); }
+      0%, 100% { border-color: var(--accent-green); box-shadow: 0 0 10px rgba(46, 160, 67, 0.4); }
+      50% { border-color: #3fb950; box-shadow: 0 0 18px rgba(46, 160, 67, 0.8); }
     }
     .duration-label {
-      font-size: 1.35rem;
+      font-size: 1.1rem;
       font-weight: 800;
       color: #ffffff;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
       display: block;
       letter-spacing: 0.5px;
     }
     .timer-val {
-      font-size: 2.0rem;
+      font-size: 1.6rem;
       font-weight: 900;
       color: var(--accent-color);
       font-family: 'Consolas', 'Courier New', monospace;
-      text-shadow: 0 0 10px rgba(0, 242, 254, 0.5);
+      text-shadow: 0 0 8px rgba(0, 242, 254, 0.5);
       letter-spacing: 1px;
     }
 
-    .trip-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .trip-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .input-field { display: flex; flex-direction: column; gap: 4px; }
-    .input-field label { font-size: 0.95rem; font-weight: bold; color: var(--accent-color); }
+    .input-field label { font-size: 0.85rem; font-weight: bold; color: var(--accent-color); }
     .input-field input {
       width: 100%;
       background: #0d1117;
       border: 1px solid var(--border-color);
       color: #ffffff;
-      padding: 8px;
-      border-radius: 8px;
-      font-size: 1.1rem; 
+      padding: 6px;
+      border-radius: 6px;
+      font-size: 0.95rem; 
       font-weight: bold;
       text-align: center;
       font-family: 'Consolas', 'Courier New', monospace;
@@ -352,17 +408,17 @@
       color-scheme: dark;
     }
 
-    .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .btn {
       border: none;
       border-radius: 8px;
-      padding: 12px 10px;
+      padding: 10px 8px;
       font-weight: bold;
-      font-size: 1.0rem;
+      font-size: 0.95rem;
       cursor: pointer;
       color: #fff;
       transition: opacity 0.2s, transform 0.1s;
-      min-height: 48px;
+      min-height: 42px;
     }
     .btn:active { transform: scale(0.98); }
     .btn:hover { opacity: 0.85; }
@@ -377,7 +433,7 @@
 
     .log-header-bar { width: 100%; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; flex-shrink: 0; }
     .log-title-row { display: flex; justify-content: space-between; align-items: center; }
-    .log-title { font-size: 1.1rem; font-weight: bold; color: var(--accent-color); }
+    .log-title { font-size: 1.0rem; font-weight: bold; color: var(--accent-color); }
     .search-box { display: flex; gap: 6px; width: 100%; }
     .search-box input[type="date"] {
       flex: 1;
@@ -386,7 +442,7 @@
       color: #ffffff;
       padding: 6px;
       border-radius: 6px;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       font-weight: bold;
       color-scheme: dark;
       outline: none;
@@ -396,35 +452,35 @@
       border-radius: 6px;
       padding: 6px 10px;
       font-weight: bold;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       cursor: pointer;
-      min-height: 38px;
+      min-height: 36px;
     }
     .btn-search { background: var(--accent-color); color: #000; }
     .btn-reset-search { background: #30363d; color: #fff; }
     .btn-action-sm { background: #238636; color: #fff; }
     .btn-action-sm.blue { background: #1f6beb; }
 
-    .log-list-box { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+    .log-list-box { width: 100%; display: flex; flex-direction: column; gap: 8px; }
     .log-date-group {
       background: rgba(255, 255, 255, 0.02);
       border: 1px solid var(--border-color);
       border-radius: 10px;
-      padding: 10px;
+      padding: 8px;
     }
     .log-date-header {
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       font-weight: bold;
       color: var(--accent-color);
-      padding-bottom: 6px;
-      margin-bottom: 8px;
+      padding-bottom: 4px;
+      margin-bottom: 6px;
       border-bottom: 1px dashed var(--border-color);
     }
     .log-item {
       background: rgba(255, 255, 255, 0.04);
       border: 1px solid var(--border-color);
       border-radius: 8px;
-      padding: 10px 12px;
+      padding: 8px 10px;
       margin-bottom: 6px;
       display: flex;
       justify-content: space-between;
@@ -433,10 +489,10 @@
       transition: all 0.2s;
     }
     .log-item:hover { background: rgba(0, 242, 254, 0.15); border-color: var(--accent-color); }
-    .log-item-title { font-size: 1.0rem; font-weight: bold; color: #ffffff; }
-    .log-item-sub { font-size: 0.85rem; color: #79c0ff; margin-top: 2px; font-family: sans-serif; }
-    .log-item-right-top { color: var(--accent-color); font-weight: bold; font-size: 1.0rem; }
-    .log-item-right-bottom { font-size: 0.8rem; color: #ff7b72; margin-top: 2px; font-weight: bold; }
+    .log-item-title { font-size: 0.9rem; font-weight: bold; color: #ffffff; }
+    .log-item-sub { font-size: 0.8rem; color: #79c0ff; margin-top: 2px; font-family: sans-serif; }
+    .log-item-right-top { color: var(--accent-color); font-weight: bold; font-size: 0.9rem; }
+    .log-item-right-bottom { font-size: 0.75rem; color: #ff7b72; margin-top: 2px; font-weight: bold; }
 
     .location-badge {
       display: none;
@@ -452,30 +508,30 @@
       animation: blink 1s infinite;
     }
 
-    .data-panel { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+    .data-panel { display: flex; flex-direction: column; gap: 10px; width: 100%; }
     .status-display-box {
       width: 100%;
       background: rgba(0, 242, 254, 0.06);
       border: 1px solid var(--accent-color);
       border-radius: 10px;
-      padding: 10px 14px;
+      padding: 8px 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-shrink: 0;
     }
-    .guide-text { font-size: 0.95rem; font-weight: bold; color: var(--accent-color); flex: 1; }
+    .guide-text { font-size: 0.88rem; font-weight: bold; color: var(--accent-color); flex: 1; }
     .guide-text.warning-alert {
       color: #ffffff;
       background: var(--accent-red);
-      padding: 6px 12px;
+      padding: 5px 10px;
       border-radius: 6px;
       animation: blink 1s infinite;
     }
     .guide-text.safe-alert {
       color: #ffffff;
       background: var(--accent-green);
-      padding: 6px 12px;
+      padding: 5px 10px;
       border-radius: 6px;
     }
 
@@ -485,11 +541,11 @@
       justify-content: space-between;
       align-items: center;
       background: rgba(255, 255, 255, 0.02);
-      padding: 8px 12px;
+      padding: 6px 10px;
       border-radius: 10px;
       border: 1px solid var(--border-color);
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 6px;
       flex-shrink: 0;
     }
     .btn-reset {
@@ -497,12 +553,12 @@
       color: #fff;
       border: none;
       border-radius: 6px;
-      padding: 6px 10px;
-      font-size: 0.85rem;
+      padding: 5px 8px;
+      font-size: 0.8rem;
       font-weight: bold;
       cursor: pointer;
       transition: all 0.2s;
-      min-height: 38px;
+      min-height: 34px;
     }
     .btn-reset:hover { background: #484f58; }
     .btn-center-mode { background: #30363d; color: #fff; }
@@ -515,16 +571,16 @@
     .alarm-switch-container {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 0.85rem;
+      gap: 6px;
+      font-size: 0.8rem;
       font-weight: bold;
       color: var(--text-sub);
     }
     .switch {
       position: relative;
       display: inline-block;
-      width: 44px;
-      height: 24px;
+      width: 40px;
+      height: 22px;
     }
     .switch input { 
       opacity: 0;
@@ -537,14 +593,14 @@
       top: 0; left: 0; right: 0; bottom: 0;
       background-color: #30363d;
       transition: .3s;
-      border-radius: 24px;
+      border-radius: 22px;
       border: 1px solid var(--border-color);
     }
     .slider:before {
       position: absolute;
       content: "";
-      height: 18px;
-      width: 18px;
+      height: 16px;
+      width: 16px;
       left: 2px;
       bottom: 2px;
       background-color: white;
@@ -555,35 +611,35 @@
       background-color: var(--accent-green);
     }
     input:checked + .slider:before {
-      transform: translateX(20px);
+      transform: translateX(18px);
     }
 
     .grid-info {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
       width: 100%;
       flex-shrink: 0;
     }
     .info-card {
       background: rgba(255, 255, 255, 0.04);
       border: 1.5px solid var(--border-color);
-      border-radius: 12px;
-      padding: 12px 14px;
+      border-radius: 10px;
+      padding: 10px 12px;
       display: flex;
       flex-direction: column;
       justify-content: center;
     }
-    .info-label { font-size: 1.0rem; color: var(--text-sub); margin-bottom: 6px; font-weight: 800; }
-    .info-value { font-size: 1.45rem; font-weight: 900; color: #ffffff; font-family: monospace; letter-spacing: -0.5px; }
+    .info-label { font-size: 0.85rem; color: var(--text-sub); margin-bottom: 4px; font-weight: 800; }
+    .info-value { font-size: 1.25rem; font-weight: 900; color: #ffffff; font-family: monospace; letter-spacing: -0.5px; }
     .info-value.highlight { color: var(--accent-color); }
     .info-value.track { color: #ff7b72; }
 
     #map {
       position: relative;
       width: 100%;
-      height: 520px;
-      min-height: 400px;
+      height: 480px;
+      min-height: 380px;
       border-radius: 12px;
       border: 2px solid var(--border-color);
       cursor: crosshair;
@@ -624,10 +680,10 @@
       overflow-y: auto;
     }
     .modal-header {
-      font-size: 1.3rem;
+      font-size: 1.2rem;
       font-weight: bold;
       color: var(--accent-color);
-      padding-bottom: 10px;
+      padding-bottom: 8px;
       border-bottom: 1px solid var(--border-color);
       display: flex;
       justify-content: space-between;
@@ -636,12 +692,12 @@
     .modal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
     .modal-card { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 12px; }
     .modal-card.full-width { grid-column: span 3; }
-    .modal-card .m-label { font-size: 0.85rem; color: #79c0ff; font-weight: bold; margin-bottom: 4px; }
-    .modal-card .m-val { font-size: 1.15rem; font-weight: bold; color: #ffffff; font-family: sans-serif; }
+    .modal-card .m-label { font-size: 0.8rem; color: #79c0ff; font-weight: bold; margin-bottom: 4px; }
+    .modal-card .m-val { font-size: 1.1rem; font-weight: bold; color: #ffffff; font-family: sans-serif; }
     .modal-card .m-val.highlight { color: var(--accent-color); }
     .modal-card .m-val.track { color: #ff7b72; }
-    .modal-section-title { font-size: 0.95rem; font-weight: bold; color: var(--accent-color); margin-bottom: 6px; }
-    #modal-map { width: 100%; height: 300px; border-radius: 10px; border: 1px solid var(--border-color); }
+    .modal-section-title { font-size: 0.9rem; font-weight: bold; color: var(--accent-color); margin-bottom: 6px; }
+    #modal-map { width: 100%; height: 280px; border-radius: 10px; border: 1px solid var(--border-color); }
     .modal-btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
     .modal-close-btn, .modal-delete-btn {
       width: 100%;
@@ -649,9 +705,9 @@
       border: none;
       border-radius: 8px;
       font-weight: bold;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       cursor: pointer;
-      min-height: 44px;
+      min-height: 40px;
     }
     .modal-close-btn { background: #30363d; color: #fff; }
     .modal-delete-btn { background: var(--accent-red); color: #fff; }
@@ -673,19 +729,19 @@
       background: rgba(13, 17, 23, 0.95);
       color: #00f2fe;
       border: 2px solid #00f2fe;
-      padding: 4px 10px;
+      padding: 4px 8px;
       border-radius: 8px;
-      font-size: 14px; 
+      font-size: 13px; 
       font-weight: 900;
       margin-bottom: 2px;
-      box-shadow: 0 0 12px rgba(0, 242, 254, 0.8);
+      box-shadow: 0 0 10px rgba(0, 242, 254, 0.8);
       text-align: center;
       line-height: 1.2;
     }
     .other-ship-badge {
       color: #ffab70;
       border-color: #ffab70;
-      box-shadow: 0 0 12px rgba(255, 171, 112, 0.6);
+      box-shadow: 0 0 10px rgba(255, 171, 112, 0.6);
     }
     .other-ship-badge.danger { background: #ff7b72; color: #fff; border-color: #fff; animation: blink 0.8s infinite; }
     .cruise-ship-icon {
@@ -695,12 +751,12 @@
       background: rgba(13, 17, 23, 0.85);
       border: 2px solid #00f2fe;
       border-radius: 50%;
-      box-shadow: 0 0 12px rgba(0, 242, 254, 0.8);
-      width: 36px;
-      height: 36px;
-      font-size: 20px;
+      box-shadow: 0 0 10px rgba(0, 242, 254, 0.8);
+      width: 34px;
+      height: 34px;
+      font-size: 18px;
     }
-    .other-ship-symbol { font-size: 24px; }
+    .other-ship-symbol { font-size: 22px; }
 
     .pwa-install-banner {
       position: fixed;
@@ -708,37 +764,38 @@
       left: 50%;
       transform: translateX(-50%);
       width: calc(100% - 30px);
-      max-width: 500px;
+      max-width: 480px;
       background: #161b22;
       border: 2px solid var(--accent-color);
-      border-radius: 14px;
-      padding: 14px 16px;
+      border-radius: 12px;
+      padding: 12px 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       box-shadow: 0 10px 30px rgba(0,0,0,0.8);
       z-index: 10000;
-      gap: 12px;
+      gap: 10px;
     }
     .pwa-install-info { display: flex; align-items: center; gap: 10px; }
-    .pwa-install-icon { font-size: 1.8rem; }
+    .pwa-install-icon { font-size: 1.6rem; }
     .pwa-install-text { display: flex; flex-direction: column; }
-    .pwa-install-title { font-size: 0.95rem; font-weight: bold; color: #ffffff; }
-    .pwa-install-desc { font-size: 0.8rem; color: var(--text-sub); }
+    .pwa-install-title { font-size: 0.9rem; font-weight: bold; color: #ffffff; }
+    .pwa-install-desc { font-size: 0.75rem; color: var(--text-sub); }
     .pwa-btn-group { display: flex; gap: 6px; }
     .pwa-btn-install {
       background: var(--accent-color);
       color: #000;
       border: none;
-      padding: 8px 12px;
+      padding: 6px 10px;
       border-radius: 6px;
       font-weight: bold;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       cursor: pointer;
       white-space: nowrap;
     }
-    .pwa-btn-close { background: transparent; color: var(--text-sub); border: none; padding: 8px; font-size: 1rem; cursor: pointer; }
+    .pwa-btn-close { background: transparent; color: var(--text-sub); border: none; padding: 6px; font-size: 0.9rem; cursor: pointer; }
 
+    /* 반응형 레이아웃 조정 */
     @media (max-width: 900px) {
       html, body {
         height: auto;
@@ -753,7 +810,17 @@
         height: auto;
         overflow: visible;
       }
-      #map { height: 420px; }
+      .dashboard-center-layout {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto auto auto;
+      }
+      .speedometer-box-center {
+        grid-column: span 2;
+        grid-row: 1;
+        max-width: 240px;
+        margin: 0 auto;
+      }
+      #map { height: 400px; }
       .modal-grid { grid-template-columns: 1fr 1fr; }
       .modal-card.full-width { grid-column: span 2; }
     }
@@ -768,7 +835,7 @@
 
   <!-- 선박 선택 바 -->
   <div class="ship-select-bar">
-    <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
       <div class="ship-select-group">
         <label for="shipSelect">선박 선택 : </label>
         <select id="shipSelect" onchange="handleShipSelectChange()">
@@ -793,7 +860,7 @@
         </div>
       </div>
     </div>
-    <div id="connection-status" style="font-size:0.9rem; font-weight:bold; color:var(--accent-green);">서버 연결 확인 중...</div>
+    <div id="connection-status" style="font-size:0.85rem; font-weight:bold; color:var(--accent-green);">서버 연결 확인 중...</div>
   </div>
 
   <input type="file" id="log-backup-input" accept=".json" style="display:none;" onchange="importLogsBackup(event)">
@@ -808,8 +875,41 @@
 
       <!-- 탭 1: 계측 제어 -->
       <div id="tab-control" class="tab-content active">
-        <div class="speedometer-box">
-          <canvas id="speedometer" width="400" height="400"></canvas>
+        
+        <!-- 중앙 아날로그 속도계 및 4개 모서리 반응형 계측 카드 -->
+        <div class="dashboard-center-layout">
+          <!-- 11시: 날씨 -->
+          <div class="corner-card">
+            <div class="corner-title">🌤️ 날씨 (Weather)</div>
+            <div class="corner-value" id="val-weather">맑음</div>
+            <div class="corner-sub" id="sub-humidity">습도: 55%</div>
+          </div>
+
+          <!-- 1시: 풍속계 -->
+          <div class="corner-card">
+            <div class="corner-title">💨 풍속계 (Wind)</div>
+            <div class="corner-value" id="val-wind-speed">3.2 m/s</div>
+            <div class="corner-sub" id="sub-wind-dir">풍향: 남서풍 (6.2 Kts)</div>
+          </div>
+
+          <!-- 중앙: 아날로그 속도계 -->
+          <div class="speedometer-box-center">
+            <canvas id="speedometer" width="400" height="400"></canvas>
+          </div>
+
+          <!-- 7시: 방향계 (나침반) -->
+          <div class="corner-card">
+            <div class="corner-title">🧭 방향계 (Compass)</div>
+            <div class="corner-value" id="val-heading">180° SSW</div>
+            <div class="corner-sub" id="sub-heading-info">방위각: 180.0°</div>
+          </div>
+
+          <!-- 5시: 현재 온도계 -->
+          <div class="corner-card">
+            <div class="corner-title">🌡️ 온도계 (Temp)</div>
+            <div class="corner-value" id="val-temp">24.5 ℃</div>
+            <div class="corner-sub" id="sub-water-temp">수온: 21.0 ℃</div>
+          </div>
         </div>
 
         <div class="clock-box">
@@ -866,7 +966,7 @@
         <div class="guide-text" id="status-guide-text">[상태] 정상 운항 중 - 안전 운항하세요.</div>
       </div>
 
-      <div class="route-control-bar" style="flex-wrap: nowrap; overflow-x: auto; gap: 12px; justify-content: flex-start;">
+      <div class="route-control-bar" style="flex-wrap: nowrap; overflow-x: auto; gap: 8px; justify-content: flex-start;">
         <div style="display:flex; gap:6px; align-items:center; flex-shrink: 0;">
           <button class="btn-reset btn-center-mode active-tracking" id="btn-center-mode-toggle" onclick="toggleCenterMode()">중심 추적(회전)</button>
           <button class="btn-reset btn-calibrate" id="btn-calibrate-toggle" onclick="toggleCalibrationMode()">위치 수동보정</button>
@@ -894,7 +994,7 @@
         </div>
         <div class="info-card">
           <div class="info-label">GPS 좌표</div>
-          <div class="info-value" id="gps-coords" style="font-size: 1.15rem;">GPS 수신 중...</div>
+          <div class="info-value" id="gps-coords" style="font-size: 1.05rem;">GPS 수신 중...</div>
         </div>
         <div class="info-card">
           <div class="info-label">이동 거리</div>
@@ -1125,6 +1225,13 @@
       ctx.fill();
     }
 
+    /* 방위각을 나침반 방향 문자로 변환 */
+    function getHeadingDirectionText(deg) {
+      const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+      const index = Math.round(((deg % 360) / 45)) % 8;
+      return `${Math.round(deg)}° ${dirs[index]}`;
+    }
+
     function switchLeftTab(tabName) {
       const tabBtns = document.querySelectorAll('.panel-tab-btn');
       const tabContents = document.querySelectorAll('.tab-content');
@@ -1215,7 +1322,7 @@
       }
     }
 
-    /* 통합 Firebase 설정을 연결 */
+    /* 통합 Firebase 설정 */
     const firebaseConfig = {
       apiKey: "AIzaSyCDtASlxPja0v95rc8k9A1O0tBzN0YdWWE",
       authDomain: "gis919-f55a2.firebaseapp.com",
@@ -1235,8 +1342,6 @@
         firebase.initializeApp(firebaseConfig);
         isFirebaseReady = true;
         document.getElementById('connection-status').innerText = "서버 연결됨";
-        
-        // Firebase 초기화 완료 즉시 온라인 감지 모니터링 수신 시작
         listenToOtherShips();
       }
     } catch(e) {
@@ -1854,7 +1959,11 @@
     function calibratePosition(lat, lng) {
       const heading = calculateBearing(currentLat, currentLng, lat, lng);
       currentLat = lat; currentLng = lng;
-      if (heading !== 0) currentHeading = heading;
+      if (heading !== 0) {
+        currentHeading = heading;
+        document.getElementById('val-heading').innerText = getHeadingDirectionText(currentHeading);
+        document.getElementById('sub-heading-info').innerText = `방위각: ${currentHeading.toFixed(1)}°`;
+      }
       shipMarker.setLatLng([currentLat, currentLng]);
       updateShipPosition(currentLat, currentLng, true);
     }
@@ -1895,6 +2004,7 @@
         lng: currentLng,
         speedKts: currentSpeedKts || 0,
         speedKmh: currentSpeedKmh || 0,
+        heading: currentHeading || 0,
         isOperating: true,
         updatedAt: Date.now()
       }).catch(err => console.error("위치 방송 오류:", err));
@@ -1987,9 +2097,7 @@
       }
     }
 
-    /* ============================================================= */
-    /* [통합/개선] 실시간 온라인 등록 선박 자동 감지 및 모니터링 로직 */
-    /* ============================================================= */
+    /* 실시간 온라인 등록 선박 모니터링 */
     function listenToOtherShips() {
       if (!isFirebaseReady) { 
         updateOnlineShipBadges({}); 
@@ -2007,11 +2115,9 @@
         const operatingShipsMap = {};
         const activeShipsArray = [];
 
-        // 1. 현재 온라인(운항 등록) 상태인 선박 추출
         Object.keys(shipsData).forEach(shipKey => {
           const ship = shipsData[shipKey];
           if (!ship || !ship.isOperating) return;
-          // 5분 이상 업데이트가 없는 타임아웃 세션 제외
           if (Date.now() - (ship.updatedAt || 0) > 300000) return;
 
           const name = ship.shipName || shipKey;
@@ -2023,21 +2129,17 @@
           }
         });
 
-        // 2. [자동 감지 및 자동 선택] 사용자 선택이 없을 때 온라인 선박 자동 선택
         const activeShipNames = Object.keys(operatingShipsMap);
         
         if (!currentShipName && activeShipNames.length > 0) {
           const autoDetectedShip = activeShipNames[0];
           shipSelect.value = autoDetectedShip;
           currentShipName = autoDetectedShip;
-          
-          console.log(`[자동 감지] 온라인 선박이 감지되어 [${autoDetectedShip}] (으)로 자동 선택되었습니다.`);
           handleShipSelectChange();
         }
 
         const isCurrentlyInSafeZone = checkIsInSafeZone(currentLat, currentLng);
 
-        // 3. 타 선박 지도 표시 및 충돌 모니터링
         activeShipsArray.forEach((ship, index) => {
           const shipKey = ship.key;
           let displayLat = ship.lat;
@@ -2082,7 +2184,6 @@
           }
         });
 
-        // 4. 오프라인으로 전환된 선박 마커 제거
         Object.keys(otherShipMarkers).forEach(key => {
           if (!currentActiveShips.has(key)) {
             map.removeLayer(otherShipMarkers[key]);
@@ -2090,7 +2191,6 @@
           }
         });
 
-        // 5. 충돌 경고 가이드 반영
         const guide = document.getElementById('status-guide-text');
         if (closestDangerShip && guide) {
           guide.className = "guide-text warning-alert";
@@ -2158,6 +2258,10 @@
           const calculatedHeading = calculateBearing(lastLat, lastLng, latitude, longitude);
           if (calculatedHeading !== 0) currentHeading = calculatedHeading;
         }
+
+        // 방향계 카드 갱신
+        document.getElementById('val-heading').innerText = getHeadingDirectionText(currentHeading);
+        document.getElementById('sub-heading-info').innerText = `방위각: ${currentHeading.toFixed(1)}°`;
 
         if (speed !== null && !isNaN(speed)) {
           currentSpeedKts = speed * MPS_TO_KTS;
@@ -2335,7 +2439,7 @@
             tripLogs = imported;
             saveLogsToLocalStorage();
             renderLogList();
-            alert("운항 기록 데이터가 성황리에 복원되었습니다.");
+            alert("운항 기록 데이터가 성공적으로 복원되었습니다.");
           } else {
             alert("올바르지 않은 백업 파일 형식입니다.");
           }
@@ -2346,8 +2450,9 @@
       reader.readAsText(file);
     }
 
-    // 초기화 호출
+    // 초기 속도계 및 나침반 렌더링
     drawSpeedometer(0, 0);
+    document.getElementById('val-heading').innerText = getHeadingDirectionText(0);
   </script>
 </body>
 </html>
