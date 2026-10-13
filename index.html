@@ -368,21 +368,42 @@
       flex-shrink: 0;
     }
 
+    /* 변경됨: 운항 시작 시 현재시간 아래가 아닌 오른쪽(옆)에 나란히 배치되도록 수정 */
+    .trip-main-layout {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+      align-items: stretch;
+    }
+    .trip-inputs-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
     .active-timer-box {
       display: none;
+      flex: 1;
       background: rgba(0, 242, 254, 0.1);
       border: 2px solid var(--accent-green);
       border-radius: 10px;
       padding: 8px 10px;
       text-align: center;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
       animation: pulse-border 2s infinite;
+    }
+    .active-timer-box.show {
+      display: flex;
     }
     @keyframes pulse-border {
       0%, 100% { border-color: var(--accent-green); box-shadow: 0 0 10px rgba(46, 160, 67, 0.4); }
       50% { border-color: #3fb950; box-shadow: 0 0 18px rgba(46, 160, 67, 0.8); }
     }
     .duration-label {
-      font-size: 1.1rem;
+      font-size: 0.95rem;
       font-weight: 800;
       color: #ffffff;
       margin-bottom: 4px;
@@ -390,7 +411,7 @@
       letter-spacing: 0.5px;
     }
     .timer-val {
-      font-size: 1.6rem;
+      font-size: 1.4rem;
       font-weight: 900;
       color: var(--accent-color);
       font-family: 'Consolas', 'Courier New', monospace;
@@ -398,7 +419,7 @@
       letter-spacing: 1px;
     }
 
-    .trip-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .trip-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
     .input-field { display: flex; flex-direction: column; gap: 4px; }
     .input-field label { font-size: 0.9rem; font-weight: bold; color: var(--accent-color); }
     
@@ -946,18 +967,23 @@
         </div>
 
         <div class="trip-control-box">
-          <div class="active-timer-box" id="active-timer-box">
-            <span class="duration-label">운항 시간</span>
-            <span class="timer-val" id="timer">00시 00분 00초</span>
-          </div>
-          <div class="trip-inputs">
-            <div class="input-field">
-              <label for="start-time-input">출항 시각</label>
-              <input type="text" id="start-time-input" placeholder="00:00:00" readonly>
+          <div class="trip-main-layout">
+            <div class="trip-inputs-wrapper">
+              <div class="trip-inputs">
+                <div class="input-field">
+                  <label for="start-time-input">출항 시각</label>
+                  <input type="text" id="start-time-input" placeholder="00:00:00" readonly>
+                </div>
+                <div class="input-field">
+                  <label for="end-time-input">입항 시각</label>
+                  <input type="text" id="end-time-input" placeholder="00:00:00" readonly>
+                </div>
+              </div>
             </div>
-            <div class="input-field">
-              <label for="end-time-input">입항 시각</label>
-              <input type="text" id="end-time-input" placeholder="00:00:00" readonly>
+            <!-- 운항 시작 시 출항/입항 시각 옆(오른쪽)에 나란히 표시되도록 수정된 타이머 박스 -->
+            <div class="active-timer-box" id="active-timer-box">
+              <span class="duration-label">소요 시간</span>
+              <span class="timer-val" id="timer">00시 00분 00초</span>
             </div>
           </div>
           <div class="btn-group">
@@ -1550,7 +1576,8 @@
       document.getElementById('start-time-input').value = startTimeStr;
       document.getElementById('end-time-input').value = ""; 
 
-      document.getElementById('active-timer-box').style.display = 'block';
+      // 운항 시작 시 옆에 배치된 타이머 박스 표시 (.show 클래스 추가)
+      document.getElementById('active-timer-box').classList.add('show');
       btnStart.disabled = true;
       btnStopSave.disabled = false;
       locationBadge.style.display = 'block';
@@ -1611,11 +1638,10 @@
       tripLogs.unshift(newLog);
       saveLogsToLocalStorage();
 
-      document.getElementById('active-timer-box').style.display = 'none';
+      document.getElementById('active-timer-box').classList.remove('show');
       releaseWakeLock();
     }
 
-    // [보완] 저장 버튼이 안 먹히거나 누락되는 문제 방어 로직 전면 보완
     function stopAndSaveTracking(isAuto = false) {
       if (!tripStartTime) {
         tripStartTime = new Date(Date.now() - 60000);
@@ -1659,7 +1685,6 @@
         alert(`[${currentShipName}] 운항 트립이 종료되고 저장되었습니다.`);
       }
 
-      // [보완] 저장 직후 곧바로 기록 탭으로 이동하여 내역 확인 가능하도록 유도
       switchLeftTab('logs');
     }
 
@@ -2057,448 +2082,387 @@
         layer.bindPopup(`<b>[지정 선착장 (Safe Zone)]</b><br>정박 시 알람 자동 차단`);
       } else {
         const color = '#ff7b72';
-        layer.zoneMeta = { type: 'danger', reason: '지정 구역', label: '경고', color: color };
+        layer.zoneMeta = { type: 'danger', reason: '위험 수역', label: '진입 금지 구역', color: color };
         if (layer.setStyle) layer.setStyle({ color: color, fillColor: color, fillOpacity: 0.35, weight: 2 });
-        layer.bindPopup(`<b>[지정 경고 구역]</b>`);
+        layer.bindPopup(`<b>[위험 수역 경고 구역]</b><br>진입 시 경고 알람 발생`);
       }
-
       drawnItems.addLayer(layer);
-      checkZoneGeofencing(currentLat, currentLng);
     });
+
+    function resetZones() {
+      if (confirm("설정된 모든 구역(선착장 및 위험 수역)을 초기화하시겠습니까?")) {
+        drawnItems.clearLayers();
+      }
+    }
 
     function toggleCalibrationMode() {
       isCalibratedMode = !isCalibratedMode;
       const btn = document.getElementById('btn-calibrate-toggle');
-      btn.classList.toggle('active', isCalibratedMode);
-      btn.innerText = isCalibratedMode ? "보정 모드 중" : "위치 수동보정";
-    }
-
-    map.on('click', function(e) {
-      if (isCalibratedMode) calibratePosition(e.latlng.lat, e.latlng.lng);
-      else addWaypoint([e.latlng.lat, e.latlng.lng]);
-    });
-
-    function addWaypoint(latlng) {
-      waypoints.push(latlng);
-      const markerIcon = L.divIcon({
-        className: '',
-        html: `<div style="background:#00f2fe; color:#000; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:10px; border:2px solid #fff;">${waypoints.length}</div>`,
-        iconSize: [20, 20], iconAnchor: [10, 10]
-      });
-      const marker = L.marker(latlng, { icon: markerIcon }).addTo(map);
-      waypointMarkers.push(marker);
-      renderRoute();
-    }
-
-    function renderRoute() {
-      if (routePolyline) map.removeLayer(routePolyline);
-      if (waypoints.length < 1) {
-        document.getElementById('dist-remaining').innerText = "-- NM";
-        return;
+      if (isCalibratedMode) {
+        btn.classList.add('active');
+        btn.innerText = "보정 모드 ON (마커 드래그)";
+        shipMarker.dragging.enable();
+        alert("마커를 드래그하여 원하는 위치에 놓을 수 있습니다.");
+      } else {
+        btn.classList.remove('active');
+        btn.innerText = "위치 수동보정";
+        shipMarker.dragging.disable();
       }
-
-      const points = [[currentLat, currentLng], ...waypoints];
-      routePolyline = L.polyline(points, { color: '#00f2fe', weight: 4, dashArray: '6, 8' }).addTo(map);
-
-      let remDistKm = 0;
-      for (let i = 0; i < points.length - 1; i++) {
-        remDistKm += getDistanceInKm(points[i][0], points[i][1], points[i+1][0], points[i+1][1]);
-      }
-      const remNm = remDistKm * KM_TO_NM;
-      document.getElementById('dist-remaining').innerText = `${remNm.toFixed(2)} NM (${remDistKm.toFixed(2)} km)`;
-    }
-
-    function calibratePosition(lat, lng) {
-      const heading = calculateBearing(currentLat, currentLng, lat, lng);
-      currentLat = lat; currentLng = lng;
-      if (heading !== 0) {
-        currentHeading = heading;
-        document.getElementById('val-heading').innerText = getHeadingDirectionText(currentHeading);
-        document.getElementById('sub-heading-info').innerText = `방위각: ${currentHeading.toFixed(1)}°`;
-      }
-      shipMarker.setLatLng([currentLat, currentLng]);
-      updateShipPosition(currentLat, currentLng, true);
     }
 
     function resetCalibration() {
-      if (isCalibratedMode) toggleCalibrationMode();
-      currentLat = actualGpsLat; currentLng = actualGpsLng;
+      isCalibratedMode = false;
+      document.getElementById('btn-calibrate-toggle').classList.remove('active');
+      document.getElementById('btn-calibrate-toggle').innerText = "위치 수동보정";
+      shipMarker.dragging.disable();
+      currentLat = actualGpsLat;
+      currentLng = actualGpsLng;
       shipMarker.setLatLng([currentLat, currentLng]);
-      checkZoneGeofencing(currentLat, currentLng);
+      alert("GPS 원본 위치로 복원되었습니다.");
     }
+
+    shipMarker.on('dragend', function(e) {
+      const pos = e.target.getLatLng();
+      currentLat = pos.lat;
+      currentLng = pos.lng;
+    });
 
     function resetTrack() {
       trackPoints = [];
-      totalTrackDistKm = 0;
       if (trackPolyline) trackPolyline.setLatLngs([]);
-      document.getElementById('track-distance').innerText = "0.00 NM (0.00 km)";
+      totalTrackDistKm = 0;
+      const distEl = document.getElementById('track-distance');
+      if (distEl) distEl.innerText = "0.00 NM";
     }
 
     function resetRoute() {
-      waypoints = [];
-      waypointMarkers.forEach(m => map.removeLayer(m));
-      waypointMarkers = [];
-      if (routePolyline) { map.removeLayer(routePolyline); routePolyline = null; }
-      document.getElementById('dist-remaining').innerText = "-- NM";
-    }
-
-    function resetZones() {
-      drawnItems.clearLayers();
-      checkZoneGeofencing(currentLat, currentLng);
-    }
-
-    function broadcastMyLocation() {
-      if (!isFirebaseReady || !isMyShipOperating || !currentShipName) return;
-      const shipRef = firebase.database().ref('ships/' + currentShipName);
-      shipRef.update({
-        shipName: currentShipName,
-        lat: currentLat,
-        lng: currentLng,
-        speedKts: currentSpeedKts || 0,
-        speedKmh: currentSpeedKmh || 0,
-        heading: currentHeading || 0,
-        isOperating: true,
-        updatedAt: Date.now()
-      }).catch(err => console.error("위치 방송 오류:", err));
-      shipRef.onDisconnect().remove();
-    }
-
-    function updateOnlineShipBadges(operatingShipsMap = {}) {
-      const container = document.getElementById('online-ship-badges');
-      if (!container || !shipSelect) return;
-      container.innerHTML = "";
-
-      Array.from(shipSelect.options).forEach(opt => {
-        const name = opt.value;
-        if (!name) return;
-        const isOperatingByOther = operatingShipsMap[name] && name !== currentShipName;
-        opt.disabled = isOperatingByOther;
-      });
-
-      const myBadge = document.createElement('span');
-      myBadge.className = isMyShipOperating ? "ship-badge my-ship" : "ship-badge";
-      let statusText = '출항 대기 중';
-      if (isDrivingStarted) {
-        statusText = '운항 중';
-      }
-      myBadge.innerText = currentShipName ? `⚓ ${currentShipName} (${isMyShipOperating ? statusText : '선택'})` : `선택 안됨`;
-      container.appendChild(myBadge);
-
-      Object.keys(operatingShipsMap).forEach(shipName => {
-        if (shipName !== currentShipName) {
-          const badge = document.createElement('span');
-          badge.className = "ship-badge busy-ship";
-          const otherStatus = operatingShipsMap[shipName].tripStatus || '운항중';
-          badge.innerText = `🚢 ${shipName} (${otherStatus})`;
-          container.appendChild(badge);
-        }
-      });
-    }
-
-    function checkIsInSafeZone(lat, lng) {
-      let inSafe = false;
-      drawnItems.eachLayer(layer => {
-        if (layer.zoneMeta && layer.zoneMeta.type === 'safe') {
-          if (layer instanceof L.Polygon || layer instanceof L.Rectangle) {
-            const latlngs = layer.getLatLngs()[0].map(pt => [pt.lat, pt.lng]);
-            if (isPointInPolygon([lat, lng], latlngs)) inSafe = true;
-          } else if (layer instanceof L.Circle) {
-            const center = layer.getLatLng();
-            const radius = layer.getRadius();
-            if (getDistanceInMeters(lat, lng, center.lat, center.lng) <= radius) inSafe = true;
-          }
-        }
-      });
-      return inSafe;
-    }
-
-    function checkZoneGeofencing(lat, lng) {
-      const guide = document.getElementById('status-guide-text');
-      if (!guide) return;
-
-      let inDanger = false;
-      let inSafe = false;
-
-      drawnItems.eachLayer(layer => {
-        let inside = false;
-        if (layer instanceof L.Polygon || layer instanceof L.Rectangle) {
-          const latlngs = layer.getLatLngs()[0].map(pt => [pt.lat, pt.lng]);
-          if (isPointInPolygon([lat, lng], latlngs)) inside = true;
-        } else if (layer instanceof L.Circle) {
-          const center = layer.getLatLng();
-          const radius = layer.getRadius();
-          if (getDistanceInMeters(lat, lng, center.lat, center.lng) <= radius) inside = true;
-        }
-
-        if (inside) {
-          if (layer.zoneMeta && layer.zoneMeta.type === 'safe') inSafe = true;
-          else inDanger = true;
-        }
-      });
-
-      if (inSafe) {
-        guide.className = "guide-text safe-alert";
-        guide.innerText = "[상태] 지정 선착장(정박 안전 영역) 내에 위치함";
-      } else if (inDanger) {
-        guide.className = "guide-text warning-alert";
-        guide.innerText = "[⚠️ 경고] 위험 지정 구역 진입! 주의 운항하세요!";
-        playAlertSound('danger');
-      } else {
-        guide.className = "guide-text";
-        guide.innerText = "[상태] 진주 남강 수역 실시간 연동 완료 - 안전 운항하세요.";
+      if (confirm("설정된 목적지 항로를 초기화하시겠습니까?")) {
+        waypoints = [];
+        waypointMarkers.forEach(m => map.removeLayer(m));
+        waypointMarkers = [];
+        if (routePolyline) { map.removeLayer(routePolyline); routePolyline = null; }
+        const rem = document.getElementById('dist-remaining');
+        if (rem) rem.innerText = "-- NM";
       }
     }
 
-    function listenToOtherShips() {
-      if (!isFirebaseReady) { 
-        updateOnlineShipBadges({}); 
-        return; 
-      }
-
-      const shipsRef = firebase.database().ref('ships');
-      if (shipsRefListener) shipsRef.off('value', shipsRefListener);
-
-      shipsRefListener = shipsRef.on('value', (snapshot) => {
-        const shipsData = snapshot.val() || {};
-        let closestDangerShip = null;
-        let minDistance = 999999;
-        const currentActiveShips = new Set();
-        const operatingShipsMap = {};
-        const activeShipsArray = [];
-
-        Object.keys(shipsData).forEach(shipKey => {
-          const ship = shipsData[shipKey];
-          if (!ship || !ship.isOperating) return;
-          if (Date.now() - (ship.updatedAt || 0) > 300000) return;
-
-          const name = ship.shipName || shipKey;
-          operatingShipsMap[name] = ship;
-          currentActiveShips.add(shipKey);
-          
-          if (shipKey !== currentShipName) {
-            activeShipsArray.push({ key: shipKey, ...ship });
-          }
-        });
-
-        const activeShipNames = Object.keys(operatingShipsMap);
+    map.on('click', function(e) {
+      if (!isCalibratedMode) {
+        const lat = e.latlng.lat;
+        const lng = e.latlng.lng;
+        waypoints.push([lat, lng]);
         
-        if (!currentShipName && activeShipNames.length > 0) {
-          const autoDetectedShip = activeShipNames[0];
-          shipSelect.value = autoDetectedShip;
-          currentShipName = autoDetectedShip;
-          handleShipSelectChange();
-        }
+        const m = L.marker([lat, lng], {
+          icon: L.divIcon({ className: '', html: '<div style="background:#00f2fe; color:#000; font-weight:bold; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:12px; border:1px solid #fff;">📍</div>', iconSize: [20, 20], iconAnchor: [10, 10] })
+        }).addTo(map).bindPopup(`목적지 ${waypoints.length}`);
+        waypointMarkers.push(m);
 
-        const isCurrentlyInSafeZone = checkIsInSafeZone(currentLat, currentLng);
+        if (routePolyline) map.removeLayer(routePolyline);
+        routePolyline = L.polyline(waypoints, { color: '#00f2fe', weight: 4, dashArray: '6, 6' }).addTo(map);
+        updateRemainingDistance();
+      }
+    });
 
-        activeShipsArray.forEach((ship, index) => {
-          const shipKey = ship.key;
-          let displayLat = ship.lat;
-          let displayLng = ship.lng;
+    function updateRemainingDistance() {
+      if (waypoints.length === 0) {
+        document.getElementById('dist-remaining').innerText = "-- NM";
+        return;
+      }
+      const target = waypoints[waypoints.length - 1];
+      const distKm = getDistanceInKm(currentLat, currentLng, target[0], target[1]);
+      const distNm = distKm * KM_TO_NM;
+      document.getElementById('dist-remaining').innerText = `${distNm.toFixed(2)} NM`;
 
-          const distM = getDistanceInMeters(currentLat, currentLng, ship.lat, ship.lng);
-
-          activeShipsArray.forEach((otherShip, otherIndex) => {
-            if (index > otherIndex) {
-              const distBetween = getDistanceInMeters(ship.lat, ship.lng, otherShip.lat, otherShip.lng);
-              if (distBetween < 10) { 
-                displayLat += (index * 0.00008); 
-                displayLng += (index * 0.00008);
-              }
-            }
-          });
-
-          const isDanger = isMyShipOperating && !isCurrentlyInSafeZone && (distM <= PROXIMITY_WARN_DISTANCE_M);
-
-          if (distM < minDistance) {
-            minDistance = distM;
-            if (isDanger) closestDangerShip = { name: ship.shipName || shipKey, dist: distM };
-          }
-
-          const speedText = (ship.speedKts || 0).toFixed(1);
-          const iconHtml = `
-            <div class="other-ship-icon" title="${ship.shipName || shipKey}">
-              <div class="other-ship-badge ${isDanger ? 'danger' : ''}">
-                <div>${ship.shipName || shipKey}</div>
-                <div style="font-size: 0.8em; color: #ffffff;">${speedText} Kts</div>
-              </div>
-              <div class="other-ship-symbol">🚢</div>
-            </div>
-          `;
-          const customIcon = L.divIcon({ className: '', html: iconHtml, iconSize: [160, 90], iconAnchor: [80, 65] });
-
-          if (otherShipMarkers[shipKey]) {
-            otherShipMarkers[shipKey].setLatLng([displayLat, displayLng]);
-            otherShipMarkers[shipKey].setIcon(customIcon);
-          } else {
-            otherShipMarkers[shipKey] = L.marker([displayLat, displayLng], { icon: customIcon }).addTo(map);
-          }
-        });
-
-        Object.keys(otherShipMarkers).forEach(key => {
-          if (!currentActiveShips.has(key)) {
-            map.removeLayer(otherShipMarkers[key]);
-            delete otherShipMarkers[key];
-          }
-        });
-
-        const guide = document.getElementById('status-guide-text');
-        if (closestDangerShip && guide) {
-          guide.className = "guide-text warning-alert";
-          guide.innerText = `[⚠️ 충돌 경고] 인근 선박 [${closestDangerShip.name}] (${closestDangerShip.dist.toFixed(0)}m 이내) 접근 중!`;
-          playAlertSound('danger');
-        }
-
-        updateOnlineShipBadges(operatingShipsMap);
-      });
+      if (distNm < 0.05 && waypoints.length > 0) {
+        playAlertSound('safe');
+      }
     }
 
-    function updateShipPosition(lat, lng, isManual = false) {
-      if (!isManual) {
+    if (navigator.geolocation) {
+      navigator.geolocation.watchPosition((position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        const speedMps = position.coords.speed || 0;
+        const heading = position.coords.heading;
+
         actualGpsLat = lat;
         actualGpsLng = lng;
-      }
-      currentLat = lat;
-      currentLng = lng;
-
-      document.getElementById('gps-coords').innerText = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-
-      if (shipMarker) {
-        shipMarker.setLatLng([lat, lng]);
-      }
-
-      if (isDrivingStarted) {
-        if (trackPoints.length > 0) {
-          const lastPt = trackPoints[trackPoints.length - 1];
-          const segKm = getDistanceInKm(lastPt[0], lastPt[1], lat, lng);
-          if (segKm > 0.002) {
-            totalTrackDistKm += segKm;
-            trackPoints.push([lat, lng]);
-            if (trackPolyline) trackPolyline.addLatLng([lat, lng]);
-          }
-        } else {
-          trackPoints.push([lat, lng]);
-          if (trackPolyline) trackPolyline.addLatLng([lat, lng]);
-        }
-        const totalNm = totalTrackDistKm * KM_TO_NM;
-        document.getElementById('track-distance').innerText = `${totalNm.toFixed(2)} NM (${totalTrackDistKm.toFixed(2)} km)`;
-      }
-
-      if (mapMode === 0) {
-        map.panTo([lat, lng]);
-        setMapBearingSafe(-currentHeading);
-      } else if (mapMode === 1) {
-        map.panTo([lat, lng]);
-        setMapBearingSafe(0);
-      }
-
-      checkZoneGeofencing(lat, lng);
-      renderRoute();
-      broadcastMyLocation();
-    }
-
-    if ('geolocation' in navigator) {
-      navigator.geolocation.watchPosition((pos) => {
         isGpsActive = true;
-        const { latitude, longitude, speed, heading } = pos.coords;
-        const now = Date.now();
 
-        if (heading !== null && !isNaN(heading)) {
+        if (!isCalibratedMode) {
+          currentLat = lat;
+          currentLng = lng;
+        }
+
+        if (speedMps > 0) {
+          currentSpeedKts = speedMps * MPS_TO_KTS;
+          currentSpeedKmh = currentSpeedKts * 1.852;
+        }
+
+        if (typeof heading === 'number' && !isNaN(heading)) {
           currentHeading = heading;
         } else if (lastLat !== null && lastLng !== null) {
-          const calculatedHeading = calculateBearing(lastLat, lastLng, latitude, longitude);
-          if (calculatedHeading !== 0) currentHeading = calculatedHeading;
+          currentHeading = calculateBearing(lastLat, lastLng, currentLat, currentLng);
         }
 
-        document.getElementById('val-heading').innerText = getHeadingDirectionText(currentHeading);
-        document.getElementById('sub-heading-info').innerText = `방위각: ${currentHeading.toFixed(1)}°`;
-
-        if (speed !== null && !isNaN(speed) && speed > 0) {
-          currentSpeedKts = speed * MPS_TO_KTS;
-          currentSpeedKmh = speed * 3.6;
-        } else if (lastGpsTime && lastLat !== null && lastLng !== null) {
-          const distKm = getDistanceInKm(lastLat, lastLng, latitude, longitude);
-          const timeHours = (now - lastGpsTime) / 3600000;
-          if (timeHours > 0) {
-            currentSpeedKmh = distKm / timeHours;
-            currentSpeedKts = currentSpeedKmh * 0.539957;
-          }
-        }
+        lastLat = currentLat;
+        lastLng = currentLng;
 
         if (isDrivingStarted) {
           tripSpeedList.push(currentSpeedKts);
           if (currentSpeedKts > tripMaxSpeed) tripMaxSpeed = currentSpeedKts;
+
+          const lastPt = trackPoints[trackPoints.length - 1];
+          if (!lastPt || getDistanceInMeters(lastPt[0], lastPt[1], currentLat, currentLng) > 5) {
+            if (lastPt) {
+              totalTrackDistKm += getDistanceInKm(lastPt[0], lastPt[1], currentLat, currentLng);
+            }
+            trackPoints.push([currentLat, currentLng]);
+            if (trackPolyline) trackPolyline.setLatLngs(trackPoints);
+
+            const distNm = totalTrackDistKm * KM_TO_NM;
+            const distEl = document.getElementById('track-distance');
+            if (distEl) distEl.innerText = `${distNm.toFixed(2)} NM`;
+          }
           checkAutoStop(currentSpeedKts);
         }
 
-        lastGpsTime = now;
-        lastLat = latitude;
-        lastLng = longitude;
+        document.getElementById('gps-coords').innerText = `${currentLat.toFixed(5)}, ${currentLng.toFixed(5)}`;
+        shipMarker.setLatLng([currentLat, currentLng]);
+        shipMarker.setIcon(createMyShipIcon(currentShipName, currentSpeedKts));
 
-        if (!isCalibratedMode) {
-          updateShipPosition(latitude, longitude, false);
+        if (isFirstGps) {
+          map.setView([currentLat, currentLng], 16);
+          isFirstGps = false;
         }
+
+        if (mapMode === 0) {
+          map.panTo([currentLat, currentLng], { animate: true });
+          setMapBearingSafe(-currentHeading);
+        } else if (mapMode === 1) {
+          map.panTo([currentLat, currentLng], { animate: true });
+        }
+
+        getHeadingDirectionText(currentHeading);
+        updateRemainingDistance();
+        checkGeofenceAndCollisions();
+        broadcastMyLocation();
+
       }, (err) => {
-        console.warn("GPS 수신 오류 혹은 권한 거부, 진주 중심 좌표로 초기화합니다.");
-        isGpsActive = false;
-        updateShipPosition(35.181668, 128.076250, true);
-      }, { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 });
-    } else {
-      isGpsActive = false;
-      updateShipPosition(35.1880, 128.0838, true);
+        console.warn("GPS 수신 오류 또는 권한 거부:", err.message);
+      }, { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 });
     }
 
-    drawSpeedometer(currentSpeedKts, currentSpeedKmh);
+    function broadcastMyLocation() {
+      if (!isFirebaseReady || !isMyShipOperating || !currentShipName) return;
+      firebase.database().ref('ships/' + currentShipName).update({
+        lat: currentLat,
+        lng: currentLng,
+        speedKts: currentSpeedKts,
+        speedKmh: currentSpeedKmh,
+        updatedAt: Date.now()
+      });
+    }
 
-    // ================= [운항 기록 내역 관리 함수들] =================
+    function listenToOtherShips() {
+      if (!isFirebaseReady) return;
+      const ref = firebase.database().ref('ships');
+      ref.on('value', (snapshot) => {
+        const data = snapshot.val() || {};
+        const onlineBadges = document.getElementById('online-ship-badges');
+        let badgesHtml = '';
+        let activeCount = 0;
+
+        Object.keys(otherShipMarkers).forEach(name => {
+          if (!data[name]) {
+            map.removeLayer(otherShipMarkers[name]);
+            delete otherShipMarkers[name];
+          }
+        });
+
+        Object.keys(data).forEach(name => {
+          const shipInfo = data[name];
+          if (!shipInfo) return;
+          activeCount++;
+
+          const isMe = (name === currentShipName);
+          const badgeClass = isMe ? "ship-badge my-ship" : "ship-badge";
+          badgesHtml += `<span class="${badgeClass}">🚢 ${name} (${shipInfo.tripStatus || '운항 중'})</span>`;
+
+          if (!isMe) {
+            const pos = [shipInfo.lat || 35.1880, shipInfo.lng || 128.0838];
+            const sKts = shipInfo.speedKts || 0;
+            const otherIcon = L.divIcon({
+              className: '',
+              html: `<div class="other-ship-icon"><div class="other-ship-badge">🚢 ${name}<br>${sKts.toFixed(1)} Kts</div><div class="other-ship-symbol">🛥️</div></div>`,
+              iconSize: [140, 70],
+              iconAnchor: [70, 50]
+            });
+
+            if (otherShipMarkers[name]) {
+              otherShipMarkers[name].setLatLng(pos);
+              otherShipMarkers[name].setIcon(otherIcon);
+            } else {
+              const marker = L.marker(pos, { icon: otherIcon }).addTo(map).bindPopup(`<b>다른 선박: ${name}</b><br>상태: ${shipInfo.tripStatus || '운항 중'}`);
+              otherShipMarkers[name] = marker;
+            }
+          }
+        });
+
+        if (activeCount === 0) {
+          badgesHtml = `<span class="ship-badge my-ship">온라인 선박 없음</span>`;
+        }
+        if (onlineBadges) onlineBadges.innerHTML = badgesHtml;
+      });
+    }
+
+    function checkGeofenceAndCollisions() {
+      const currentPoint = [currentLat, currentLng];
+      let inDanger = false;
+      let inSafe = false;
+
+      drawnItems.eachLayer(layer => {
+        if (layer instanceof L.Polygon || layer instanceof L.Rectangle) {
+          const latLngs = layer.getLatLngs()[0];
+          const vs = latLngs.map(pt => [pt.lat, pt.lng]);
+          if (isPointInPolygon(currentPoint, vs)) {
+            if (layer.zoneMeta && layer.zoneMeta.type === 'safe') {
+              inSafe = true;
+            } else {
+              inDanger = true;
+            }
+          }
+        } else if (layer instanceof L.Circle) {
+          const center = layer.getLatLng();
+          const radius = layer.getRadius();
+          if (center.distanceTo(currentPoint) <= radius) {
+            if (layer.zoneMeta && layer.zoneMeta.type === 'safe') {
+              inSafe = true;
+            } else {
+              inDanger = true;
+            }
+          }
+        }
+      });
+
+      let closeToOther = false;
+      Object.keys(otherShipMarkers).forEach(name => {
+        const marker = otherShipMarkers[name];
+        const mPos = marker.getLatLng();
+        const dist = getDistanceInMeters(currentLat, currentLng, mPos.lat, mPos.lng);
+        if (dist <= PROXIMITY_WARN_DISTANCE_M) {
+          closeToOther = true;
+        }
+      });
+
+      const guide = document.getElementById('status-guide-text');
+      if (inDanger || closeToOther) {
+        if (guide) {
+          guide.className = "guide-text warning-alert";
+          guide.innerText = `[⚠️ 경고] ${inDanger ? '위험 수역 진입!' : ''} ${closeToOther ? '인근 선박 근접 경고!' : ''}`;
+        }
+        playAlertSound('danger');
+      } else if (inSafe) {
+        if (guide) {
+          guide.className = "guide-text safe-alert";
+          guide.innerText = `[안전] 지정 선착장(Safe Zone) 정박 중 - 알람 자동 차단됨`;
+        }
+      } else {
+        if (guide && guide.classList.contains('warning-alert')) {
+          guide.className = "guide-text";
+          guide.innerText = "[상태] 진주 남강 수역 실시간 연동 완료 - 안전 운항하세요.";
+        }
+      }
+    }
+
     function renderLogList() {
       const container = document.getElementById('log-list-container');
       if (!container) return;
-      container.innerHTML = "";
 
       if (tripLogs.length === 0) {
-        container.innerHTML = `<div style="text-align:center; color:var(--text-sub); padding:20px; font-size:0.9rem;">저장된 운항 기록이 없습니다.</div>`;
+        container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-sub); font-size:0.9rem;">저장된 운항 기록 내역이 없습니다.</div>`;
         return;
       }
 
       const grouped = {};
       tripLogs.forEach(log => {
-        if (!grouped[log.date]) grouped[log.date] = [];
-        grouped[log.date].push(log);
+        const d = log.date || '기타 일자';
+        if (!grouped[d]) grouped[d] = [];
+        grouped[d].push(log);
       });
 
-      Object.keys(grouped).sort().reverse().forEach(dateStr => {
-        const dateGroupDiv = document.createElement('div');
-        dateGroupDiv.className = 'log-date-group';
-
-        const headerDiv = document.createElement('div');
-        headerDiv.className = 'log-date-header';
-        headerDiv.innerText = `📅 ${dateStr}`;
-        dateGroupDiv.appendChild(headerDiv);
-
-        grouped[dateStr].forEach(log => {
-          const itemDiv = document.createElement('div');
-          itemDiv.className = 'log-item';
-          itemDiv.onclick = () => openDetailModal(log);
-
-          itemDiv.innerHTML = `
-            <div>
-              <div class="log-item-title">🚢 ${log.shipName || '선박'}</div>
-              <div class="log-item-sub">출항 ${log.startTime} ~ 입항 ${log.endTime} (${log.duration})</div>
-            </div>
-            <div style="text-align:right;">
-              <div class="log-item-right-top">${log.distanceNm} NM</div>
-              <div class="log-item-right-bottom">최고 ${log.maxSpeedKts} Kts</div>
+      let html = '';
+      Object.keys(grouped).sort().reverse().forEach(dateKey => {
+        html += `
+          <div class="log-date-group">
+            <div class="log-date-header">📅 ${dateKey}</div>
+        `;
+        grouped[dateKey].forEach(log => {
+          html += `
+            <div class="log-item" onclick="openDetailModal(${log.id})">
+              <div>
+                <div class="log-item-title">🚢 ${log.shipName} (${log.startTime} ~ ${log.endTime})</div>
+                <div class="log-item-sub">소요: ${log.duration} | 거리: ${log.distanceNm} NM (${log.distanceKm} km)</div>
+              </div>
+              <div style="text-align:right;">
+                <div class="log-item-right-top">${log.avgSpeedKts} Kts</div>
+                <div class="log-item-right-bottom">최고 ${log.maxSpeedKts} Kts</div>
+              </div>
             </div>
           `;
-          dateGroupDiv.appendChild(itemDiv);
         });
-
-        container.appendChild(dateGroupDiv);
+        html += `</div>`;
       });
+      container.innerHTML = html;
     }
 
-    function openDetailModal(log) {
+    function filterLogsByDate() {
+      const val = document.getElementById('search-date-input').value;
+      if (!val) {
+        renderLogList();
+        return;
+      }
+      const filtered = tripLogs.filter(l => l.date === val);
+      const container = document.getElementById('log-list-container');
+      if (filtered.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-sub); font-size:0.9rem;">해당 일자에 일치하는 운항 기록이 없습니다.</div>`;
+        return;
+      }
+
+      let html = `
+        <div class="log-date-group">
+          <div class="log-date-header">📅 검색 결과 (${val})</div>
+      `;
+      filtered.forEach(log => {
+        html += `
+          <div class="log-item" onclick="openDetailModal(${log.id})">
+            <div>
+              <div class="log-item-title">🚢 ${log.shipName} (${log.startTime} ~ ${log.endTime})</div>
+              <div class="log-item-sub">소요: ${log.duration} | 거리: ${log.distanceNm} NM (${log.distanceKm} km)</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="log-item-right-top">${log.avgSpeedKts} Kts</div>
+              <div class="log-item-right-bottom">최고 ${log.maxSpeedKts} Kts</div>
+            </div>
+          </div>
+        `;
+      });
+      html += `</div>`;
+      container.innerHTML = html;
+    }
+
+    function resetLogFilter() {
+      document.getElementById('search-date-input').value = "";
+      renderLogList();
+    }
+
+    let currentOpenLogId = null;
+
+    function openDetailModal(id) {
+      const log = tripLogs.find(l => l.id === id);
+      if (!log) return;
+      currentOpenLogId = id;
+
       document.getElementById('modal-title').innerText = `[${log.shipName}] 운항 상세 정보`;
       document.getElementById('m-date').innerText = log.date;
       document.getElementById('m-duration').innerText = log.duration;
@@ -2508,23 +2472,24 @@
       document.getElementById('m-avg-speed').innerText = `${log.avgSpeedKts} Kts`;
       document.getElementById('m-max-speed').innerText = `${log.maxSpeedKts} Kts`;
 
-      document.getElementById('modal-delete-btn').onclick = () => deleteLog(log.id);
+      document.getElementById('modal-delete-btn').onclick = function() {
+        deleteLog(log.id);
+      };
 
-      const modalOverlay = document.getElementById('detail-modal');
-      modalOverlay.style.display = 'flex';
+      const modal = document.getElementById('detail-modal');
+      modal.style.display = 'flex';
 
       setTimeout(() => {
         if (!modalMap) {
-          modalMap = L.map('modal-map', { zoomControl: false, attributionControl: false }).setView([35.1880, 128.0838], 14);
-          L.tileLayer('https://xdworld.vworld.kr/2d/Base/service/{z}/{x}/{y}.png', { maxZoom: 18, minZoom: 10 }).addTo(modalMap);
+          modalMap = L.map('modal-map', { zoomControl: false, attributionControl: false }).setView([35.1880, 128.0838], 15);
+          L.tileLayer('https://xdworld.vworld.kr/2d/Base/service/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(modalMap);
         } else {
           modalMap.invalidateSize();
         }
 
         if (modalPolyline) modalMap.removeLayer(modalPolyline);
-
         if (log.path && log.path.length > 0) {
-          modalPolyline = L.polyline(log.path, { color: '#00f2fe', weight: 4 }).addTo(modalMap);
+          modalPolyline = L.polyline(log.path, { color: '#ff4d4d', weight: 4 }).addTo(modalMap);
           modalMap.fitBounds(modalPolyline.getBounds(), { padding: [20, 20] });
         }
       }, 150);
@@ -2532,10 +2497,11 @@
 
     function closeModal() {
       document.getElementById('detail-modal').style.display = 'none';
+      currentOpenLogId = null;
     }
 
     function deleteLog(id) {
-      if (confirm("정말 이 운항 기록을 삭제하시겠습니까?")) {
+      if (confirm("이 운항 기록을 삭제하시겠습니까?")) {
         tripLogs = tripLogs.filter(l => l.id !== id);
         saveLogsToLocalStorage();
         closeModal();
@@ -2548,28 +2514,28 @@
         alert("내보낼 운항 기록이 없습니다.");
         return;
       }
-      let csv = '\uFEFF선박명,운항일자,출항시각,입항시각,소요시간,운항거리(NM),평균속도(Kts),최고속도(Kts)\n';
+      let csv = '\uFEFF고유ID,선박명,운항일자,출항시각,입항시각,소요시간,거리(NM),거리(KM),평균속도(Kts),최고속도(Kts)\n';
       tripLogs.forEach(l => {
-        csv += `"${l.shipName}","${l.date}","${l.startTime}","${l.endTime}","${l.duration}","${l.distanceNm}","${l.avgSpeedKts}","${l.maxSpeedKts}"\n`;
+        csv += `${l.id},${l.shipName},${l.date},${l.startTime},${l.endTime},${l.duration},${l.distanceNm},${l.distanceKm},${l.avgSpeedKts},${l.maxSpeedKts}\n`;
       });
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `남강_운항기록_${new Date().toISOString().split('T')[0]}.csv`;
+      a.download = `남강선박_운항기록_${new Date().toISOString().split('T')[0]}.csv`;
       a.click();
       URL.revokeObjectURL(url);
     }
 
     function exportLogsBackup() {
       if (tripLogs.length === 0) {
-        alert("백업할 기록이 없습니다.");
+        alert("백업할 운항 기록이 없습니다.");
         return;
       }
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tripLogs, null, 2));
       const a = document.createElement('a');
       a.href = dataStr;
-      a.download = `ship_logs_backup_${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `남강선박_백업_${new Date().toISOString().split('T')[0]}.json`;
       a.click();
     }
 
@@ -2577,75 +2543,27 @@
       document.getElementById('log-backup-input').click();
     }
 
-    function importLogsBackup(event) {
-      const file = event.target.files[0];
+    function importLogsBackup(e) {
+      const file = e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = function(e) {
+      reader.onload = function(evt) {
         try {
-          const imported = JSON.parse(e.target.result);
+          const imported = JSON.parse(evt.target.result);
           if (Array.isArray(imported)) {
             tripLogs = imported;
             saveLogsToLocalStorage();
             renderLogList();
-            alert("운항 기록 복원이 완료되었습니다.");
+            alert("운항 기록 백업 파일이 성공적으로 복원되었습니다.");
           } else {
             alert("잘못된 백업 파일 형식입니다.");
           }
         } catch (err) {
-          alert("JSON 파싱 중 오류가 발생했습니다.");
+          alert("JSON 파싱 오류가 발생했습니다.");
         }
       };
       reader.readAsText(file);
-      event.target.value = '';
-    }
-
-    function filterLogsByDate() {
-      const dateVal = document.getElementById('search-date-input').value;
-      if (!dateVal) {
-        alert("검색할 날짜를 선택해주세요.");
-        return;
-      }
-      const filtered = tripLogs.filter(l => l.date === dateVal);
-      renderFilteredLogList(filtered, `검색일: ${dateVal}`);
-    }
-
-    function resetLogFilter() {
-      document.getElementById('search-date-input').value = '';
-      renderLogList();
-    }
-
-    function renderFilteredLogList(list, titleMsg) {
-      const container = document.getElementById('log-list-container');
-      if (!container) return;
-      container.innerHTML = `<div style="font-size:0.85rem; color:var(--accent-color); margin-bottom:6px;">🔍 ${titleMsg} (총 ${list.length}건)</div>`;
-
-      if (list.length === 0) {
-        container.innerHTML += `<div style="text-align:center; color:var(--text-sub); padding:15px; font-size:0.9rem;">해당 날짜의 기록이 없습니다.</div>`;
-        return;
-      }
-
-      const dateGroupDiv = document.createElement('div');
-      dateGroupDiv.className = 'log-date-group';
-
-      list.forEach(log => {
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'log-item';
-        itemDiv.onclick = () => openDetailModal(log);
-
-        itemDiv.innerHTML = `
-          <div>
-            <div class="log-item-title">🚢 ${log.shipName || '선박'} (${log.date})</div>
-            <div class="log-item-sub">출항 ${log.startTime} ~ 입항 ${log.endTime} (${log.duration})</div>
-          </div>
-          <div style="text-align:right;">
-            <div class="log-item-right-top">${log.distanceNm} NM</div>
-            <div class="log-item-right-bottom">최고 ${log.maxSpeedKts} Kts</div>
-          </div>
-        `;
-        dateGroupDiv.appendChild(itemDiv);
-      });
-      container.appendChild(dateGroupDiv);
+      e.target.value = '';
     }
   </script>
 </body>
