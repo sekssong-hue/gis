@@ -1191,6 +1191,8 @@
     }
 
     let baseSpeedKts = 8.5; 
+    let currentSpeedKts = 8.5;
+    let currentSpeedKmh = 15.7; // ⬅️ 속도 변수 정상 선언 추가됨
     let isGpsActive = false;
 
     function simulateLiveSpeedFluctuation() {
@@ -1202,7 +1204,7 @@
       
       const speedDisplay = document.getElementById('dual-speed-display');
       if (speedDisplay) {
-        speedDisplay.innerText = `${currentSpeedKmh.toFixed(1)} km/h`;
+        speedDisplay.innerText = `${currentSpeedKmh.toFixed(1)} km/h`; // ⬅️ 우측 패널 현재 속도 정상 출력
       }
 
       drawSpeedometer(currentSpeedKts, currentSpeedKmh);
@@ -1982,7 +1984,6 @@
     let totalTrackDistKm = 0;
 
     let waypoints = [], waypointMarkers = [], routePolyline = null;
-    let currentSpeedKts = 8.5, currentSpeedKmh = 15.7;
 
     let tripLogs = [];
     try { tripLogs = JSON.parse(localStorage.getItem('ship_trip_logs') || '[]'); } catch (e) { tripLogs = []; }
@@ -2561,3 +2562,4 @@
   </script>
 </body>
 </html>
+```[cite: 1, 2]
