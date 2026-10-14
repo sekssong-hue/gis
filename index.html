@@ -329,26 +329,37 @@
       height: 100% !important;
     }
 
-    .clock-box {
+    /* 수정됨: 현재 날짜/시간 칸과 운항 중 타이머가 나란히 배치될 수 있도록 레이아웃 구조 변경 */
+    .clock-and-timer-layout {
+      display: flex;
+      gap: 10px;
       width: 100%;
+      align-items: stretch;
+      margin-bottom: 10px;
+      flex-shrink: 0;
+    }
+
+    .clock-box {
+      flex: 1;
       background: rgba(0, 242, 254, 0.08);
       border: 1.5px solid var(--accent-color);
       border-radius: 12px;
       padding: 8px 10px;
-      margin-bottom: 10px;
       text-align: center;
       box-shadow: 0 0 12px rgba(0, 242, 254, 0.15);
-      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
     .clock-date {
-      font-size: clamp(0.95rem, 1.8vw, 1.2rem);
+      font-size: clamp(0.9rem, 1.6vw, 1.1rem);
       font-weight: 800;
       color: #ffffff;
       margin-bottom: 2px;
       letter-spacing: 0.5px;
     }
     .clock-time {
-      font-size: clamp(1.2rem, 2.5vw, 1.7rem);
+      font-size: clamp(1.1rem, 2.2vw, 1.5rem);
       font-weight: 900;
       color: var(--accent-color);
       font-family: 'Consolas', 'Courier New', monospace;
@@ -368,7 +379,6 @@
       flex-shrink: 0;
     }
 
-    /* 변경됨: 운항 시작 시 현재시간 아래가 아닌 오른쪽(옆)에 나란히 배치되도록 수정 */
     .trip-main-layout {
       display: flex;
       gap: 10px;
@@ -403,15 +413,15 @@
       50% { border-color: #3fb950; box-shadow: 0 0 18px rgba(46, 160, 67, 0.8); }
     }
     .duration-label {
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       font-weight: 800;
       color: #ffffff;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
       display: block;
       letter-spacing: 0.5px;
     }
     .timer-val {
-      font-size: 1.4rem;
+      font-size: clamp(1.1rem, 2.2vw, 1.5rem);
       font-weight: 900;
       color: var(--accent-color);
       font-family: 'Consolas', 'Courier New', monospace;
@@ -961,9 +971,16 @@
           </div>
         </div>
 
-        <div class="clock-box">
-          <div class="clock-date" id="live-date">2026년 00월 00일 (월)</div>
-          <div class="clock-time" id="live-time">00시 00분 00초</div>
+        <!-- 변경됨: 현재 날짜/시간 칸과 운항 중 소요 시간 타이머 박스가 나란히 배치되도록 감싸는 레이아웃 -->
+        <div class="clock-and-timer-layout">
+          <div class="clock-box">
+            <div class="clock-date" id="live-date">2026년 00월 00일 (월)</div>
+            <div class="clock-time" id="live-time">00시 00분 00초</div>
+          </div>
+          <div class="active-timer-box" id="active-timer-box">
+            <span class="duration-label">소요 시간</span>
+            <span class="timer-val" id="timer">00시 00분 00초</span>
+          </div>
         </div>
 
         <div class="trip-control-box">
@@ -979,11 +996,6 @@
                   <input type="text" id="end-time-input" placeholder="00:00:00" readonly>
                 </div>
               </div>
-            </div>
-            <!-- 운항 시작 시 출항/입항 시각 옆(오른쪽)에 나란히 표시되도록 수정된 타이머 박스 -->
-            <div class="active-timer-box" id="active-timer-box">
-              <span class="duration-label">소요 시간</span>
-              <span class="timer-val" id="timer">00시 00분 00초</span>
             </div>
           </div>
           <div class="btn-group">
@@ -1576,7 +1588,6 @@
       document.getElementById('start-time-input').value = startTimeStr;
       document.getElementById('end-time-input').value = ""; 
 
-      // 운항 시작 시 옆에 배치된 타이머 박스 표시 (.show 클래스 추가)
       document.getElementById('active-timer-box').classList.add('show');
       btnStart.disabled = true;
       btnStopSave.disabled = false;
