@@ -329,7 +329,6 @@
       height: 100% !important;
     }
 
-    /* 수정됨: 현재 날짜/시간 칸과 운항 중 타이머가 나란히 배치될 수 있도록 레이아웃 구조 변경 */
     .clock-and-timer-layout {
       display: flex;
       gap: 10px;
@@ -971,7 +970,6 @@
           </div>
         </div>
 
-        <!-- 변경됨: 현재 날짜/시간 칸과 운항 중 소요 시간 타이머 박스가 나란히 배치되도록 감싸는 레이아웃 -->
         <div class="clock-and-timer-layout">
           <div class="clock-box">
             <div class="clock-date" id="live-date">2026년 00월 00일 (월)</div>
@@ -1056,7 +1054,7 @@
       <div class="grid-info">
         <div class="info-card">
           <div class="info-label">현재 속도</div>
-          <div class="info-value highlight" id="dual-speed-display">0.0 Kts (0.0 km/h)</div>
+          <div class="info-value highlight" id="dual-speed-display">0.0 km/h</div>
         </div>
         <div class="info-card">
           <div class="info-label">GPS 좌표</div>
@@ -1064,11 +1062,11 @@
         </div>
         <div class="info-card">
           <div class="info-label">이동 거리</div>
-          <div class="info-value track" id="track-distance">0.00 NM</div>
+          <div class="info-value track" id="track-distance">0.00 km</div>
         </div>
         <div class="info-card">
           <div class="info-label">목적지 잔여거리</div>
-          <div class="info-value" id="dist-remaining">-- NM</div>
+          <div class="info-value" id="dist-remaining">-- km</div>
         </div>
       </div>
 
@@ -1149,9 +1147,6 @@
     let rawHumidity = 65;
     let currentWeatherText = "맑음";
 
-    /* ============================================================= */
-    /* [진주시 실시간 기상 연동 및 실시간 미세 변동 모듈] */
-    /* ============================================================= */
     async function fetchJinjuWeather() {
       try {
         const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=35.1928&longitude=128.0845&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m&timezone=Asia%2FSeoul');
@@ -1195,9 +1190,6 @@
       document.getElementById('sub-water-temp').innerText = `수온: ${waterTemp} ℃`;
     }
 
-    /* ============================================================= */
-    /* [실시간 속도 미세 변동 시뮬레이션 및 UI 동기화] */
-    /* ============================================================= */
     let baseSpeedKts = 8.5; 
     let isGpsActive = false;
 
@@ -1210,7 +1202,7 @@
       
       const speedDisplay = document.getElementById('dual-speed-display');
       if (speedDisplay) {
-        speedDisplay.innerText = `${currentSpeedKts.toFixed(1)} Kts (${currentSpeedKmh.toFixed(1)} km/h)`;
+        speedDisplay.innerText = `${currentSpeedKmh.toFixed(1)} km/h`;
       }
 
       drawSpeedometer(currentSpeedKts, currentSpeedKmh);
@@ -1226,9 +1218,6 @@
       setInterval(simulateLiveSpeedFluctuation, 1500); 
     });
 
-    /* ============================================================= */
-    /* [아날로그 & 디지털 혼합형 속도계 렌더링 함수] */
-    /* ============================================================= */
     function drawSpeedometer(speedKts = 0, speedKmh = 0) {
       const canvas = document.getElementById('speedometer');
       if (!canvas) return;
@@ -1485,7 +1474,6 @@
       }
     }
 
-    /* 통합 Firebase 설정 */
     const firebaseConfig = {
       apiKey: "AIzaSyCDtASlxPja0v95rc8k9A1O0tBzN0YdWWE",
       authDomain: "gis919-f55a2.firebaseapp.com",
@@ -1630,8 +1618,6 @@
         avgSpeed = sum / tripSpeedList.length;
       }
 
-      const totalDistNm = totalTrackDistKm * KM_TO_NM;
-
       const newLog = {
         id: Date.now(),
         shipName: currentShipName,
@@ -1639,7 +1625,6 @@
         startTime: document.getElementById('start-time-input').value,
         endTime: endTimeStr,
         duration: durationStr,
-        distanceNm: totalDistNm.toFixed(2),
         distanceKm: totalTrackDistKm.toFixed(2),
         avgSpeedKts: avgSpeed.toFixed(1),
         maxSpeedKts: tripMaxSpeed.toFixed(1),
@@ -1946,7 +1931,6 @@
     }
     setInterval(updateClock, 1000);
 
-    const KM_TO_NM = 0.539957;
     const MPS_TO_KTS = 1.943844;
 
     function getDistanceInKm(lat1, lon1, lat2, lon2) {
@@ -2143,7 +2127,7 @@
       if (trackPolyline) trackPolyline.setLatLngs([]);
       totalTrackDistKm = 0;
       const distEl = document.getElementById('track-distance');
-      if (distEl) distEl.innerText = "0.00 NM";
+      if (distEl) distEl.innerText = "0.00 km";
     }
 
     function resetRoute() {
@@ -2153,7 +2137,7 @@
         waypointMarkers = [];
         if (routePolyline) { map.removeLayer(routePolyline); routePolyline = null; }
         const rem = document.getElementById('dist-remaining');
-        if (rem) rem.innerText = "-- NM";
+        if (rem) rem.innerText = "-- km";
       }
     }
 
@@ -2176,15 +2160,14 @@
 
     function updateRemainingDistance() {
       if (waypoints.length === 0) {
-        document.getElementById('dist-remaining').innerText = "-- NM";
+        document.getElementById('dist-remaining').innerText = "-- km";
         return;
       }
       const target = waypoints[waypoints.length - 1];
       const distKm = getDistanceInKm(currentLat, currentLng, target[0], target[1]);
-      const distNm = distKm * KM_TO_NM;
-      document.getElementById('dist-remaining').innerText = `${distNm.toFixed(2)} NM`;
+      document.getElementById('dist-remaining').innerText = `${distKm.toFixed(2)} km`;
 
-      if (distNm < 0.05 && waypoints.length > 0) {
+      if (distKm < 0.05 && waypoints.length > 0) {
         playAlertSound('safe');
       }
     }
@@ -2231,9 +2214,8 @@
             trackPoints.push([currentLat, currentLng]);
             if (trackPolyline) trackPolyline.setLatLngs(trackPoints);
 
-            const distNm = totalTrackDistKm * KM_TO_NM;
             const distEl = document.getElementById('track-distance');
-            if (distEl) distEl.innerText = `${distNm.toFixed(2)} NM`;
+            if (distEl) distEl.innerText = `${totalTrackDistKm.toFixed(2)} km`;
           }
           checkAutoStop(currentSpeedKts);
         }
@@ -2413,7 +2395,7 @@
             <div class="log-item" onclick="openDetailModal(${log.id})">
               <div>
                 <div class="log-item-title">🚢 ${log.shipName} (${log.startTime} ~ ${log.endTime})</div>
-                <div class="log-item-sub">소요: ${log.duration} | 거리: ${log.distanceNm} NM (${log.distanceKm} km)</div>
+                <div class="log-item-sub">소요: ${log.duration} | 거리: ${log.distanceKm} km</div>
               </div>
               <div style="text-align:right;">
                 <div class="log-item-right-top">${log.avgSpeedKts} Kts</div>
@@ -2449,7 +2431,7 @@
           <div class="log-item" onclick="openDetailModal(${log.id})">
             <div>
               <div class="log-item-title">🚢 ${log.shipName} (${log.startTime} ~ ${log.endTime})</div>
-              <div class="log-item-sub">소요: ${log.duration} | 거리: ${log.distanceNm} NM (${log.distanceKm} km)</div>
+              <div class="log-item-sub">소요: ${log.duration} | 거리: ${log.distanceKm} km</div>
             </div>
             <div style="text-align:right;">
               <div class="log-item-right-top">${log.avgSpeedKts} Kts</div>
@@ -2479,7 +2461,7 @@
       document.getElementById('m-duration').innerText = log.duration;
       document.getElementById('m-start-time').innerText = log.startTime;
       document.getElementById('m-end-time').innerText = log.endTime;
-      document.getElementById('m-distance').innerText = `${log.distanceNm} NM (${log.distanceKm} km)`;
+      document.getElementById('m-distance').innerText = `${log.distanceKm} km`;
       document.getElementById('m-avg-speed').innerText = `${log.avgSpeedKts} Kts`;
       document.getElementById('m-max-speed').innerText = `${log.maxSpeedKts} Kts`;
 
@@ -2525,9 +2507,9 @@
         alert("내보낼 운항 기록이 없습니다.");
         return;
       }
-      let csv = '\uFEFF고유ID,선박명,운항일자,출항시각,입항시각,소요시간,거리(NM),거리(KM),평균속도(Kts),최고속도(Kts)\n';
+      let csv = '\uFEFF고유ID,선박명,운항일자,출항시각,입항시각,소요시간,거리(KM),평균속도(Kts),최고속도(Kts)\n';
       tripLogs.forEach(l => {
-        csv += `${l.id},${l.shipName},${l.date},${l.startTime},${l.endTime},${l.duration},${l.distanceNm},${l.distanceKm},${l.avgSpeedKts},${l.maxSpeedKts}\n`;
+        csv += `${l.id},${l.shipName},${l.date},${l.startTime},${l.endTime},${l.duration},${l.distanceKm},${l.avgSpeedKts},${l.maxSpeedKts}\n`;
       });
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
