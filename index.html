@@ -674,6 +674,8 @@
     .info-value { font-size: 1.25rem; font-weight: 900; color: #ffffff; font-family: monospace; letter-spacing: -0.5px; }
     .info-value.highlight { color: var(--accent-color); }
     .info-value.track { color: #ff7b72; }
+    /* GPS 좌표 글씨 크기 확대 스타일 */
+    .info-value.gps-coords-val { font-size: 1.45rem; color: var(--accent-color); }
 
     #map {
       position: relative;
@@ -1058,7 +1060,8 @@
         </div>
         <div class="info-card">
           <div class="info-label">GPS 좌표</div>
-          <div class="info-value" id="gps-coords" style="font-size: 1.05rem;">GPS 수신 중...</div>
+          <!-- GPS 좌표 수치 크기를 더 키우고 강조 색상 적용 -->
+          <div class="info-value gps-coords-val" id="gps-coords">GPS 수신 중...</div>
         </div>
         <div class="info-card">
           <div class="info-label">이동 거리</div>
@@ -2161,7 +2164,6 @@
         let speedMps = position.coords.speed;
         const heading = position.coords.heading;
 
-        // 브라우저에서 속도(speed)를 제공하지 않거나 0인 경우 위치/시간 간격으로 직접 속도 계산
         if ((speedMps === null || speedMps === undefined || speedMps === 0) && lastLat !== null && lastGpsTime !== null) {
           const distMeters = getDistanceInMeters(lastLat, lastLng, lat, lng);
           const timeDiffSec = (currentTime - lastGpsTime) / 1000;
@@ -2197,7 +2199,6 @@
           currentHeading = calculateBearing(lastLat, lastLng, currentLat, currentLng);
         }
 
-        // 실시간 속도 UI 및 아날로그 계기판 반영
         const speedDisplay = document.getElementById('dual-speed-display');
         if (speedDisplay) {
           speedDisplay.innerText = `${currentSpeedKmh.toFixed(1)} km/h`;
@@ -2563,3 +2564,4 @@
   </script>
 </body>
 </html>
+```[ssong]
