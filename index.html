@@ -1190,34 +1190,14 @@
       document.getElementById('sub-water-temp').innerText = `수온: ${waterTemp} ℃`;
     }
 
-    let baseSpeedKts = 8.5; 
-    let currentSpeedKts = 8.5;
-    let currentSpeedKmh = 15.7; // ⬅️ 속도 변수 정상 선언 추가됨
+    let currentSpeedKts = 0;
+    let currentSpeedKmh = 0;
     let isGpsActive = false;
-
-    function simulateLiveSpeedFluctuation() {
-      if (!isGpsActive) {
-        const variation = (Math.random() * 0.8 - 0.4);
-        currentSpeedKts = Math.max(0.0, baseSpeedKts + variation);
-        currentSpeedKmh = currentSpeedKts * 1.852;
-      }
-      
-      const speedDisplay = document.getElementById('dual-speed-display');
-      if (speedDisplay) {
-        speedDisplay.innerText = `${currentSpeedKmh.toFixed(1)} km/h`; // ⬅️ 우측 패널 현재 속도 정상 출력
-      }
-
-      drawSpeedometer(currentSpeedKts, currentSpeedKmh);
-      if (typeof shipMarker !== 'undefined' && shipMarker) {
-        shipMarker.setIcon(createMyShipIcon(currentShipName, currentSpeedKts));
-      }
-    }
 
     window.addEventListener('DOMContentLoaded', () => {
       fetchJinjuWeather();
       setInterval(fetchJinjuWeather, 60000); 
       setInterval(updateWeatherUI, 2000);    
-      setInterval(simulateLiveSpeedFluctuation, 1500); 
     });
 
     function drawSpeedometer(speedKts = 0, speedKmh = 0) {
@@ -2177,8 +2157,22 @@
       navigator.geolocation.watchPosition((position) => {
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
-        const speedMps = position.coords.speed || 0;
+        const currentTime = position.timestamp || Date.now();
+        let speedMps = position.coords.speed;
         const heading = position.coords.heading;
+
+        // 브라우저에서 속도(speed)를 제공하지 않거나 0인 경우 위치/시간 간격으로 직접 속도 계산
+        if ((speedMps === null || speedMps === undefined || speedMps === 0) && lastLat !== null && lastGpsTime !== null) {
+          const distMeters = getDistanceInMeters(lastLat, lastLng, lat, lng);
+          const timeDiffSec = (currentTime - lastGpsTime) / 1000;
+          if (timeDiffSec > 0) {
+            speedMps = distMeters / timeDiffSec;
+          }
+        }
+
+        lastLat = lat;
+        lastLng = lng;
+        lastGpsTime = currentTime;
 
         actualGpsLat = lat;
         actualGpsLng = lng;
@@ -2189,9 +2183,12 @@
           currentLng = lng;
         }
 
-        if (speedMps > 0) {
+        if (speedMps !== null && speedMps !== undefined && !isNaN(speedMps)) {
           currentSpeedKts = speedMps * MPS_TO_KTS;
           currentSpeedKmh = currentSpeedKts * 1.852;
+        } else {
+          currentSpeedKts = 0;
+          currentSpeedKmh = 0;
         }
 
         if (typeof heading === 'number' && !isNaN(heading)) {
@@ -2200,8 +2197,12 @@
           currentHeading = calculateBearing(lastLat, lastLng, currentLat, currentLng);
         }
 
-        lastLat = currentLat;
-        lastLng = currentLng;
+        // 실시간 속도 UI 및 아날로그 계기판 반영
+        const speedDisplay = document.getElementById('dual-speed-display');
+        if (speedDisplay) {
+          speedDisplay.innerText = `${currentSpeedKmh.toFixed(1)} km/h`;
+        }
+        drawSpeedometer(currentSpeedKts, currentSpeedKmh);
 
         if (isDrivingStarted) {
           tripSpeedList.push(currentSpeedKts);
@@ -2562,4 +2563,3 @@
   </script>
 </body>
 </html>
-```[cite: 1, 2]
