@@ -753,6 +753,7 @@
     .modal-close-btn { background: #30363d; color: #fff; }
     .modal-delete-btn { background: var(--accent-red); color: #fff; }
 
+    /* [내 위치 마커 확대 스타일 수정] */
     .my-ship-icon-box, .other-ship-icon {
       display: flex;
       flex-direction: column;
@@ -769,15 +770,15 @@
     .my-ship-badge, .other-ship-badge {
       background: rgba(13, 17, 23, 0.95);
       color: #00f2fe;
-      border: 2px solid #00f2fe;
-      padding: 4px 8px;
-      border-radius: 8px;
-      font-size: 13px; 
+      border: 2.5px solid #00f2fe;
+      padding: 6px 12px;
+      border-radius: 10px;
+      font-size: 16px; /* 글자 크기 확대 */
       font-weight: 900;
-      margin-bottom: 2px;
-      box-shadow: 0 0 10px rgba(0, 242, 254, 0.8);
+      margin-bottom: 4px;
+      box-shadow: 0 0 14px rgba(0, 242, 254, 0.9);
       text-align: center;
-      line-height: 1.2;
+      line-height: 1.3;
     }
     .other-ship-badge {
       color: #ffab70;
@@ -789,13 +790,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(13, 17, 23, 0.85);
-      border: 2px solid #00f2fe;
+      background: rgba(13, 17, 23, 0.9);
+      border: 2.5px solid #00f2fe;
       border-radius: 50%;
-      box-shadow: 0 0 10px rgba(0, 242, 254, 0.8);
-      width: 34px;
-      height: 34px;
-      font-size: 18px;
+      box-shadow: 0 0 14px rgba(0, 242, 254, 0.9);
+      width: 48px;  /* 아이콘 크기 확대 */
+      height: 48px; /* 아이콘 크기 확대 */
+      font-size: 26px; /* 이모지 크기 확대 */
     }
     .other-ship-symbol { font-size: 22px; }
 
@@ -1994,12 +1995,13 @@
         <div class="my-ship-icon-box">
           <div class="my-ship-badge">
             <div>${displayName}</div>
-            <div style="font-size: 0.8em; color: #ffffff;">속도: ${speedText} Kts</div>
+            <div style="font-size: 0.85em; color: #ffffff;">속도: ${speedText} Kts</div>
           </div>
           <div class="cruise-ship-icon">⚓</div>
         </div>
       `;
-      return L.divIcon({ className: '', html: iconHtml, iconSize: [160, 90], iconAnchor: [80, 65] });
+      // [수정] 마커 아이콘 크기와 앵커를 확대된 크기에 맞춰 조정
+      return L.divIcon({ className: '', html: iconHtml, iconSize: [200, 110], iconAnchor: [100, 75] });
     }
 
     const shipMarker = L.marker([currentLat, currentLng], {
@@ -2161,7 +2163,6 @@
         let speedMps = position.coords.speed;
         const heading = position.coords.heading;
 
-        // 브라우저에서 속도(speed)를 제공하지 않거나 0인 경우 위치/시간 간격으로 직접 속도 계산
         if ((speedMps === null || speedMps === undefined || speedMps === 0) && lastLat !== null && lastGpsTime !== null) {
           const distMeters = getDistanceInMeters(lastLat, lastLng, lat, lng);
           const timeDiffSec = (currentTime - lastGpsTime) / 1000;
@@ -2197,7 +2198,6 @@
           currentHeading = calculateBearing(lastLat, lastLng, currentLat, currentLng);
         }
 
-        // 실시간 속도 UI 및 아날로그 계기판 반영
         const speedDisplay = document.getElementById('dual-speed-display');
         if (speedDisplay) {
           speedDisplay.innerText = `${currentSpeedKmh.toFixed(1)} km/h`;
@@ -2563,4 +2563,3 @@
   </script>
 </body>
 </html>
-```[cite: 1]
