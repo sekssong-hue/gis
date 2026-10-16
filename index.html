@@ -1664,7 +1664,7 @@
         alert(`[${currentShipName}] 운항 트립이 종료되고 저장되었습니다.`);
       }
 
-      switchLeftTab('logs');
+      // 강제 탭 전환 코드가 제거되었습니다.
     }
 
     function checkAutoStop(speedKts) {
@@ -2000,7 +2000,6 @@
           <div class="cruise-ship-icon">⚓</div>
         </div>
       `;
-      // [수정] 마커 아이콘 크기와 앵커를 확대된 크기에 맞춰 조정
       return L.divIcon({ className: '', html: iconHtml, iconSize: [200, 110], iconAnchor: [100, 75] });
     }
 
