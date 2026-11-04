@@ -39,6 +39,7 @@
       --accent-green: #2ea043;
       --accent-red: #ff7b72;
       --accent-yellow: #f59e0b;
+      --accent-purple: #a371f7;
       --text-main: #ffffff;
       --text-sub: #c9d1d9;
       --border-color: #30363d;
@@ -606,6 +607,17 @@
     .btn-center-mode.active-tracking-norotate { background: #8957e5; color: #fff; }
     .btn-calibrate { background: #e3b341; color: #000; }
     .btn-calibrate.active { background: #ff7b72; color: #fff; animation: blink 1.2s infinite; }
+    
+    .btn-survey-mode {
+      background: #30363d;
+      color: #fff;
+    }
+    .btn-survey-mode.active {
+      background: var(--accent-purple) !important;
+      color: #fff !important;
+      box-shadow: 0 0 10px rgba(163, 113, 247, 0.6);
+    }
+    
     @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
     .alarm-switch-container {
@@ -1034,6 +1046,7 @@
       <div class="route-control-bar" style="flex-wrap: nowrap; overflow-x: auto; gap: 8px; justify-content: flex-start;">
         <div style="display:flex; gap:6px; align-items:center; flex-shrink: 0;">
           <button class="btn-reset btn-center-mode active-tracking" id="btn-center-mode-toggle" onclick="toggleCenterMode()">중심 추적(회전)</button>
+          <button class="btn-reset btn-survey-mode" id="btn-survey-mode-toggle" onclick="toggleSurveyMode()">📷 촬영·측량 모드 OFF</button>
           <button class="btn-reset btn-calibrate" id="btn-calibrate-toggle" onclick="toggleCalibrationMode()">위치 수동보정</button>
           <button class="btn-reset" onclick="resetCalibration()">GPS 원복</button>
           <button class="btn-reset" onclick="resetTrack()">궤적 초기화</button>
@@ -1147,6 +1160,7 @@
     let currentHeading = 0; 
     let mapMode = 0;
     let isCalibratedMode = false, isFirstGps = true;
+    let isSurveyMode = false; // 촬영·측량 전용 모드 토글 상태
 
     let rawWindSpeedMs = 2.4;
     let rawWindDirDeg = 180;
@@ -1688,6 +1702,15 @@
     }
 
     function checkAutoStop(speedKts) {
+      // 촬영·측량 모드가 켜져 있는 경우 자동 종료 로직 완전 차단
+      if (isSurveyMode) {
+        if (autoStopTimer) {
+          clearTimeout(autoStopTimer);
+          autoStopTimer = null;
+        }
+        return;
+      }
+
       if (!isDrivingStarted || hasSaved) {
         if (autoStopTimer) {
           clearTimeout(autoStopTimer);
@@ -1707,6 +1730,33 @@
           clearTimeout(autoStopTimer);
           autoStopTimer = null;
         }
+      }
+    }
+
+    // 촬영·측량 모드 토글 함수
+    function toggleSurveyMode() {
+      isSurveyMode = !isSurveyMode;
+      const btn = document.getElementById('btn-survey-mode-toggle');
+      const guide = document.getElementById('status-guide-text');
+
+      if (isSurveyMode) {
+        btn.classList.add('active');
+        btn.innerText = "📷 촬영·측량 모드 ON";
+        if (guide) {
+          guide.innerText = "[상태] 📷 촬영·측량 전용 모드 작동 중 (자동 종료 완전 잠금)";
+        }
+        if (autoStopTimer) {
+          clearTimeout(autoStopTimer);
+          autoStopTimer = null;
+        }
+        alert("촬영·측량 전용 모드가 활성화되었습니다.\n선박 정지 및 저속 이동 중에도 운항이 자동 종료되지 않습니다.");
+      } else {
+        btn.classList.remove('active');
+        btn.innerText = "📷 촬영·측량 모드 OFF";
+        if (guide) {
+          guide.innerText = "[상태] 일반 운항 모드로 전환되었습니다.";
+        }
+        alert("일반 운항 관제 모드로 전환되었습니다.");
       }
     }
 
@@ -2383,7 +2433,11 @@
       } else {
         if (guide && guide.classList.contains('warning-alert')) {
           guide.className = "guide-text";
-          guide.innerText = "[상태] 진주 남강 수역 실시간 연동 완료 - 안전 운항하세요.";
+          if (isSurveyMode) {
+            guide.innerText = "[상태] 📷 촬영·측량 전용 모드 작동 중 (자동 종료 완전 잠금)";
+          } else {
+            guide.innerText = "[상태] 진주 남강 수역 실시간 연동 완료 - 안전 운항하세요.";
+          }
         }
       }
     }
