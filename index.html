@@ -1,16 +1,10 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <!-- ============================================================= -->
-  <!-- [HTML-1] 메타 설정 및 뷰포트 (모바일 Safe Area 대응) -->
-  <!-- ============================================================= -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>남강 GPS 선박 운항 관제 및 충돌방지 시스템 (실시간 위치 기상 연동)</title>
 
-  <!-- ============================================================= -->
-  <!-- [HTML-2] PWA 메타 태그 및 인라인 매니페스트 -->
-  <!-- ============================================================= -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -18,9 +12,6 @@
   <meta name="theme-color" content="#0d1117">
   <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22GPS%20%EC%84%A0%EB%B0%95%20%EA%B4%80%EC%A0%9C%20%EC%8B%9C%EC%8A%A4%ED%85%9C%22%2C%22short_name%22%3A%22GPS%EA%B4%80%EC%A0%9C%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230d1117%22%2C%22theme_color%22%3A%22%230d1117%22%2C%22orientation%22%3A%22any%22%7D">
 
-  <!-- ============================================================= -->
-  <!-- [HTML-3] Leaflet 및 라이브러리 -->
-  <!-- ============================================================= -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate.js"></script>
@@ -765,7 +756,6 @@
     .modal-close-btn { background: #30363d; color: #fff; }
     .modal-delete-btn { background: var(--accent-red); color: #fff; }
 
-    /* 내 위치 마커 확대 스타일 */
     .my-ship-icon-box, .other-ship-icon {
       display: flex;
       flex-direction: column;
@@ -881,12 +871,13 @@
 </head>
 
 <body onclick="initAudioContextOnce()">
-  <!-- 헤더 -->
+  <!-- 무음 오디오 재생 태그 (백그라운드 스레드 방지용 Silent Audio Loop) -->
+  <audio id="silentBgAudio" loop style="display:none;" src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA="></audio>
+
   <header>
     <h1>남강 GPS 선박 운항 관제 및 충돌방지 시스템 (실시간 위치 기상 연동)</h1>
   </header> 
 
-  <!-- 선박 선택 바 -->
   <div class="ship-select-bar">
     <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
       <div class="ship-select-group">
@@ -918,7 +909,6 @@
 
   <input type="file" id="log-backup-input" accept=".json" style="display:none;" onchange="importLogsBackup(event)">
 
-  <!-- 메인 대시보드 -->
   <div class="dashboard-container">
     <div class="panel">
       <div class="left-panel-nav">
@@ -926,31 +916,24 @@
         <button class="panel-tab-btn" onclick="switchLeftTab('logs')">📜 운항 기록 내역</button>
       </div>
 
-      <!-- 탭 1: 계측 제어 -->
       <div id="tab-control" class="tab-content active">
-        
-        <!-- 중앙 아날로그 속도계 및 4개 모서리 반응형 계측 카드 -->
         <div class="dashboard-center-layout">
-          <!-- 11시: 날씨 -->
           <div class="corner-card">
             <div class="corner-title">🌤️ 실시간 날씨 (Weather)</div>
             <div class="corner-value" id="val-weather">조회 중...</div>
             <div class="corner-sub" id="sub-humidity">습도: --%</div>
           </div>
 
-          <!-- 1시: 풍속계 -->
           <div class="corner-card">
             <div class="corner-title">💨 실시간 풍속 (Wind)</div>
             <div class="corner-value" id="val-wind-speed">-- m/s</div>
             <div class="corner-sub" id="sub-wind-dir">풍향: -- (-- Kts)</div>
           </div>
 
-          <!-- 중앙: 아날로그 속도계 -->
           <div class="speedometer-box-center">
             <canvas id="speedometer" width="400" height="400"></canvas>
           </div>
 
-          <!-- 7시: 그래픽 나침반 방향계 -->
           <div class="corner-card">
             <div class="corner-title">🧭 방향계 (Compass)</div>
             <div class="compass-container">
@@ -975,7 +958,6 @@
             </div>
           </div>
 
-          <!-- 5시: 현재 온도계 -->
           <div class="corner-card">
             <div class="corner-title">🌡️ 실시간 기온 (Temp)</div>
             <div class="corner-value" id="val-temp">-- ℃</div>
@@ -1016,7 +998,6 @@
         </div>
       </div>
 
-      <!-- 탭 2: 기록 관리 -->
       <div id="tab-logs" class="tab-content">
         <div class="log-header-bar">
           <div class="log-title-row">
@@ -1037,7 +1018,6 @@
       </div>
     </div>
 
-    <!-- 우측 GIS 및 지도 패널 -->
     <div class="panel data-panel">
       <div class="status-display-box">
         <div class="guide-text" id="status-guide-text">[상태] 진주 남강 수역 실시간 연동 완료 - 안전 운항하세요.</div>
@@ -1090,7 +1070,6 @@
     </div>
   </div>
 
-  <!-- 상세 정보 모달 -->
   <div class="modal-overlay" id="detail-modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -1138,7 +1117,6 @@
     </div>
   </div>
 
-  <!-- PWA 설치 배너 -->
   <div id="pwa-install-banner" class="pwa-install-banner" style="display: none;">
     <div class="pwa-install-info">
       <span class="pwa-install-icon">📱</span>
@@ -1153,14 +1131,13 @@
     </div>
   </div>
 
-  <!-- 스크립트 로직 -->
   <script>
-    let currentLat = 35.1880, currentLng = 128.0838; // 초기 기본 좌표 (진주 남강 수역)
+    let currentLat = 35.1880, currentLng = 128.0838;
     let actualGpsLat = currentLat, actualGpsLng = currentLng;
     let currentHeading = 0; 
     let mapMode = 0;
     let isCalibratedMode = false, isFirstGps = true;
-    let isSurveyMode = false; // 촬영·측량 전용 모드 토글 상태
+    let isSurveyMode = false;
 
     let rawWindSpeedMs = 2.4;
     let rawWindDirDeg = 180;
@@ -1171,11 +1148,47 @@
     let lastFetchedLat = null;
     let lastFetchedLng = null;
 
-    // 내 위치 좌표(currentLat, currentLng) 기준으로 실시간 기상 데이터 호출 함수
+    // 백그라운드 구동을 위한 Web Worker 및 Audio 설정
+    let bgWorker = null;
+
+    function initBackgroundWorker() {
+      const workerCode = `
+        let timer = null;
+        self.onmessage = function(e) {
+          if (e.data === 'start') {
+            if (!timer) {
+              timer = setInterval(() => {
+                self.postMessage('tick');
+              }, 1000);
+            }
+          } else if (e.data === 'stop') {
+            if (timer) {
+              clearInterval(timer);
+              timer = null;
+            }
+          }
+        };
+      `;
+      const blob = new Blob([workerCode], { type: 'application/javascript' });
+      bgWorker = new Worker(URL.createObjectURL(blob));
+      bgWorker.onmessage = function(e) {
+        if (e.data === 'tick') {
+          updateClock();
+        }
+      };
+      bgWorker.postMessage('start');
+    }
+
+    function enableBackgroundAudioLoop() {
+      const audioEl = document.getElementById('silentBgAudio');
+      if (audioEl) {
+        audioEl.play().catch(e => console.log("무음 오디오 재생 준비 완료:", e));
+      }
+    }
+
     async function fetchLocationWeather() {
       if (!currentLat || !currentLng) return;
       
-      // 위치 변경이 미세한 경우 불필요한 네트워크 요청 방지 (0.001도 약 100m 이내 변경 시 스킵)
       if (lastFetchedLat !== null && lastFetchedLng !== null) {
         const dLat = Math.abs(currentLat - lastFetchedLat);
         const dLng = Math.abs(currentLng - lastFetchedLng);
@@ -1206,7 +1219,7 @@
           updateWeatherUI();
         }
       } catch (e) {
-        console.warn("실시간 위치 기반 기상 API 수신 실패, 기본 시뮬레이션을 유지합니다.", e);
+        console.warn("실시간 위치 기반 기상 API 수신 실패", e);
       }
     }
 
@@ -1233,8 +1246,9 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       fetchLocationWeather();
-      setInterval(fetchLocationWeather, 30000); // 30초 간격으로 내 위치 기상 최신화
-      setInterval(updateWeatherUI, 2000);    
+      setInterval(fetchLocationWeather, 30000);
+      setInterval(updateWeatherUI, 2000); 
+      initBackgroundWorker();   
     });
 
     function drawSpeedometer(speedKts = 0, speedKmh = 0) {
@@ -1427,8 +1441,8 @@
     let tripSpeedList = [];
     let tripMaxSpeed = 0;
 
-    const STOP_THRESHOLD_SPEED = 0.1; // 거의 완전한 정지 상태일 때만 감지
-    const STOP_HOLD_TIME_MS = 300000; // 5분 (300초) 동안 저속일 때만 자동 종료
+    const STOP_THRESHOLD_SPEED = 0.1;
+    const STOP_HOLD_TIME_MS = 300000;
 
     let audioCtx = null;
     let lastAlertTime = 0;
@@ -1446,6 +1460,7 @@
 
     function initAudioContextOnce() {
       initAudioContext();
+      enableBackgroundAudioLoop();
       window.removeEventListener('click', initAudioContextOnce);
       window.removeEventListener('touchstart', initAudioContextOnce);
     }
@@ -1702,7 +1717,6 @@
     }
 
     function checkAutoStop(speedKts) {
-      // 촬영·측량 모드가 켜져 있는 경우 자동 종료 로직 완전 차단
       if (isSurveyMode) {
         if (autoStopTimer) {
           clearTimeout(autoStopTimer);
@@ -1733,7 +1747,6 @@
       }
     }
 
-    // 촬영·측량 모드 토글 함수
     function toggleSurveyMode() {
       isSurveyMode = !isSurveyMode;
       const btn = document.getElementById('btn-survey-mode-toggle');
@@ -1951,6 +1964,11 @@
         if ('wakeLock' in navigator) {
           wakeLock = await navigator.wakeLock.request('screen'); 
         }
+        if ('locks' in navigator) {
+          navigator.locks.request('gps_keep_alive_lock', async () => {
+            await new Promise(() => {});
+          });
+        }
       } catch (err) {}
     }
     
@@ -1961,8 +1979,10 @@
     }
 
     document.addEventListener('visibilitychange', async () => {
-      if (wakeLock !== null && document.visibilityState === 'visible') {
-        await requestWakeLock();
+      if (document.visibilityState === 'visible') {
+        if (wakeLock !== null) await requestWakeLock();
+      } else {
+        enableBackgroundAudioLoop();
       }
     });
 
@@ -1982,7 +2002,6 @@
         document.getElementById('timer').innerText = formatDurationText(diffSec);
       }
     }
-    setInterval(updateClock, 1000);
 
     const MPS_TO_KTS = 1.943844;
 
@@ -2159,7 +2178,7 @@
       currentLat = actualGpsLat;
       currentLng = actualGpsLng;
       shipMarker.setLatLng([currentLat, currentLng]);
-      fetchLocationWeather(); // 보정 해제 시 원본 좌표 기반 기상 재호출
+      fetchLocationWeather();
       alert("GPS 원본 위치로 복원되었습니다.");
     }
 
@@ -2167,7 +2186,7 @@
       const pos = e.target.getLatLng();
       currentLat = pos.lat;
       currentLng = pos.lng;
-      fetchLocationWeather(); // 마커 수동 보정 이동 완료 시 해당 좌표의 실시간 기상 반영
+      fetchLocationWeather();
     });
 
     function resetTrack() {
@@ -2249,7 +2268,6 @@
           currentLng = lng;
         }
 
-        // GPS 수신 좌표에 맞추어 실시간 날씨 갱신
         fetchLocationWeather();
 
         if (speedMps !== null && speedMps !== undefined && !isNaN(speedMps)) {
@@ -2313,7 +2331,7 @@
 
       }, (err) => {
         console.warn("GPS 수신 오류 또는 권한 거부:", err.message);
-      }, { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 });
+      }, { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 });
     }
 
     function broadcastMyLocation() {
