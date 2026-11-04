@@ -6,7 +6,7 @@
   <!-- ============================================================= -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>남강 GPS 선박 운항 관제 및 충돌방지 시스템 (진주 기상 연동)</title>
+  <title>남강 GPS 선박 운항 관제 및 충돌방지 시스템 (실시간 위치 기상 연동)</title>
 
   <!-- ============================================================= -->
   <!-- [HTML-2] PWA 메타 태그 및 인라인 매니페스트 -->
@@ -753,7 +753,7 @@
     .modal-close-btn { background: #30363d; color: #fff; }
     .modal-delete-btn { background: var(--accent-red); color: #fff; }
 
-    /* [내 위치 마커 확대 스타일 수정] */
+    /* 내 위치 마커 확대 스타일 */
     .my-ship-icon-box, .other-ship-icon {
       display: flex;
       flex-direction: column;
@@ -773,7 +773,7 @@
       border: 2.5px solid #00f2fe;
       padding: 6px 12px;
       border-radius: 10px;
-      font-size: 16px; /* 글자 크기 확대 */
+      font-size: 16px;
       font-weight: 900;
       margin-bottom: 4px;
       box-shadow: 0 0 14px rgba(0, 242, 254, 0.9);
@@ -794,9 +794,9 @@
       border: 2.5px solid #00f2fe;
       border-radius: 50%;
       box-shadow: 0 0 14px rgba(0, 242, 254, 0.9);
-      width: 48px;  /* 아이콘 크기 확대 */
-      height: 48px; /* 아이콘 크기 확대 */
-      font-size: 26px; /* 이모지 크기 확대 */
+      width: 48px;
+      height: 48px;
+      font-size: 26px;
     }
     .other-ship-symbol { font-size: 22px; }
 
@@ -871,7 +871,7 @@
 <body onclick="initAudioContextOnce()">
   <!-- 헤더 -->
   <header>
-    <h1>남강 GPS 선박 운항 관제 및 충돌방지 시스템 (진주 기상 연동)</h1>
+    <h1>남강 GPS 선박 운항 관제 및 충돌방지 시스템 (실시간 위치 기상 연동)</h1>
   </header> 
 
   <!-- 선박 선택 바 -->
@@ -921,7 +921,7 @@
         <div class="dashboard-center-layout">
           <!-- 11시: 날씨 -->
           <div class="corner-card">
-            <div class="corner-title">🌤️ 진주 날씨 (Weather)</div>
+            <div class="corner-title">🌤️ 실시간 날씨 (Weather)</div>
             <div class="corner-value" id="val-weather">조회 중...</div>
             <div class="corner-sub" id="sub-humidity">습도: --%</div>
           </div>
@@ -965,7 +965,7 @@
 
           <!-- 5시: 현재 온도계 -->
           <div class="corner-card">
-            <div class="corner-title">🌡️ 진주 기온 (Temp)</div>
+            <div class="corner-title">🌡️ 실시간 기온 (Temp)</div>
             <div class="corner-value" id="val-temp">-- ℃</div>
             <div class="corner-sub" id="sub-water-temp">수온: -- ℃</div>
           </div>
@@ -1142,15 +1142,34 @@
 
   <!-- 스크립트 로직 -->
   <script>
+    let currentLat = 35.1880, currentLng = 128.0838; // 초기 기본 좌표 (진주 남강 수역)
+    let actualGpsLat = currentLat, actualGpsLng = currentLng;
+    let currentHeading = 0; 
+    let mapMode = 0;
+    let isCalibratedMode = false, isFirstGps = true;
+
     let rawWindSpeedMs = 2.4;
     let rawWindDirDeg = 180;
     let rawTemp = 22.0;
     let rawHumidity = 65;
     let currentWeatherText = "맑음";
 
-    async function fetchJinjuWeather() {
+    let lastFetchedLat = null;
+    let lastFetchedLng = null;
+
+    // 내 위치 좌표(currentLat, currentLng) 기준으로 실시간 기상 데이터 호출 함수
+    async function fetchLocationWeather() {
+      if (!currentLat || !currentLng) return;
+      
+      // 위치 변경이 미세한 경우 불필요한 네트워크 요청 방지 (0.001도 약 100m 이내 변경 시 스킵)
+      if (lastFetchedLat !== null && lastFetchedLng !== null) {
+        const dLat = Math.abs(currentLat - lastFetchedLat);
+        const dLng = Math.abs(currentLng - lastFetchedLng);
+        if (dLat < 0.001 && dLng < 0.001) return;
+      }
+
       try {
-        const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=35.1928&longitude=128.0845&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m&timezone=Asia%2FSeoul');
+        const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${currentLat.toFixed(4)}&longitude=${currentLng.toFixed(4)}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m&timezone=Asia%2FSeoul`);
         const data = await response.json();
         
         if (data && data.current) {
@@ -1167,10 +1186,13 @@
           else if (weatherCode >= 95) currentWeatherText = "뇌우 / 폭풍";
           else currentWeatherText = "맑음";
 
+          lastFetchedLat = currentLat;
+          lastFetchedLng = currentLng;
+
           updateWeatherUI();
         }
       } catch (e) {
-        console.warn("진주 실시간 기상 API 수신 실패, 기본 시뮬레이션을 유지합니다.", e);
+        console.warn("실시간 위치 기반 기상 API 수신 실패, 기본 시뮬레이션을 유지합니다.", e);
       }
     }
 
@@ -1196,8 +1218,8 @@
     let isGpsActive = false;
 
     window.addEventListener('DOMContentLoaded', () => {
-      fetchJinjuWeather();
-      setInterval(fetchJinjuWeather, 60000); 
+      fetchLocationWeather();
+      setInterval(fetchLocationWeather, 30000); // 30초 간격으로 내 위치 기상 최신화
       setInterval(updateWeatherUI, 2000);    
     });
 
@@ -1391,8 +1413,8 @@
     let tripSpeedList = [];
     let tripMaxSpeed = 0;
 
-    const STOP_THRESHOLD_SPEED = 0.5;
-    const STOP_HOLD_TIME_MS = 60000;
+    const STOP_THRESHOLD_SPEED = 0.1; // 거의 완전한 정지 상태일 때만 감지
+    const STOP_HOLD_TIME_MS = 300000; // 5분 (300초) 동안 저속일 때만 자동 종료
 
     let audioCtx = null;
     let lastAlertTime = 0;
@@ -1663,8 +1685,6 @@
       } else {
         alert(`[${currentShipName}] 운항 트립이 종료되고 저장되었습니다.`);
       }
-
-      // 강제 탭 전환 코드가 제거되었습니다.
     }
 
     function checkAutoStop(speedKts) {
@@ -1954,12 +1974,6 @@
       return inside;
     }
 
-    let currentLat = 35.1880, currentLng = 128.0838;
-    let actualGpsLat = currentLat, actualGpsLng = currentLng;
-    let currentHeading = 0; 
-    let mapMode = 0;
-    let isCalibratedMode = false, isFirstGps = true;
-
     let trackPoints = [];
     let trackPolyline = null;
     let totalTrackDistKm = 0;
@@ -2095,6 +2109,7 @@
       currentLat = actualGpsLat;
       currentLng = actualGpsLng;
       shipMarker.setLatLng([currentLat, currentLng]);
+      fetchLocationWeather(); // 보정 해제 시 원본 좌표 기반 기상 재호출
       alert("GPS 원본 위치로 복원되었습니다.");
     }
 
@@ -2102,6 +2117,7 @@
       const pos = e.target.getLatLng();
       currentLat = pos.lat;
       currentLng = pos.lng;
+      fetchLocationWeather(); // 마커 수동 보정 이동 완료 시 해당 좌표의 실시간 기상 반영
     });
 
     function resetTrack() {
@@ -2182,6 +2198,9 @@
           currentLat = lat;
           currentLng = lng;
         }
+
+        // GPS 수신 좌표에 맞추어 실시간 날씨 갱신
+        fetchLocationWeather();
 
         if (speedMps !== null && speedMps !== undefined && !isNaN(speedMps)) {
           currentSpeedKts = speedMps * MPS_TO_KTS;
