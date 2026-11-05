@@ -114,7 +114,7 @@
       flex-shrink: 0;
     }
 
-    .ship-select-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .ship-select-group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
     .ship-select-group label { font-size: 0.95rem; font-weight: bold; color: var(--accent-color); }
     .ship-select-group select {
       background: #0d1117;
@@ -130,6 +130,25 @@
       color: #6e7681;
       background: #161b22;
     }
+
+    .btn-ship-manage {
+      background: #30363d;
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-ship-manage:hover {
+      background: #484f58;
+      border-color: var(--accent-color);
+    }
+    .btn-ship-manage.add { color: #58a6ff; }
+    .btn-ship-manage.edit { color: #f2cc60; }
+    .btn-ship-manage.delete { color: #ff7b72; }
 
     .btn-op-start, .btn-op-stop {
       color: #fff;
@@ -877,23 +896,20 @@
     <h1>남강 GPS 선박 운항 관제 및 충돌방지 시스템 (실시간 위치 기상 연동)</h1>
   </header> 
 
-  <!-- 선박 선택 바 -->
+  <!-- 선박 선택 바 (선박 추가, 수정, 삭제 기능 포함) -->
   <div class="ship-select-bar">
     <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
       <div class="ship-select-group">
         <label for="shipSelect">선박 선택 : </label>
         <select id="shipSelect" onchange="handleShipSelectChange()">
-          <option value="">-- 선박을 선택하세요 --</option>
-          <option value="김시민 1호">김시민 1호</option>
-          <option value="김시민 2호">김시민 2호</option>
-          <option value="남강 3호">남강 3호</option>
-          <option value="남강 4호">남강 4호</option>
-          <option value="남강 5호">남강 5호</option>
-          <option value="남강 6호">남강 6호</option>
-          <option value="인명구조선">인명구조선</option>
-          <option value="안전관리선">안전관리선</option>
-          <option value="기타작업선">기타작업선</option>
+          <!-- 스크립트에서 동적 로드 -->
         </select>
+        
+        <!-- 선박 관리 버튼 -->
+        <button class="btn-ship-manage add" onclick="addNewShip()" title="새 선박 추가">+ 추가</button>
+        <button class="btn-ship-manage edit" onclick="renameCurrentShip()" title="선박 이름 변경">✏️ 수정</button>
+        <button class="btn-ship-manage delete" onclick="deleteCurrentShip()" title="선박 삭제">🗑️ 삭제</button>
+
         <button class="btn-op-start" id="btn-ship-start" onclick="startShipOperation()" disabled>운항 등록</button>
         <button class="btn-op-stop" id="btn-ship-stop" onclick="stopShipOperation()" disabled>운항 해제</button>
       </div>
@@ -1166,7 +1182,7 @@
     let isSurveyMode = false; // 촬영·측량 전용 모드
     let isCalibratedMode = false, isFirstGps = true;
 
-    // 모바일 확인창(안내창) 사용 여부 전역 변수 (기본값 ON: true, 핸드폰에서 불편할 경우 OFF로 끌 수 있음)
+    // 모바일 확인창(안내창) 사용 여부 전역 변수 (기본값 ON: true)
     let showConfirmAlerts = true;
 
     function toggleConfirmAlert() {
@@ -1174,15 +1190,13 @@
       showConfirmAlerts = toggleEl ? toggleEl.checked : true;
     }
 
-    // 커스텀 알림/확인 함수 (확인창 OFF일 경우 팝업 없이 즉시 실행 또는 안내 문구 대체)
+    // 커스텀 알림/확인 함수
     function showNotification(message, isConfirm = false, onConfirmCallback = null) {
       if (!showConfirmAlerts) {
-        // 확인창 OFF 상태: 팝업을 띄우지 않고 바로 콜백 실행 (모바일 터치 편의성 극대화)
         if (onConfirmCallback) onConfirmCallback();
         return;
       }
 
-      // 확인창 ON 상태: 기존처럼 안내창 띄우기
       if (isConfirm) {
         if (confirm(message)) {
           if (onConfirmCallback) onConfirmCallback();
@@ -1192,7 +1206,139 @@
       }
     }
 
-    // 기상 변수 기본값
+    // =============================================================
+    // [선박 관리 기능] 목록 생성, 추가, 수정, 삭제 및 저장
+    // =============================================================
+    const DEFAULT_SHIPS = [
+      "김시민 1호", "김시민 2호", "남강 3호", "남강 4호", 
+      "남강 5호", "남강 6호", "인명구조선", "안전관리선", "기타작업선"
+    ];
+
+    let customShipsList = [];
+
+    function loadShipsList() {
+      try {
+        const saved = localStorage.getItem('ship_custom_list');
+        if (saved) {
+          customShipsList = JSON.parse(saved);
+        } else {
+          customShipsList = [...DEFAULT_SHIPS];
+        }
+      } catch (e) {
+        customShipsList = [...DEFAULT_SHIPS];
+      }
+      renderShipSelectOptions();
+    }
+
+    function saveShipsList() {
+      try {
+        localStorage.setItem('ship_custom_list', JSON.stringify(customShipsList));
+      } catch (e) {
+        console.error("선박 목록 저장 실패:", e);
+      }
+    }
+
+    function renderShipSelectOptions(selectedName = "") {
+      const selectEl = document.getElementById('shipSelect');
+      if (!selectEl) return;
+
+      const currentVal = selectedName || selectEl.value;
+      selectEl.innerHTML = `<option value="">-- 선박을 선택하세요 --</option>`;
+
+      customShipsList.forEach(name => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.innerText = name;
+        if (name === currentVal) option.selected = true;
+        selectEl.appendChild(option);
+      });
+
+      handleShipSelectChange();
+    }
+
+    function addNewShip() {
+      if (isMyShipOperating) {
+        showNotification("운항 등록 중에는 선박 목록을 변경할 수 없습니다.");
+        return;
+      }
+      const newName = prompt("새로 추가할 선박 이름을 입력하세요:");
+      if (!newName || !newName.trim()) return;
+
+      const cleanName = newName.trim();
+      if (customShipsList.includes(cleanName)) {
+        showNotification("이미 존재하는 선박 이름입니다.");
+        return;
+      }
+
+      customShipsList.push(cleanName);
+      saveShipsList();
+      renderShipSelectOptions(cleanName);
+      showNotification(`선박 [${cleanName}]이(가) 추가되었습니다.`);
+    }
+
+    function renameCurrentShip() {
+      if (isMyShipOperating) {
+        showNotification("운항 등록 중에는 선박 이름을 변경할 수 없습니다.");
+        return;
+      }
+      const selectEl = document.getElementById('shipSelect');
+      const targetName = selectEl.value;
+
+      if (!targetName) {
+        showNotification("이름을 변경할 선박을 먼저 선택해 주세요.");
+        return;
+      }
+
+      const updatedName = prompt(`선박 [${targetName}]의 변경할 새 이름을 입력하세요:`, targetName);
+      if (!updatedName || !updatedName.trim() || updatedName.trim() === targetName) return;
+
+      const cleanName = updatedName.trim();
+      if (customShipsList.includes(cleanName)) {
+        showNotification("이미 동일한 이름의 선박이 존재합니다.");
+        return;
+      }
+
+      const index = customShipsList.indexOf(targetName);
+      if (index !== -1) {
+        customShipsList[index] = cleanName;
+        saveShipsList();
+        renderShipSelectOptions(cleanName);
+        showNotification(`선박 이름이 [${targetName}] ➡️ [${cleanName}](으)로 변경되었습니다.`);
+      }
+    }
+
+    function deleteCurrentShip() {
+      if (isMyShipOperating) {
+        showNotification("운항 등록 중에는 선박을 삭제할 수 없습니다.");
+        return;
+      }
+      const selectEl = document.getElementById('shipSelect');
+      const targetName = selectEl.value;
+
+      if (!targetName) {
+        showNotification("삭제할 선박을 먼저 선택해 주세요.");
+        return;
+      }
+
+      const performDelete = () => {
+        customShipsList = customShipsList.filter(name => name !== targetName);
+        saveShipsList();
+        renderShipSelectOptions("");
+        showNotification(`선박 [${targetName}]이(가) 삭제되었습니다.`);
+      };
+
+      if (!showConfirmAlerts) {
+        performDelete();
+      } else {
+        if (confirm(`정말로 선박 [${targetName}]을(를) 목록에서 삭제하시겠습니까?`)) {
+          performDelete();
+        }
+      }
+    }
+
+    // =============================================================
+    // [기상 데이터 연동 및 동적 UI 변경 로직]
+    // =============================================================
     let rawWindSpeedMs = 0.8;
     let rawWindDirDeg = 180;
     let rawTemp = 18.0;
@@ -1214,7 +1360,7 @@
         btn.style.background = "#2ea043";
         btn.style.color = "#ffffff";
         
-        // 보정 토글 시 시연용으로 상태를 순환 변경 (맑음 -> 비 -> 흐림)
+        // 현장 보정 버튼 클릭 시 상태 변경 (맑음 -> 비/강수 -> 흐림 -> 맑음 순환 테스트)
         if (currentWeatherText === "맑음") {
           currentWeatherText = "비 / 강수";
           rawPrecipitation = 3.5; 
@@ -1311,7 +1457,7 @@
       const weatherValEl = document.getElementById('val-weather');
       const subHumidityEl = document.getElementById('sub-humidity');
 
-      // 요구사항 반영: 맑음이면 자외선 수치, 비면 강수량, 흐림/구름이면 구름양(구름%)으로 실시간 변경
+      // 요구사항 반영: 맑음이면 자외선 수치, 비면 강수량, 흐림/구름이면 구름양(%)을 실시간 동적 표시
       if (currentWeatherText.includes("비") || currentWeatherText.includes("강수") || rawPrecipitation > 0) {
         weatherValEl.innerText = `${currentWeatherText}`;
         subHumidityEl.innerText = `강수량: ${rawPrecipitation.toFixed(1)} mm/h (습도 ${rawHumidity}%)`;
@@ -1319,7 +1465,6 @@
         weatherValEl.innerText = `${currentWeatherText}`;
         subHumidityEl.innerText = `구름 양: ${rawCloudCover}% (습도 ${rawHumidity}%)`;
       } else {
-        // 맑음인 경우 자외선 수치 표시
         weatherValEl.innerText = `${currentWeatherText}`;
         subHumidityEl.innerText = `자외선(UV): ${rawUvIndex.toFixed(1)} (습도 ${rawHumidity}%)`;
       }
@@ -1337,6 +1482,7 @@
     let isGpsActive = false;
 
     window.addEventListener('DOMContentLoaded', () => {
+      loadShipsList();
       fetchLocationWeather(true);
       setInterval(() => fetchLocationWeather(false), 30000); 
       setInterval(updateWeatherUI, 2000);    
@@ -1684,6 +1830,12 @@
         }
       }
       updateOnlineShipBadges();
+    }
+
+    function updateOnlineShipBadges() {
+      if (isFirebaseReady) {
+        // firebase 온라인 선박 정보 갱신 레이어
+      }
     }
 
     function startTracking() {
@@ -2241,7 +2393,7 @@
       };
 
       if (!showConfirmAlerts) {
-        applyZoneAction(false); // 확인창 OFF일 때는 기본 위험구역으로 즉시 지정
+        applyZoneAction(false);
       } else {
         const isSafeZone = confirm("이 영역을 지정 선착장(정박 안전 구역 - Safe Zone)으로 설정하시겠습니까?\n[확인]: 선착장(알람 차단 Mute)\n[취소]: 일반 경고 구역");
         applyZoneAction(isSafeZone);
@@ -2277,15 +2429,25 @@
     }
 
     function resetCalibration() {
-      isCalibratedMode = false;
-      document.getElementById('btn-calibrate-toggle').classList.remove('active');
-      document.getElementById('btn-calibrate-toggle').innerText = "위치 수동보정";
-      shipMarker.dragging.disable();
-      currentLat = actualGpsLat;
-      currentLng = actualGpsLng;
-      shipMarker.setLatLng([currentLat, currentLng]);
-      fetchLocationWeather(true);
-      showNotification("GPS 원본 위치로 복원되었습니다.");
+      const executeCalibrationReset = () => {
+        isCalibratedMode = false;
+        document.getElementById('btn-calibrate-toggle').classList.remove('active');
+        document.getElementById('btn-calibrate-toggle').innerText = "위치 수동보정";
+        shipMarker.dragging.disable();
+        currentLat = actualGpsLat;
+        currentLng = actualGpsLng;
+        shipMarker.setLatLng([currentLat, currentLng]);
+        fetchLocationWeather(true);
+        showNotification("GPS 원본 위치로 복원되었습니다.");
+      };
+
+      if (!showConfirmAlerts) {
+        executeCalibrationReset();
+      } else {
+        if (confirm("수동 보정된 위치를 취소하고 GPS 원본 위치로 복원하시겠습니까?")) {
+          executeCalibrationReset();
+        }
+      }
     }
 
     shipMarker.on('dragend', function(e) {
