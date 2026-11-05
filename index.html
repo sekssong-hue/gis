@@ -922,7 +922,7 @@
         
         <!-- 중앙 아날로그 속도계 및 4개 모서리 반응형 계측 카드 -->
         <div class="dashboard-center-layout">
-          <!-- 11시: 날씨 및 강수량 -->
+          <!-- 11시: 날씨 및 상태별 동적 값(맑음:자외선, 비:강수량, 흐림:구름양) -->
           <div class="corner-card">
             <div class="corner-title" style="display:flex; justify-content:space-between; width:100%;">
               <span>🌤️ 실시간 날씨</span>
@@ -1198,6 +1198,8 @@
     let rawTemp = 18.0;
     let rawHumidity = 85;
     let rawPrecipitation = 0.0;
+    let rawCloudCover = 20; // 구름 양 (%)
+    let rawUvIndex = 5.2;   // 자외선 지수 (UV Index)
     let currentWeatherText = "맑음";
 
     let lastFetchedLat = null;
@@ -1208,11 +1210,22 @@
       isWeatherOverride = !isWeatherOverride;
       const btn = document.getElementById('btn-override-toggle');
       if (isWeatherOverride) {
-        btn.innerText = "현장 보정 ON";
+        btn.innerText = "현장 보정 ON (순환)";
         btn.style.background = "#2ea043";
         btn.style.color = "#ffffff";
-        currentWeatherText = "비 / 강수";
-        rawPrecipitation = 2.5; 
+        
+        // 보정 토글 시 시연용으로 상태를 순환 변경 (맑음 -> 비 -> 흐림)
+        if (currentWeatherText === "맑음") {
+          currentWeatherText = "비 / 강수";
+          rawPrecipitation = 3.5; 
+        } else if (currentWeatherText.includes("비")) {
+          currentWeatherText = "흐림 / 구름많음";
+          rawCloudCover = 85;
+        } else {
+          currentWeatherText = "맑음";
+          rawUvIndex = 7.8;
+        }
+
         rawWindSpeedMs = 1.2;
         rawTemp = 17.5;
         rawHumidity = 90;
@@ -1236,7 +1249,7 @@
       }
 
       try {
-        const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${currentLat.toFixed(4)}&longitude=${currentLng.toFixed(4)}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m,precipitation&timezone=Asia%2FSeoul`);
+        const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${currentLat.toFixed(4)}&longitude=${currentLng.toFixed(4)}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m,precipitation,cloud_cover,uv_index&timezone=Asia%2FSeoul`);
         const data = await response.json();
         
         if (data && data.current) {
@@ -1256,6 +1269,8 @@
           }
 
           rawPrecipitation = cur.precipitation || 0.0;
+          rawCloudCover = cur.cloud_cover !== undefined ? cur.cloud_cover : 30;
+          rawUvIndex = cur.uv_index !== undefined ? cur.uv_index : 4.5;
           const weatherCode = cur.weather_code;
 
           if (rawPrecipitation > 0 || (weatherCode >= 51 && weatherCode <= 67) || (weatherCode >= 80 && weatherCode <= 82) || (weatherCode >= 95)) {
@@ -1263,8 +1278,8 @@
             if (rawPrecipitation === 0) rawPrecipitation = 0.5;
           } else if (weatherCode >= 71 && weatherCode <= 77) {
             currentWeatherText = "눈";
-          } else if (weatherCode >= 1 && weatherCode <= 3) {
-            currentWeatherText = "구름 조금/많음";
+          } else if (weatherCode >= 1 && weatherCode <= 3 || rawCloudCover > 40) {
+            currentWeatherText = "흐림 / 구름많음";
           } else if (weatherCode === 45 || weatherCode === 48) {
             currentWeatherText = "안개";
           } else {
@@ -1294,14 +1309,21 @@
       const windDirText = getHeadingDirectionText(windDirDeg);
 
       const weatherValEl = document.getElementById('val-weather');
-      if (rawPrecipitation > 0 || currentWeatherText.includes("비") || currentWeatherText.includes("강수")) {
-        weatherValEl.innerText = `${currentWeatherText} (${rawPrecipitation.toFixed(1)} mm/h)`;
+      const subHumidityEl = document.getElementById('sub-humidity');
+
+      // 요구사항 반영: 맑음이면 자외선 수치, 비면 강수량, 흐림/구름이면 구름양(구름%)으로 실시간 변경
+      if (currentWeatherText.includes("비") || currentWeatherText.includes("강수") || rawPrecipitation > 0) {
+        weatherValEl.innerText = `${currentWeatherText}`;
+        subHumidityEl.innerText = `강수량: ${rawPrecipitation.toFixed(1)} mm/h (습도 ${rawHumidity}%)`;
+      } else if (currentWeatherText.includes("흐림") || currentWeatherText.includes("구름") || rawCloudCover > 40) {
+        weatherValEl.innerText = `${currentWeatherText}`;
+        subHumidityEl.innerText = `구름 양: ${rawCloudCover}% (습도 ${rawHumidity}%)`;
       } else {
-        weatherValEl.innerText = currentWeatherText;
+        // 맑음인 경우 자외선 수치 표시
+        weatherValEl.innerText = `${currentWeatherText}`;
+        subHumidityEl.innerText = `자외선(UV): ${rawUvIndex.toFixed(1)} (습도 ${rawHumidity}%)`;
       }
 
-      document.getElementById('sub-humidity').innerText = `습도: ${rawHumidity}%`;
-      
       document.getElementById('val-wind-speed').innerText = `${windSpeedMs.toFixed(1)} m/s`;
       document.getElementById('sub-wind-dir').innerText = `풍향: ${windDirText} (${windSpeedKts.toFixed(1)} Kts)`;
 
