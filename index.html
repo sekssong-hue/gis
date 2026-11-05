@@ -960,16 +960,16 @@
             <canvas id="speedometer" width="400" height="400"></canvas>
           </div>
 
-          <!-- 7시: 그래픽 나침반 방향계 -->
+          <!-- 7시: 그래픽 나침반 방향계 ( SVG 내부 글자도 북, 남, 동, 서로 변경 ) -->
           <div class="corner-card">
             <div class="corner-title">🧭 방향계 (Compass)</div>
             <div class="compass-container">
               <svg id="compass-icon" class="compass-svg" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="45" fill="#0d1117" stroke="#00f2fe" stroke-width="3"/>
-                <text x="50" y="18" fill="#ff7b72" font-size="12" font-weight="bold" text-anchor="middle">N</text>
-                <text x="50" y="88" fill="#ffffff" font-size="10" font-weight="bold" text-anchor="middle">S</text>
-                <text x="85" y="53" fill="#ffffff" font-size="10" font-weight="bold" text-anchor="middle">E</text>
-                <text x="15" y="53" fill="#ffffff" font-size="10" font-weight="bold" text-anchor="middle">W</text>
+                <text x="50" y="18" fill="#ff7b72" font-size="12" font-weight="bold" text-anchor="middle">북</text>
+                <text x="50" y="88" fill="#ffffff" font-size="10" font-weight="bold" text-anchor="middle">남</text>
+                <text x="85" y="53" fill="#ffffff" font-size="10" font-weight="bold" text-anchor="middle">동</text>
+                <text x="15" y="53" fill="#ffffff" font-size="10" font-weight="bold" text-anchor="middle">서</text>
                 <g id="compass-needle" transform="rotate(180, 50, 50)" style="transition: transform 0.3s ease-out;">
                   <polygon points="50,18 43,50 50,45" fill="#ff7b72"/>
                   <polygon points="50,18 57,50 50,45" fill="#ff4d4d"/>
@@ -979,7 +979,7 @@
                 </g>
               </svg>
               <div>
-                <div class="corner-value" id="val-heading">180° SSW</div>
+                <div class="corner-value" id="val-heading">180° 남서</div>
                 <div class="corner-sub" id="sub-heading-info">방위각: 180.0°</div>
               </div>
             </div>
@@ -1367,9 +1367,11 @@
         } else if (currentWeatherText.includes("비")) {
           currentWeatherText = "흐림 / 구름많음";
           rawCloudCover = 85;
+          rawPrecipitation = 0.0;
         } else {
           currentWeatherText = "맑음";
           rawUvIndex = 7.8;
+          rawPrecipitation = 0.0;
         }
 
         rawWindSpeedMs = 1.2;
@@ -1419,17 +1421,21 @@
           rawUvIndex = cur.uv_index !== undefined ? cur.uv_index : 4.5;
           const weatherCode = cur.weather_code;
 
-          if (rawPrecipitation > 0 || (weatherCode >= 51 && weatherCode <= 67) || (weatherCode >= 80 && weatherCode <= 82) || (weatherCode >= 95)) {
+          const isRainingCode = (weatherCode >= 51 && weatherCode <= 67) || (weatherCode >= 80 && weatherCode <= 82) || (weatherCode >= 95);
+
+          if (rawPrecipitation >= 0.2 || isRainingCode) {
             currentWeatherText = "비 / 강수";
             if (rawPrecipitation === 0) rawPrecipitation = 0.5;
           } else if (weatherCode >= 71 && weatherCode <= 77) {
             currentWeatherText = "눈";
-          } else if (weatherCode >= 1 && weatherCode <= 3 || rawCloudCover > 40) {
-            currentWeatherText = "흐림 / 구름많음";
           } else if (weatherCode === 45 || weatherCode === 48) {
             currentWeatherText = "안개";
+          } else if ((weatherCode >= 1 && weatherCode <= 3) || rawCloudCover > 40) {
+            currentWeatherText = "흐림 / 구름많음";
+            rawPrecipitation = 0.0;
           } else {
             currentWeatherText = "맑음";
+            rawPrecipitation = 0.0;
           }
 
           lastFetchedLat = currentLat;
@@ -1457,8 +1463,7 @@
       const weatherValEl = document.getElementById('val-weather');
       const subHumidityEl = document.getElementById('sub-humidity');
 
-      // 요구사항 반영: 맑음이면 자외선 수치, 비면 강수량, 흐림/구름이면 구름양(%)을 실시간 동적 표시
-      if (currentWeatherText.includes("비") || currentWeatherText.includes("강수") || rawPrecipitation > 0) {
+      if (currentWeatherText.includes("비") || currentWeatherText.includes("강수") || rawPrecipitation >= 0.2) {
         weatherValEl.innerText = `${currentWeatherText}`;
         subHumidityEl.innerText = `강수량: ${rawPrecipitation.toFixed(1)} mm/h (습도 ${rawHumidity}%)`;
       } else if (currentWeatherText.includes("흐림") || currentWeatherText.includes("구름") || rawCloudCover > 40) {
@@ -1633,10 +1638,17 @@
       ctx.fill();
     }
 
+    // =============================================================
+    // [한글 방향 변환 함수] 영문 방위(N, NE 등)를 한글(북, 북동 등)로 변환
+    // =============================================================
     function getHeadingDirectionText(deg) {
-      const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+      // 16방위 기준 한글 명칭 정의 (0도 북쪽 기준 시계 방향)
+      // N, NNE, NE, ENE, E, ESE, SE, SSE, S, SSW, SW, WSW, W, WNW, NW, NNW
+      const koreanDirs = ['북', '북북동', '북동', '동북동', '동', '동남동', '남동', '남남동', '남', '남남서', '남서', '서남서', '서', '서북서', '북서', '북북서'];
+      
       const normalizedDeg = (deg + 360) % 360;
-      const index = Math.round((normalizedDeg / 45)) % 8;
+      // 360도를 16등분 (22.5도 단위)
+      const index = Math.round(normalizedDeg / 22.5) % 16;
       
       const needle = document.getElementById('compass-needle');
       if (needle) {
@@ -1645,10 +1657,10 @@
 
       const valHeading = document.getElementById('val-heading');
       const subHeadingInfo = document.getElementById('sub-heading-info');
-      if (valHeading) valHeading.innerText = `${Math.round(normalizedDeg)}° ${dirs[index]}`;
+      if (valHeading) valHeading.innerText = `${Math.round(normalizedDeg)}° ${koreanDirs[index]}`;
       if (subHeadingInfo) subHeadingInfo.innerText = `방위각: ${normalizedDeg.toFixed(1)}°`;
 
-      return `${Math.round(normalizedDeg)}° ${dirs[index]}`;
+      return `${Math.round(normalizedDeg)}° ${koreanDirs[index]}`;
     }
 
     function switchLeftTab(tabName) {
