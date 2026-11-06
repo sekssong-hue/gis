@@ -6,7 +6,7 @@
   <!-- ============================================================= -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>남강 GPS 선박 운항 관제 및 충돌방지 시스템 (실시간 위치 기상 연동)</title>
+  <title>남강 GPS 선박 운항 관제 및 충돌방지 시스템 (물빛나루쉼터·망진나루 기준)</title>
 
   <!-- ============================================================= -->
   <!-- [HTML-2] PWA 메타 태그 및 인라인 매니페스트 -->
@@ -189,11 +189,6 @@
       background: rgba(0, 242, 254, 0.2);
       border-color: var(--accent-color);
       color: var(--accent-color);
-    }
-    .ship-badge.busy-ship {
-      background: rgba(255, 123, 114, 0.2);
-      border-color: var(--accent-red);
-      color: var(--accent-red);
     }
 
     .dashboard-container {
@@ -893,10 +888,10 @@
 <body onclick="initAudioContextOnce()">
   <!-- 헤더 -->
   <header>
-    <h1>남강 GPS 선박 운항 관제 및 충돌방지 시스템 (실시간 위치 기상 연동)</h1>
+    <h1>남강 GPS 선박 운항 관제 및 충돌방지 시스템 (물빛나루쉼터·망진나루 기준)</h1>
   </header> 
 
-  <!-- 선박 선택 바 (선박 추가, 수정, 삭제 기능 포함) -->
+  <!-- 선박 선택 바 -->
   <div class="ship-select-bar">
     <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
       <div class="ship-select-group">
@@ -905,7 +900,6 @@
           <!-- 스크립트에서 동적 로드 -->
         </select>
         
-        <!-- 선박 관리 버튼 -->
         <button class="btn-ship-manage add" onclick="addNewShip()" title="새 선박 추가">+ 추가</button>
         <button class="btn-ship-manage edit" onclick="renameCurrentShip()" title="선박 이름 변경">✏️ 수정</button>
         <button class="btn-ship-manage delete" onclick="deleteCurrentShip()" title="선박 삭제">🗑️ 삭제</button>
@@ -936,9 +930,7 @@
       <!-- 탭 1: 계측 제어 -->
       <div id="tab-control" class="tab-content active">
         
-        <!-- 중앙 아날로그 속도계 및 4개 모서리 반응형 계측 카드 -->
         <div class="dashboard-center-layout">
-          <!-- 11시: 날씨 및 상태별 동적 값(맑음:자외선, 비:강수량, 흐림:구름양) -->
           <div class="corner-card">
             <div class="corner-title" style="display:flex; justify-content:space-between; width:100%;">
               <span>🌤️ 실시간 날씨</span>
@@ -948,19 +940,16 @@
             <div class="corner-sub" id="sub-humidity">습도: --%</div>
           </div>
 
-          <!-- 1시: 풍속계 -->
           <div class="corner-card">
             <div class="corner-title">💨 실시간 풍속 (Wind)</div>
             <div class="corner-value" id="val-wind-speed">-- m/s</div>
             <div class="corner-sub" id="sub-wind-dir">풍향: -- (-- Kts)</div>
           </div>
 
-          <!-- 중앙: 아날로그 속도계 -->
           <div class="speedometer-box-center">
             <canvas id="speedometer" width="400" height="400"></canvas>
           </div>
 
-          <!-- 7시: 그래픽 나침반 방향계 (한글 동서남북 적용) -->
           <div class="corner-card">
             <div class="corner-title">🧭 방향계 (Compass)</div>
             <div class="compass-container">
@@ -985,7 +974,6 @@
             </div>
           </div>
 
-          <!-- 5시: 현재 온도계 -->
           <div class="corner-card">
             <div class="corner-title">🌡️ 실시간 기온 (Temp)</div>
             <div class="corner-value" id="val-temp">-- ℃</div>
@@ -1050,7 +1038,7 @@
     <!-- 우측 GIS 및 지도 패널 -->
     <div class="panel data-panel">
       <div class="status-display-box">
-        <div class="guide-text" id="status-guide-text">[상태] GPS 신호 수신 대기 중...</div>
+        <div class="guide-text" id="status-guide-text">[상태] 물빛나루쉼터·망진나루 수역 연동 대기 중...</div>
       </div>
 
       <div class="route-control-bar" style="flex-wrap: nowrap; overflow-x: auto; gap: 8px; justify-content: flex-start;">
@@ -1066,7 +1054,6 @@
 
         <div style="width: 1px; background: var(--border-color); flex-shrink: 0; align-self: stretch; margin: 2px 0;"></div>
 
-        <!-- 알람소리 및 모바일 확인창(안내창) 제어 스위치 영역 -->
         <div style="display:flex; gap: 10px; align-items:center; flex-shrink:0; margin-left: auto;">
           <div class="alarm-switch-container">
             <span>💬 확인창</span>
@@ -1175,14 +1162,14 @@
 
   <!-- 스크립트 로직 -->
   <script>
-    let currentLat = 35.1880, currentLng = 128.0838; // 초기 기본 좌표 (진주 남강 수역)
+    // [망진나루와 물빛나루쉼터 사이의 남강 수역 중심 좌표로 초기 설정]
+    let currentLat = 35.1885, currentLng = 128.0832; 
     let actualGpsLat = currentLat, actualGpsLng = currentLng;
     let currentHeading = 0; 
     let mapMode = 0;
-    let isSurveyMode = false; // 촬영·측량 전용 모드
+    let isSurveyMode = false; 
     let isCalibratedMode = false, isFirstGps = true;
 
-    // 모바일 확인창(안내창) 사용 여부 전역 변수 (기본값 ON: true)
     let showConfirmAlerts = true;
 
     function toggleConfirmAlert() {
@@ -1190,7 +1177,6 @@
       showConfirmAlerts = toggleEl ? toggleEl.checked : true;
     }
 
-    // 커스텀 알림/확인 함수
     function showNotification(message, isConfirm = false, onConfirmCallback = null) {
       if (!showConfirmAlerts) {
         if (onConfirmCallback) onConfirmCallback();
@@ -1206,9 +1192,6 @@
       }
     }
 
-    // =============================================================
-    // [선박 관리 기능] 목록 생성, 추가, 수정, 삭제 및 저장
-    // =============================================================
     const DEFAULT_SHIPS = [
       "김시민 1호", "김시민 2호", "남강 3호", "남강 4호", 
       "남강 5호", "남강 6호", "인명구조선", "안전관리선", "기타작업선"
@@ -1336,26 +1319,19 @@
       }
     }
 
-    // =============================================================
-    // [기상 데이터 연동 및 동적 UI 변경 로직 - 날씨 및 풍속/풍향 수정]
-    // =============================================================
     let rawWindSpeedMs = 0.8;
     let rawWindDirDeg = 180;
     let rawTemp = 18.0;
     let rawHumidity = 85;
     let rawPrecipitation = 0.0;
-    let rawCloudCover = 20; // 구름 양 (%)
-    let rawUvIndex = 5.2;   // 자외선 지수 (UV Index)
+    let rawCloudCover = 20; 
+    let rawUvIndex = 5.2;   
     let currentWeatherText = "맑음";
 
     let lastFetchedLat = null;
     let lastFetchedLng = null;
-    let isWeatherOverride = false; // 현장 수동 보정 모드 여부
+    let isWeatherOverride = false; 
 
-    // =============================================================
-    // [현장 보정 순환: 날씨 + 풍속/풍향 동시 수정]
-    // 맑음(1.2 m/s) -> 흐림(4.5 m/s) -> 비(8.2 m/s)
-    // =============================================================
     function toggleOverrideWeather() {
       isWeatherOverride = !isWeatherOverride;
       const btn = document.getElementById('btn-override-toggle');
@@ -1364,32 +1340,31 @@
         btn.style.background = "#2ea043";
         btn.style.color = "#ffffff";
         
-        // 날씨 및 풍속/풍향 동시 변경 처리
         if (currentWeatherText === "맑음") {
           currentWeatherText = "흐림 / 구름많음";
           rawCloudCover = 85;
           rawPrecipitation = 0.0;
-          rawWindSpeedMs = 4.5;   // 약 8.7 Kts
-          rawWindDirDeg = 225;    // 남서풍
+          rawWindSpeedMs = 4.2;   
+          rawWindDirDeg = 225;    
           rawTemp = 17.5;
           rawHumidity = 85;
         } else if (currentWeatherText.includes("흐림") || currentWeatherText.includes("구름")) {
           currentWeatherText = "비 / 강수";
           rawPrecipitation = 3.5; 
           rawCloudCover = 100;
-          rawWindSpeedMs = 8.2;   // 약 15.9 Kts (강풍)
-          rawWindDirDeg = 315;    // 북서풍
-          rawTemp = 15.0;
+          rawWindSpeedMs = 7.8;   
+          rawWindDirDeg = 315;    
+          rawTemp = 14.5;
           rawHumidity = 95;
         } else {
           currentWeatherText = "맑음";
           rawUvIndex = 7.8;
           rawPrecipitation = 0.0;
-          rawCloudCover = 20;
-          rawWindSpeedMs = 1.2;   // 약 2.3 Kts (미풍)
-          rawWindDirDeg = 180;    // 남풍
-          rawTemp = 19.5;
-          rawHumidity = 65;
+          rawCloudCover = 15;
+          rawWindSpeedMs = 1.5;   
+          rawWindDirDeg = 180;    
+          rawTemp = 20.0;
+          rawHumidity = 60;
         }
 
         updateWeatherUI();
@@ -1504,9 +1479,9 @@
     window.addEventListener('DOMContentLoaded', () => {
       loadShipsList();
       fetchLocationWeather(true);
-      setInterval(() => fetchLocationWeather(false), 30000); 
+      setInterval(() => fetchLocationWeather(false), 10000); 
       setInterval(updateWeatherUI, 2000);    
-      startGpsTracking(); // GPS 추적 개시
+      startGpsTracking(); 
     });
 
     function drawSpeedometer(speedKts = 0, speedKmh = 0) {
@@ -1654,9 +1629,6 @@
       ctx.fill();
     }
 
-    // =============================================================
-    // [한글 방향 변환 함수] 영문 방위(N, NE 등)를 한글(북, 북동 등)로 변환
-    // =============================================================
     function getHeadingDirectionText(deg) {
       const koreanDirs = ['북', '북북동', '북동', '동북동', '동', '동남동', '남동', '남남동', '남', '남남서', '남서', '서남서', '서', '서북서', '북서', '북북서'];
       
@@ -1858,9 +1830,7 @@
     }
 
     function updateOnlineShipBadges() {
-      if (isFirebaseReady) {
-        // firebase 온라인 선박 정보 갱신 레이어
-      }
+      if (isFirebaseReady) {}
     }
 
     function startTracking() {
@@ -2143,7 +2113,7 @@
       const guide = document.getElementById('status-guide-text');
       if (guide) {
         guide.className = "guide-text";
-        guide.innerText = "[상태] 진주 남강 수역 실시간 연동 완료 - 안전 운항하세요.";
+        guide.innerText = "[상태] 물빛나루쉼터·망진나루 수역 실시간 연동 완료 - 안전 운항하세요.";
       }
     }
 
@@ -2253,7 +2223,7 @@
     setInterval(updateClock, 1000);
 
     const MPS_TO_KTS = 1.943844;
-    const KM_TO_NM = 0.539957; // 1 km = 0.539957 해리(Nautical Mile)
+    const KM_TO_NM = 0.539957; 
 
     function getDistanceInKm(lat1, lon1, lat2, lon2) {
       if (!lat1 || !lon1 || !lat2 || !lon2) return 0;
@@ -2340,7 +2310,7 @@
       icon: createMyShipIcon(currentShipName, currentSpeedKts),
       draggable: true,
       zIndexOffset: 1000
-    }).addTo(map).bindPopup("<b>현재 내 위치</b>");
+    }).addTo(map).bindPopup("<b>현재 내 위치 (물빛나루쉼터·망진나루 수역)</b>");
 
     trackPolyline = L.polyline([], { color: '#ff4d4d', weight: 5, opacity: 0.85 }).addTo(map);
 
@@ -2541,9 +2511,6 @@
       }
     }
 
-    // =============================================================
-    // [GPS 위치 수신 로직 보강] 위치 권한 확보 및 실시간 추적
-    // =============================================================
     function handlePositionUpdate(position) {
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
@@ -2621,7 +2588,7 @@
 
       const guide = document.getElementById('status-guide-text');
       if (guide && !guide.classList.contains('warning-alert') && !guide.classList.contains('safe-alert')) {
-        guide.innerText = "[상태] GPS 연동 완료 - 실시간 안전 운항 중";
+        guide.innerText = "[상태] 물빛나루쉼터·망진나루 수역 연동 완료 - 실시간 안전 운항 중";
       }
 
       if (isFirstGps) {
@@ -2651,8 +2618,8 @@
       const coords = document.getElementById('gps-coords');
       
       let errMsg = "GPS 신호를 찾을 수 없습니다.";
-      if (err.code === 1) errMsg = "GPS 위치 권한이 거부되었습니다. (브라우저 설정 확인)";
-      else if (err.code === 2) errMsg = "위치 정보를 이용할 수 없습니다. (위치 서비스 ON 필요)";
+      if (err.code === 1) errMsg = "GPS 위치 권한이 거부되었습니다.";
+      else if (err.code === 2) errMsg = "위치 정보를 이용할 수 없습니다.";
       else if (err.code === 3) errMsg = "GPS 신호 수신 시간이 초과되었습니다.";
 
       if (guide) {
@@ -2666,14 +2633,12 @@
 
     function startGpsTracking() {
       if (navigator.geolocation) {
-        // 1. 단발성 위치 확인으로 위치 권한 획득 촉진
         navigator.geolocation.getCurrentPosition(
           (pos) => handlePositionUpdate(pos),
           (err) => handleGpsError(err),
           { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
         );
 
-        // 2. 지속적인 실시간 좌표 추적
         navigator.geolocation.watchPosition(
           (pos) => handlePositionUpdate(pos),
           (err) => handleGpsError(err),
@@ -2722,7 +2687,7 @@
           badgesHtml += `<span class="${badgeClass}">🚢 ${name} (${shipInfo.tripStatus || '운항 중'})</span>`;
 
           if (!isMe) {
-            const pos = [shipInfo.lat || 35.1880, shipInfo.lng || 128.0838];
+            const pos = [shipInfo.lat || 35.1885, shipInfo.lng || 128.0832];
             const sKts = shipInfo.speedKts || 0;
             const otherIcon = L.divIcon({
               className: '',
@@ -2802,7 +2767,7 @@
       } else {
         if (guide && guide.classList.contains('warning-alert')) {
           guide.className = "guide-text";
-          guide.innerText = "[상태] 진주 남강 수역 실시간 연동 완료 - 안전 운항하세요.";
+          guide.innerText = "[상태] 물빛나루쉼터·망진나루 수역 실시간 연동 완료 - 안전 운항하세요.";
         }
       }
     }
@@ -2922,7 +2887,7 @@
 
       setTimeout(() => {
         if (!modalMap) {
-          modalMap = L.map('modal-map', { zoomControl: false, attributionControl: false }).setView([35.1880, 128.0838], 15);
+          modalMap = L.map('modal-map', { zoomControl: false, attributionControl: false }).setView([35.1885, 128.0832], 15);
           L.tileLayer('https://xdworld.vworld.kr/2d/Base/service/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(modalMap);
         } else {
           modalMap.invalidateSize();
