@@ -960,7 +960,7 @@
             <canvas id="speedometer" width="400" height="400"></canvas>
           </div>
 
-          <!-- 7시: 그래픽 나침반 방향계 ( SVG 내부 글자도 북, 남, 동, 서로 변경 ) -->
+          <!-- 7시: 그래픽 나침반 방향계 (한글 동서남북 적용) -->
           <div class="corner-card">
             <div class="corner-title">🧭 방향계 (Compass)</div>
             <div class="compass-container">
@@ -979,7 +979,7 @@
                 </g>
               </svg>
               <div>
-                <div class="corner-value" id="val-heading">180° 남서</div>
+                <div class="corner-value" id="val-heading">180° 남</div>
                 <div class="corner-sub" id="sub-heading-info">방위각: 180.0°</div>
               </div>
             </div>
@@ -1050,7 +1050,7 @@
     <!-- 우측 GIS 및 지도 패널 -->
     <div class="panel data-panel">
       <div class="status-display-box">
-        <div class="guide-text" id="status-guide-text">[상태] 진주 남강 수역 실시간 연동 완료 - 안전 운항하세요.</div>
+        <div class="guide-text" id="status-guide-text">[상태] GPS 신호 수신 대기 중...</div>
       </div>
 
       <div class="route-control-bar" style="flex-wrap: nowrap; overflow-x: auto; gap: 8px; justify-content: flex-start;">
@@ -1092,7 +1092,7 @@
         </div>
         <div class="info-card">
           <div class="info-label">GPS 좌표</div>
-          <div class="info-value" id="gps-coords" style="font-size: 1.05rem;">GPS 수신 중...</div>
+          <div class="info-value" id="gps-coords" style="font-size: 1.05rem;">GPS 탐색 중...</div>
         </div>
         <div class="info-card">
           <div class="info-label">이동 거리</div>
@@ -1337,7 +1337,7 @@
     }
 
     // =============================================================
-    // [기상 데이터 연동 및 동적 UI 변경 로직]
+    // [기상 데이터 연동 및 동적 UI 변경 로직 - 날씨 및 풍속/풍향 수정]
     // =============================================================
     let rawWindSpeedMs = 0.8;
     let rawWindDirDeg = 180;
@@ -1352,6 +1352,10 @@
     let lastFetchedLng = null;
     let isWeatherOverride = false; // 현장 수동 보정 모드 여부
 
+    // =============================================================
+    // [현장 보정 순환: 날씨 + 풍속/풍향 동시 수정]
+    // 맑음(1.2 m/s) -> 흐림(4.5 m/s) -> 비(8.2 m/s)
+    // =============================================================
     function toggleOverrideWeather() {
       isWeatherOverride = !isWeatherOverride;
       const btn = document.getElementById('btn-override-toggle');
@@ -1360,23 +1364,34 @@
         btn.style.background = "#2ea043";
         btn.style.color = "#ffffff";
         
-        // 현장 보정 버튼 클릭 시 상태 변경 (맑음 -> 비/강수 -> 흐림 -> 맑음 순환 테스트)
+        // 날씨 및 풍속/풍향 동시 변경 처리
         if (currentWeatherText === "맑음") {
-          currentWeatherText = "비 / 강수";
-          rawPrecipitation = 3.5; 
-        } else if (currentWeatherText.includes("비")) {
           currentWeatherText = "흐림 / 구름많음";
           rawCloudCover = 85;
           rawPrecipitation = 0.0;
+          rawWindSpeedMs = 4.5;   // 약 8.7 Kts
+          rawWindDirDeg = 225;    // 남서풍
+          rawTemp = 17.5;
+          rawHumidity = 85;
+        } else if (currentWeatherText.includes("흐림") || currentWeatherText.includes("구름")) {
+          currentWeatherText = "비 / 강수";
+          rawPrecipitation = 3.5; 
+          rawCloudCover = 100;
+          rawWindSpeedMs = 8.2;   // 약 15.9 Kts (강풍)
+          rawWindDirDeg = 315;    // 북서풍
+          rawTemp = 15.0;
+          rawHumidity = 95;
         } else {
           currentWeatherText = "맑음";
           rawUvIndex = 7.8;
           rawPrecipitation = 0.0;
+          rawCloudCover = 20;
+          rawWindSpeedMs = 1.2;   // 약 2.3 Kts (미풍)
+          rawWindDirDeg = 180;    // 남풍
+          rawTemp = 19.5;
+          rawHumidity = 65;
         }
 
-        rawWindSpeedMs = 1.2;
-        rawTemp = 17.5;
-        rawHumidity = 90;
         updateWeatherUI();
       } else {
         btn.innerText = "API 연동 중";
@@ -1491,6 +1506,7 @@
       fetchLocationWeather(true);
       setInterval(() => fetchLocationWeather(false), 30000); 
       setInterval(updateWeatherUI, 2000);    
+      startGpsTracking(); // GPS 추적 개시
     });
 
     function drawSpeedometer(speedKts = 0, speedKmh = 0) {
@@ -1642,12 +1658,9 @@
     // [한글 방향 변환 함수] 영문 방위(N, NE 등)를 한글(북, 북동 등)로 변환
     // =============================================================
     function getHeadingDirectionText(deg) {
-      // 16방위 기준 한글 명칭 정의 (0도 북쪽 기준 시계 방향)
-      // N, NNE, NE, ENE, E, ESE, SE, SSE, S, SSW, SW, WSW, W, WNW, NW, NNW
       const koreanDirs = ['북', '북북동', '북동', '동북동', '동', '동남동', '남동', '남남동', '남', '남남서', '남서', '서남서', '서', '서북서', '북서', '북북서'];
       
       const normalizedDeg = (deg + 360) % 360;
-      // 360도를 16등분 (22.5도 단위)
       const index = Math.round(normalizedDeg / 22.5) % 16;
       
       const needle = document.getElementById('compass-needle');
@@ -2528,105 +2541,148 @@
       }
     }
 
-    if (navigator.geolocation) {
-      navigator.geolocation.watchPosition((position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        const currentTime = position.timestamp || Date.now();
-        let speedMps = position.coords.speed;
-        const heading = position.coords.heading;
+    // =============================================================
+    // [GPS 위치 수신 로직 보강] 위치 권한 확보 및 실시간 추적
+    // =============================================================
+    function handlePositionUpdate(position) {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      const currentTime = position.timestamp || Date.now();
+      let speedMps = position.coords.speed;
+      const heading = position.coords.heading;
 
-        if ((speedMps === null || speedMps === undefined || speedMps === 0) && lastLat !== null && lastGpsTime !== null) {
-          const distMeters = getDistanceInMeters(lastLat, lastLng, lat, lng);
-          const timeDiffSec = (currentTime - lastGpsTime) / 1000;
-          if (timeDiffSec > 0) {
-            speedMps = distMeters / timeDiffSec;
+      if ((speedMps === null || speedMps === undefined || speedMps === 0) && lastLat !== null && lastGpsTime !== null) {
+        const distMeters = getDistanceInMeters(lastLat, lastLng, lat, lng);
+        const timeDiffSec = (currentTime - lastGpsTime) / 1000;
+        if (timeDiffSec > 0) {
+          speedMps = distMeters / timeDiffSec;
+        }
+      }
+
+      lastLat = lat;
+      lastLng = lng;
+      lastGpsTime = currentTime;
+
+      actualGpsLat = lat;
+      actualGpsLng = lng;
+      isGpsActive = true;
+
+      if (!isCalibratedMode) {
+        currentLat = lat;
+        currentLng = lng;
+      }
+
+      fetchLocationWeather(false);
+
+      if (speedMps !== null && speedMps !== undefined && !isNaN(speedMps)) {
+        currentSpeedKts = speedMps * MPS_TO_KTS;
+        currentSpeedKmh = currentSpeedKts * 1.852;
+      } else {
+        currentSpeedKts = 0;
+        currentSpeedKmh = 0;
+      }
+
+      if (typeof heading === 'number' && !isNaN(heading)) {
+        currentHeading = heading;
+      } else if (lastLat !== null && lastLng !== null) {
+        currentHeading = calculateBearing(lastLat, lastLng, currentLat, currentLng);
+      }
+
+      const speedDisplay = document.getElementById('dual-speed-display');
+      if (speedDisplay) {
+        speedDisplay.innerText = `${currentSpeedKmh.toFixed(1)} km/h (${currentSpeedKts.toFixed(1)} Kts)`;
+      }
+      drawSpeedometer(currentSpeedKts, currentSpeedKmh);
+
+      if (isDrivingStarted) {
+        tripSpeedList.push(currentSpeedKts);
+        if (currentSpeedKts > tripMaxSpeed) tripMaxSpeed = currentSpeedKts;
+
+        const lastPt = trackPoints[trackPoints.length - 1];
+        if (!lastPt || getDistanceInMeters(lastPt[0], lastPt[1], currentLat, currentLng) > 5) {
+          if (lastPt) {
+            totalTrackDistKm += getDistanceInKm(lastPt[0], lastPt[1], currentLat, currentLng);
+          }
+          trackPoints.push([currentLat, currentLng]);
+          if (trackPolyline) trackPolyline.setLatLngs(trackPoints);
+
+          const distEl = document.getElementById('track-distance');
+          if (distEl) {
+            const totalNm = totalTrackDistKm * KM_TO_NM;
+            distEl.innerText = `${totalTrackDistKm.toFixed(2)} km (${totalNm.toFixed(2)} NM)`;
           }
         }
+        checkAutoStop(currentSpeedKts);
+      }
 
-        lastLat = lat;
-        lastLng = lng;
-        lastGpsTime = currentTime;
+      document.getElementById('gps-coords').innerText = `${currentLat.toFixed(5)}, ${currentLng.toFixed(5)}`;
+      shipMarker.setLatLng([currentLat, currentLng]);
+      shipMarker.setIcon(createMyShipIcon(currentShipName, currentSpeedKts));
 
-        actualGpsLat = lat;
-        actualGpsLng = lng;
-        isGpsActive = true;
+      const guide = document.getElementById('status-guide-text');
+      if (guide && !guide.classList.contains('warning-alert') && !guide.classList.contains('safe-alert')) {
+        guide.innerText = "[상태] GPS 연동 완료 - 실시간 안전 운항 중";
+      }
 
-        if (!isCalibratedMode) {
-          currentLat = lat;
-          currentLng = lng;
-        }
+      if (isFirstGps) {
+        map.setView([currentLat, currentLng], 16);
+        isFirstGps = false;
+        fetchLocationWeather(true);
+      }
 
-        fetchLocationWeather(false);
+      if (mapMode === 0) {
+        map.panTo([currentLat, currentLng], { animate: true });
+        setMapBearingSafe(-currentHeading);
+      } else if (mapMode === 1) {
+        map.panTo([currentLat, currentLng], { animate: true });
+        setMapBearingSafe(0);
+      }
 
-        if (speedMps !== null && speedMps !== undefined && !isNaN(speedMps)) {
-          currentSpeedKts = speedMps * MPS_TO_KTS;
-          currentSpeedKmh = currentSpeedKts * 1.852;
-        } else {
-          currentSpeedKts = 0;
-          currentSpeedKmh = 0;
-        }
+      getHeadingDirectionText(currentHeading);
 
-        if (typeof heading === 'number' && !isNaN(heading)) {
-          currentHeading = heading;
-        } else if (lastLat !== null && lastLng !== null) {
-          currentHeading = calculateBearing(lastLat, lastLng, currentLat, currentLng);
-        }
+      updateRemainingDistance();
+      checkGeofenceAndCollisions();
+      broadcastMyLocation();
+    }
 
-        const speedDisplay = document.getElementById('dual-speed-display');
-        if (speedDisplay) {
-          speedDisplay.innerText = `${currentSpeedKmh.toFixed(1)} km/h (${currentSpeedKts.toFixed(1)} Kts)`;
-        }
-        drawSpeedometer(currentSpeedKts, currentSpeedKmh);
+    function handleGpsError(err) {
+      console.warn("GPS 수신 오류:", err.message);
+      const guide = document.getElementById('status-guide-text');
+      const coords = document.getElementById('gps-coords');
+      
+      let errMsg = "GPS 신호를 찾을 수 없습니다.";
+      if (err.code === 1) errMsg = "GPS 위치 권한이 거부되었습니다. (브라우저 설정 확인)";
+      else if (err.code === 2) errMsg = "위치 정보를 이용할 수 없습니다. (위치 서비스 ON 필요)";
+      else if (err.code === 3) errMsg = "GPS 신호 수신 시간이 초과되었습니다.";
 
-        if (isDrivingStarted) {
-          tripSpeedList.push(currentSpeedKts);
-          if (currentSpeedKts > tripMaxSpeed) tripMaxSpeed = currentSpeedKts;
+      if (guide) {
+        guide.className = "guide-text warning-alert";
+        guide.innerText = `[⚠️ GPS 오류] ${errMsg}`;
+      }
+      if (coords) {
+        coords.innerText = "GPS 수신 실패";
+      }
+    }
 
-          const lastPt = trackPoints[trackPoints.length - 1];
-          if (!lastPt || getDistanceInMeters(lastPt[0], lastPt[1], currentLat, currentLng) > 5) {
-            if (lastPt) {
-              totalTrackDistKm += getDistanceInKm(lastPt[0], lastPt[1], currentLat, currentLng);
-            }
-            trackPoints.push([currentLat, currentLng]);
-            if (trackPolyline) trackPolyline.setLatLngs(trackPoints);
+    function startGpsTracking() {
+      if (navigator.geolocation) {
+        // 1. 단발성 위치 확인으로 위치 권한 획득 촉진
+        navigator.geolocation.getCurrentPosition(
+          (pos) => handlePositionUpdate(pos),
+          (err) => handleGpsError(err),
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
 
-            const distEl = document.getElementById('track-distance');
-            if (distEl) {
-              const totalNm = totalTrackDistKm * KM_TO_NM;
-              distEl.innerText = `${totalTrackDistKm.toFixed(2)} km (${totalNm.toFixed(2)} NM)`;
-            }
-          }
-          checkAutoStop(currentSpeedKts);
-        }
-
-        document.getElementById('gps-coords').innerText = `${currentLat.toFixed(5)}, ${currentLng.toFixed(5)}`;
-        shipMarker.setLatLng([currentLat, currentLng]);
-        shipMarker.setIcon(createMyShipIcon(currentShipName, currentSpeedKts));
-
-        if (isFirstGps) {
-          map.setView([currentLat, currentLng], 16);
-          isFirstGps = false;
-          fetchLocationWeather(true);
-        }
-
-        if (mapMode === 0) {
-          map.panTo([currentLat, currentLng], { animate: true });
-          setMapBearingSafe(-currentHeading);
-        } else if (mapMode === 1) {
-          map.panTo([currentLat, currentLng], { animate: true });
-          setMapBearingSafe(0);
-        }
-
-        getHeadingDirectionText(currentHeading);
-
-        updateRemainingDistance();
-        checkGeofenceAndCollisions();
-        broadcastMyLocation();
-
-      }, (err) => {
-        console.warn("GPS 수신 오류 또는 권한 거부:", err.message);
-      }, { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 });
+        // 2. 지속적인 실시간 좌표 추적
+        navigator.geolocation.watchPosition(
+          (pos) => handlePositionUpdate(pos),
+          (err) => handleGpsError(err),
+          { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 }
+        );
+      } else {
+        const guide = document.getElementById('status-guide-text');
+        if (guide) guide.innerText = "[⚠️ 오류] 이 기기/브라우저는 GPS를 지원하지 않습니다.";
+      }
     }
 
     function broadcastMyLocation() {
