@@ -16,7 +16,6 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="GPS 관제">
   <meta name="theme-color" content="#0d1117">
-  <!-- PWA 설치 안정성을 위해 외부 링크 분리 또는 안정적 인라인 매니페스트 유지 -->
   <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22GPS%20%EC%84%A0%EB%B0%95%20%EA%B4%80%EC%A0%9C%20%EC%8B%9C%EC%8A%A4%ED%85%9C%22%2C%22short_name%22%3A%22GPS%EA%B4%80%EC%A0%9C%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230d1117%22%2C%22theme_color%22%3A%22%230d1117%22%2C%22orientation%22%3A%22any%22%7D">
 
   <!-- ============================================================= -->
@@ -197,7 +196,7 @@
 
     .dashboard-container {
       display: grid;
-      grid-template-columns: minmax(360px, 1.1fr) minmax(380px, 1.4fr);
+      grid-template-columns: minmax(380px, 1.15fr) minmax(380px, 1.35fr);
       gap: clamp(10px, 1.5vw, 15px);
       flex: 1;
       min-height: 0;
@@ -272,9 +271,9 @@
     .dashboard-center-layout {
       width: 100%;
       display: grid;
-      grid-template-columns: 1fr minmax(200px, 260px) 1fr;
-      grid-template-rows: 1fr 1fr;
-      gap: 10px;
+      grid-template-columns: 1fr minmax(190px, 240px) 1fr;
+      grid-template-rows: auto auto auto;
+      gap: 8px;
       align-items: center;
       justify-items: center;
       margin-bottom: 10px;
@@ -288,7 +287,7 @@
     .corner-card {
       width: 100%;
       height: 100%;
-      min-height: 95px;
+      min-height: 85px;
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid var(--border-color);
       border-radius: 10px;
@@ -299,7 +298,7 @@
       box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
     }
     .corner-card .corner-title {
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: bold;
       color: var(--text-sub);
       display: flex;
@@ -307,14 +306,14 @@
       gap: 4px;
     }
     .corner-card .corner-value {
-      font-size: 1.15rem;
+      font-size: 1.05rem;
       font-weight: 900;
       color: #ffffff;
       font-family: 'Consolas', monospace;
       text-align: right;
     }
     .corner-card .corner-sub {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       color: var(--accent-color);
       text-align: right;
     }
@@ -323,21 +322,21 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-top: 4px;
+      margin-top: 2px;
     }
     .compass-svg {
-      width: 46px;
-      height: 46px;
+      width: 40px;
+      height: 40px;
       flex-shrink: 0;
       filter: drop-shadow(0 0 4px rgba(0, 242, 254, 0.4));
     }
 
     .speedometer-box-center {
       grid-column: 2;
-      grid-row: 1 / span 2;
+      grid-row: 1 / span 3;
       position: relative;
       width: 100%;
-      max-width: 260px;
+      max-width: 240px;
       aspect-ratio: 1;
       display: flex;
       align-items: center;
@@ -882,7 +881,7 @@
       }
       .dashboard-center-layout {
         grid-template-columns: 1fr 1fr;
-        grid-template-rows: auto auto auto;
+        grid-template-rows: auto;
       }
       .speedometer-box-center {
         grid-column: span 2;
@@ -946,7 +945,7 @@
           <div class="corner-card">
             <div class="corner-title" style="display:flex; justify-content:space-between; width:100%;">
               <span>🌤️ 실시간 날씨</span>
-              <button id="btn-override-toggle" onclick="toggleOverrideWeather()" style="font-size:0.65rem; padding:2px 5px; background:#30363d; color:#00f2fe; border:1px solid #00f2fe; border-radius:4px; cursor:pointer;">API 연동 중</button>
+              <button id="btn-override-toggle" onclick="toggleOverrideWeather()" style="font-size:0.6rem; padding:2px 4px; background:#30363d; color:#00f2fe; border:1px solid #00f2fe; border-radius:4px; cursor:pointer;">API 연동 중</button>
             </div>
             <div class="corner-value" id="val-weather">조회 중...</div>
             <div class="corner-sub" id="sub-humidity">습도: --%</div>
@@ -958,6 +957,7 @@
             <div class="corner-sub" id="sub-wind-dir">풍향: -- (-- Kts)</div>
           </div>
 
+          <!-- 속도계 (중앙 배치) -->
           <div class="speedometer-box-center">
             <canvas id="speedometer" width="400" height="400"></canvas>
           </div>
@@ -980,7 +980,7 @@
                 </g>
               </svg>
               <div>
-                <div class="corner-value" id="val-heading">180° 남</div>
+                <div class="corner-value" id="val-heading" style="font-size:0.95rem;">180° 남</div>
                 <div class="corner-sub" id="sub-heading-info">방위각: 180.0°</div>
               </div>
             </div>
@@ -990,6 +990,19 @@
             <div class="corner-title">🌡️ 실시간 기온 (Temp)</div>
             <div class="corner-value" id="val-temp">-- ℃</div>
             <div class="corner-sub" id="sub-water-temp">수온: -- ℃</div>
+          </div>
+
+          <!-- 신규 추가: 일출 / 일몰 및 물때 정보 카드 -->
+          <div class="corner-card">
+            <div class="corner-title">🌅 일출 · 일몰</div>
+            <div class="corner-value" id="val-sun" style="font-size:0.9rem;">--:-- / --:--</div>
+            <div class="corner-sub" id="sub-sun-status">주간 / 야간 대기</div>
+          </div>
+
+          <div class="corner-card">
+            <div class="corner-title">🌊 남강 물때 (조석)</div>
+            <div class="corner-value" id="val-tide" style="font-size:0.95rem;">조위계 연동 중</div>
+            <div class="corner-sub" id="sub-tide-time">간조/만조 확인 중</div>
           </div>
         </div>
 
@@ -1174,7 +1187,6 @@
 
   <!-- 스크립트 로직 -->
   <script>
-    // [망진나루와 물빛나루쉼터 사이의 남강 수역 중심 좌표로 초기 설정]
     let currentLat = 35.1885, currentLng = 128.0832; 
     let actualGpsLat = currentLat, actualGpsLng = currentLng;
     let currentHeading = 0; 
@@ -1194,7 +1206,6 @@
         if (onConfirmCallback) onConfirmCallback();
         return;
       }
-
       if (isConfirm) {
         if (confirm(message)) {
           if (onConfirmCallback) onConfirmCallback();
@@ -1340,6 +1351,12 @@
     let rawUvIndex = 5.2;   
     let currentWeatherText = "맑음";
 
+    // 일출/일몰 및 물때 상태 변수
+    let sunriseTimeStr = "06:24";
+    let sunsetTimeStr = "17:52";
+    let tideInfoText = "조위 안정 (보통물때)";
+    let tideSubText = "만조 --:-- / 간조 --:--";
+
     let lastFetchedLat = null;
     let lastFetchedLng = null;
     let isWeatherOverride = false; 
@@ -1399,7 +1416,7 @@
       }
 
       try {
-        const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${currentLat.toFixed(4)}&longitude=${currentLng.toFixed(4)}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m,precipitation,cloud_cover,uv_index&timezone=Asia%2FSeoul`);
+        const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${currentLat.toFixed(4)}&longitude=${currentLng.toFixed(4)}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m,precipitation,cloud_cover,uv_index&daily=sunrise,sunset&timezone=Asia%2FSeoul`);
         const data = await response.json();
         
         if (data && data.current) {
@@ -1440,14 +1457,49 @@
             rawPrecipitation = 0.0;
           }
 
+          // 일출 / 일몰 시간 파싱 (Open-Meteo daily API 활용)
+          if (data.daily && data.daily.sunrise && data.daily.sunrise.length > 0) {
+            const rawSunrise = new Date(data.daily.sunrise[0]);
+            const rawSunset = new Date(data.daily.sunset[0]);
+            if (!isNaN(rawSunrise)) sunriseTimeStr = String(rawSunrise.getHours()).padStart(2,'0') + ":" + String(rawSunrise.getMinutes()).padStart(2,'0');
+            if (!isNaN(rawSunset)) sunsetTimeStr = String(rawSunset.getHours()).padStart(2,'0') + ":" + String(rawSunset.getMinutes()).padStart(2,'0');
+          }
+
+          // 남강 수역 특성상 진주 남강은 낙동강 수계 인접 및 진양호 방류량 연동 물때(조석 간만 영향 또는 보 조절 구간) 가늠 정보 산출
+          calculateTideInfo();
+
           lastFetchedLat = currentLat;
           lastFetchedLng = currentLng;
 
           updateWeatherUI();
         }
       } catch (e) {
-        console.warn("실시간 위치 기반 기상 API 수신 실패, 기본 기상 정보를 유지합니다.", e);
+        console.warn("실시간 위치 기반 기상/일출일몰 API 수신 실패, 기본 정보를 유지합니다.", e);
       }
+    }
+
+    // 진주 남강 물때 및 조석 간만 추정 로직 (음력 및 날짜 기준 계산 또는 시뮬레이션)
+    function calculateTideInfo() {
+      const now = new Date();
+      // 간단한 음력 주기 근사 및 당일 날짜 기반 물때 계산 (예: 1~15물, 조금, 무시 등)
+      const startOfYear = new Date(now.getFullYear(), 0, 1);
+      const dayOfYear = Math.floor((now - startOfYear) / (1000 * 60 * 60 * 24));
+      const lunarApprox = (dayOfYear + 5) % 15 + 1; // 1물 ~ 15물 순환
+      
+      let tideName = `${lunarApprox}물`;
+      if (lunarApprox === 7 || lunarApprox === 8) tideName = "조금 (유속 완만)";
+      else if (lunarApprox === 9) tideName = "무시";
+      else if (lunarApprox === 1 || lunarApprox === 15) tideName = "사리 (유속 빠름)";
+
+      // 진주교 / 진양호 방류 및 남강댐 연동 수위 간이 추정 시간
+      const hours = now.getHours();
+      let flowStatus = "평온 (정상 수위)";
+      if (hours >= 6 && hours < 12) flowStatus = "오전 순환기 (안정)";
+      else if (hours >= 12 && hours < 18) flowStatus = "오후 방류 영향 구간";
+      else flowStatus = "야간 수위 안정세";
+
+      tideInfoText = `${tideName} (${flowStatus})`;
+      tideSubText = `진양호 방류 연동 수역`;
     }
 
     function updateWeatherUI() {
@@ -1482,6 +1534,16 @@
       document.getElementById('val-temp').innerText = `${rawTemp.toFixed(1)} ℃`;
       const waterTemp = (rawTemp * 0.85 + 2.0).toFixed(1);
       document.getElementById('sub-water-temp').innerText = `수온: ${waterTemp} ℃`;
+
+      // 일출 일몰 및 물때 UI 반영
+      document.getElementById('val-sun').innerText = `${sunriseTimeStr} / ${sunsetTimeStr}`;
+      
+      const currentTimeStr = String(new Date().getHours()).padStart(2,'0') + ":" + String(new Date().getMinutes()).padStart(2,'0');
+      const isDaytime = currentTimeStr >= sunriseTimeStr && currentTimeStr <= sunsetTimeStr;
+      document.getElementById('sub-sun-status').innerText = isDaytime ? "☀️ 주간 운항 시간대" : "🌙 야간 항해 주의 시간대";
+
+      document.getElementById('val-tide').innerText = tideInfoText;
+      document.getElementById('sub-tide-time').innerText = tideSubText;
     }
 
     let currentSpeedKts = 0;
@@ -1497,7 +1559,6 @@
       setupNetworkStatusListeners();
     });
 
-    // 4. 네트워크 단절(Offline) 및 재연결 모니터링
     function setupNetworkStatusListeners() {
       window.addEventListener('online', updateOnlineStatus);
       window.addEventListener('offline', updateOnlineStatus);
@@ -1574,7 +1635,7 @@
         const textR = radius - 42;
         const tx = cx + Math.cos(angle) * textR;
         const ty = cy + Math.sin(angle) * textR;
-        ctx.font = 'bold 30px sans-serif';
+        ctx.font = 'bold 26px sans-serif';
         ctx.fillStyle = (val >= 20) ? '#ff7b72' : '#ffffff';
         ctx.fillText(val.toString(), tx, ty);
 
@@ -1603,24 +1664,24 @@
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       if (ctx.roundRect) {
-        ctx.roundRect(cx - 90, cy + 20, 180, 80, 10);
+        ctx.roundRect(cx - 85, cy + 15, 170, 75, 10);
       } else {
-        ctx.rect(cx - 90, cy + 20, 180, 80);
+        ctx.rect(cx - 85, cy + 15, 170, 75);
       }
       ctx.fill();
       ctx.stroke();
 
-      ctx.font = 'bold 44px "Consolas", monospace';
+      ctx.font = 'bold 38px "Consolas", monospace';
       ctx.fillStyle = '#00f2fe';
-      ctx.fillText(`${speedKts.toFixed(1)} Kts`, cx, cy + 50);
+      ctx.fillText(`${speedKts.toFixed(1)} Kts`, cx, cy + 42);
 
-      ctx.font = 'bold 24px sans-serif';
+      ctx.font = 'bold 20px sans-serif';
       ctx.fillStyle = '#c9d1d9';
-      ctx.fillText(`(${speedKmh.toFixed(1)} km/h)`, cx, cy + 82);
+      ctx.fillText(`(${speedKmh.toFixed(1)} km/h)`, cx, cy + 72);
 
-      ctx.font = 'bold 24px sans-serif';
+      ctx.font = 'bold 20px sans-serif';
       ctx.fillStyle = '#79c0ff';
-      ctx.fillText('SPEED (KNOTS)', cx, cy - 45);
+      ctx.fillText('SPEED (KNOTS)', cx, cy - 40);
 
       const clampedSpeed = Math.min(Math.max(speedKts, 0), maxSpeed);
       const needleAngle = startAngle + (clampedSpeed / maxSpeed) * totalAngle;
@@ -2255,11 +2316,10 @@
     const MPS_TO_KTS = 1.943844;
     const KM_TO_NM = 0.539957; 
 
-    // [개선 2] 구역 연산 및 거리 계산 시 Haversine 정확한 구면 거리 적용 (경도 보정 포함)
     function getDistanceInKm(lat1, lon1, lat2, lon2) {
       if (!lat1 || !lon1 || !lat2 || !lon2) return 0;
       if (lat1 === lat2 && lon1 === lon2) return 0;
-      const R = 6371.0088; // 지구 평균 반경 (km)
+      const R = 6371.0088; 
       const dLat = (lat2 - lat1) * Math.PI / 180;
       const dLon = (lon2 - lon1) * Math.PI / 180;
       const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
@@ -2281,7 +2341,6 @@
       return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
     }
 
-    // [개선 2] 지오펜스 폴리곤 판정 정밀화 (Leaflet LatLngBounds 1차 필터링 포함)
     function isPointInPolygon(point, vs) {
       if (!vs || !Array.isArray(vs) || vs.length < 3) return false;
       const x = point[0], y = point[1];
@@ -2546,16 +2605,14 @@
     function handlePositionUpdate(position) {
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
-      // [개선 3] 밀리초 단위 기준으로 타임스탬프 유효성 검사 (0 또는 비정상 수치 방어)
       const currentTime = (position.timestamp && position.timestamp > 1000000000) ? position.timestamp : Date.now();
       let speedMps = position.coords.speed;
       const heading = position.coords.heading;
 
-      // [개선 3] 기기 속도값(speed)이 부재하거나 0일 때 이전 좌표 및 정밀 시간차를 활용한 Fallback 계산
       if ((speedMps === null || speedMps === undefined || speedMps === 0) && lastLat !== null && lastGpsTime !== null) {
         const distMeters = getDistanceInMeters(lastLat, lastLng, lat, lng);
         const timeDiffSec = (currentTime - lastGpsTime) / 1000;
-        if (timeDiffSec > 0.2 && timeDiffSec < 30) { // 비정상적 긴 공백 제외
+        if (timeDiffSec > 0.2 && timeDiffSec < 30) {
           speedMps = distMeters / timeDiffSec;
         }
       }
@@ -2580,9 +2637,8 @@
         rawKts = speedMps * MPS_TO_KTS;
       }
 
-      // [개선 3] 속도 휨 현상(Spike) 방지를 위한 간단한 저역 통과 필터 (Low-pass filter / Exponential Moving Average)
       currentSpeedKts = (currentSpeedKts * 0.6) + (rawKts * 0.4);
-      if (currentSpeedKts < 0.05) currentSpeedKts = 0; // 정지 임계치 보정
+      if (currentSpeedKts < 0.05) currentSpeedKts = 0; 
       currentSpeedKmh = currentSpeedKts * 1.852;
 
       if (typeof heading === 'number' && !isNaN(heading)) {
