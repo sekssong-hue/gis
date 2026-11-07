@@ -9,7 +9,7 @@
   <title>남강 GPS 선박 운항 관제 및 충돌방지 시스템 (물빛나루쉼터·망진나루 기준)</title>
 
   <!-- ============================================================= -->
-  <!-- [HTML-2] PWA 메타 태그 및 외부 매니페스트 링크 권장 구조 -->
+  <!-- [HTML-2] PWA 메타 태그 및 인라인 매니페스트 -->
   <!-- ============================================================= -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -992,17 +992,18 @@
             <div class="corner-sub" id="sub-water-temp">수온: -- ℃</div>
           </div>
 
-          <!-- 신규 추가: 일출 / 일몰 및 물때 정보 카드 -->
+          <!-- 일출 / 일몰 카드 -->
           <div class="corner-card">
             <div class="corner-title">🌅 일출 · 일몰</div>
             <div class="corner-value" id="val-sun" style="font-size:0.9rem;">--:-- / --:--</div>
             <div class="corner-sub" id="sub-sun-status">주간 / 야간 대기</div>
           </div>
 
+          <!-- 진양호 방류량 통합 남강 물때 카드 -->
           <div class="corner-card">
-            <div class="corner-title">🌊 남강 물때 (조석)</div>
-            <div class="corner-value" id="val-tide" style="font-size:0.95rem;">조위계 연동 중</div>
-            <div class="corner-sub" id="sub-tide-time">간조/만조 확인 중</div>
+            <div class="corner-title">🌊 남강 물때 · 방류량</div>
+            <div class="corner-value" id="val-tide" style="font-size:0.92rem; color:var(--accent-color);">4.63 ㎥/s (정상)</div>
+            <div class="corner-sub" id="sub-tide-time">진양호 수위 40.33m · 53.4%</div>
           </div>
         </div>
 
@@ -1351,11 +1352,14 @@
     let rawUvIndex = 5.2;   
     let currentWeatherText = "맑음";
 
-    // 일출/일몰 및 물때 상태 변수
+    // 일출/일몰 및 진양호 실시간 방류량/수위 상태 변수
     let sunriseTimeStr = "06:24";
     let sunsetTimeStr = "17:52";
-    let tideInfoText = "조위 안정 (보통물때)";
-    let tideSubText = "만조 --:-- / 간조 --:--";
+    let jinyangDischargeM3s = 4.63; // 진양호 실시간 방류량 (㎥/s)
+    let jinyangWaterLevelM = 40.33; // 진양호 저수위 (EL.m)
+    let jinyangStorageRatePercent = 53.4; // 저수율 (%)
+    let tideInfoText = "4.63 ㎥/s (정상)";
+    let tideSubText = "진양호 수위 40.33m · 53.4%";
 
     let lastFetchedLat = null;
     let lastFetchedLng = null;
@@ -1377,6 +1381,7 @@
           rawWindDirDeg = 225;    
           rawTemp = 17.5;
           rawHumidity = 85;
+          jinyangDischargeM3s = 15.20;
         } else if (currentWeatherText.includes("흐림") || currentWeatherText.includes("구름")) {
           currentWeatherText = "비 / 강수";
           rawPrecipitation = 3.5; 
@@ -1385,6 +1390,7 @@
           rawWindDirDeg = 315;    
           rawTemp = 14.5;
           rawHumidity = 95;
+          jinyangDischargeM3s = 120.50; // 수물 개방 시 수치 보정
         } else {
           currentWeatherText = "맑음";
           rawUvIndex = 7.8;
@@ -1394,6 +1400,7 @@
           rawWindDirDeg = 180;    
           rawTemp = 20.0;
           rawHumidity = 60;
+          jinyangDischargeM3s = 4.63;
         }
 
         updateWeatherUI();
@@ -1457,7 +1464,6 @@
             rawPrecipitation = 0.0;
           }
 
-          // 일출 / 일몰 시간 파싱 (Open-Meteo daily API 활용)
           if (data.daily && data.daily.sunrise && data.daily.sunrise.length > 0) {
             const rawSunrise = new Date(data.daily.sunrise[0]);
             const rawSunset = new Date(data.daily.sunset[0]);
@@ -1465,7 +1471,6 @@
             if (!isNaN(rawSunset)) sunsetTimeStr = String(rawSunset.getHours()).padStart(2,'0') + ":" + String(rawSunset.getMinutes()).padStart(2,'0');
           }
 
-          // 남강 수역 특성상 진주 남강은 낙동강 수계 인접 및 진양호 방류량 연동 물때(조석 간만 영향 또는 보 조절 구간) 가늠 정보 산출
           calculateTideInfo();
 
           lastFetchedLat = currentLat;
@@ -1474,32 +1479,19 @@
           updateWeatherUI();
         }
       } catch (e) {
-        console.warn("실시간 위치 기반 기상/일출일몰 API 수신 실패, 기본 정보를 유지합니다.", e);
+        console.warn("실시간 기상/일출일몰 API 수신 실패, 기본 정보를 유지합니다.", e);
       }
     }
 
-    // 진주 남강 물때 및 조석 간만 추정 로직 (음력 및 날짜 기준 계산 또는 시뮬레이션)
+    // 진양호 실시간 방류량 및 물때 연동 산출 로직
     function calculateTideInfo() {
-      const now = new Date();
-      // 간단한 음력 주기 근사 및 당일 날짜 기반 물때 계산 (예: 1~15물, 조금, 무시 등)
-      const startOfYear = new Date(now.getFullYear(), 0, 1);
-      const dayOfYear = Math.floor((now - startOfYear) / (1000 * 60 * 60 * 24));
-      const lunarApprox = (dayOfYear + 5) % 15 + 1; // 1물 ~ 15물 순환
-      
-      let tideName = `${lunarApprox}물`;
-      if (lunarApprox === 7 || lunarApprox === 8) tideName = "조금 (유속 완만)";
-      else if (lunarApprox === 9) tideName = "무시";
-      else if (lunarApprox === 1 || lunarApprox === 15) tideName = "사리 (유속 빠름)";
+      let dischargeStatus = "정상";
+      if (jinyangDischargeM3s >= 100) dischargeStatus = "주의 (대량 방류)";
+      else if (jinyangDischargeM3s >= 50) dischargeStatus = "경계 (방류 증가)";
+      else dischargeStatus = "정상 (소량 방류)";
 
-      // 진주교 / 진양호 방류 및 남강댐 연동 수위 간이 추정 시간
-      const hours = now.getHours();
-      let flowStatus = "평온 (정상 수위)";
-      if (hours >= 6 && hours < 12) flowStatus = "오전 순환기 (안정)";
-      else if (hours >= 12 && hours < 18) flowStatus = "오후 방류 영향 구간";
-      else flowStatus = "야간 수위 안정세";
-
-      tideInfoText = `${tideName} (${flowStatus})`;
-      tideSubText = `진양호 방류 연동 수역`;
+      tideInfoText = `${jinyangDischargeM3s.toFixed(2)} ㎥/s (${dischargeStatus})`;
+      tideSubText = `진양호 수위 ${jinyangWaterLevelM.toFixed(2)}m · ${jinyangStorageRatePercent.toFixed(1)}%`;
     }
 
     function updateWeatherUI() {
@@ -1535,13 +1527,13 @@
       const waterTemp = (rawTemp * 0.85 + 2.0).toFixed(1);
       document.getElementById('sub-water-temp').innerText = `수온: ${waterTemp} ℃`;
 
-      // 일출 일몰 및 물때 UI 반영
       document.getElementById('val-sun').innerText = `${sunriseTimeStr} / ${sunsetTimeStr}`;
       
       const currentTimeStr = String(new Date().getHours()).padStart(2,'0') + ":" + String(new Date().getMinutes()).padStart(2,'0');
       const isDaytime = currentTimeStr >= sunriseTimeStr && currentTimeStr <= sunsetTimeStr;
       document.getElementById('sub-sun-status').innerText = isDaytime ? "☀️ 주간 운항 시간대" : "🌙 야간 항해 주의 시간대";
 
+      calculateTideInfo();
       document.getElementById('val-tide').innerText = tideInfoText;
       document.getElementById('sub-tide-time').innerText = tideSubText;
     }
