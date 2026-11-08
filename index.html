@@ -1553,7 +1553,7 @@
       document.getElementById('val-tide').innerText = tideInfoText;
       
       // 단위 및 순서 개편: 총방류량 m³/s (발전방류량 m³/s / 수문방류량 m³/s)
-      const dischargeText = `${damTotalDischarge.toFixed(1)} m³/s (${damPowerDischarge.toFixed(1)} m³/s / ${damSluiceDischarge.toFixed(1)} m³/s)`;
+      const dischargeText = `${damTotalDischarge.toFixed(1)} m³/s (${damPowerDischarge.toFixed(1)}/ ${damSluiceDischarge.toFixed(1)})`;
       document.getElementById('val-dam-discharge-namgang').innerText = dischargeText;
       document.getElementById('val-dam-discharge-sacheon').innerText = `${damDischargeSacheon.toFixed(1)} m³/s`;
 
