@@ -2,24 +2,24 @@
 <html lang="ko">
 <head>
   <!-- ============================================================= -->
-  <!-- [HTML-1] 메타 설정 및 뷰포트 (모바일 Safe Area 대응) -->
+  <!-- [HTML-1] 硫뷀? ?ㅼ젙 諛?酉고룷??(紐⑤컮??Safe Area ??? -->
   <!-- ============================================================= -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>남강 GPS 선박 운항 관제 및 수문·물때 통합 시스템</title>
+  <title>?④컯 GPS ?좊컯 ?댄빆 愿??諛??④컯???섎Ц쨌臾쇰븣쨌湲곗긽泥?1二쇱씪 ?덈낫 ?듯빀 ?쒖뒪??/title>
 
   <!-- ============================================================= -->
-  <!-- [HTML-2] PWA 메타 태그 및 외부 매니페스트 링크 권장 구조 -->
+  <!-- [HTML-2] PWA 硫뷀? ?쒓렇 諛??몃? 留ㅻ땲?섏뒪??留곹겕 -->
   <!-- ============================================================= -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="GPS 관제">
+  <meta name="apple-mobile-web-app-title" content="GPS 愿??>
   <meta name="theme-color" content="#0d1117">
   <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22GPS%20%EC%84%A0%EB%B0%95%20%EA%B4%80%EC%A0%9C%20%EC%8B%9C%EC%8A%A4%ED%85%9C%22%2C%22short_name%22%3A%22GPS%EA%B4%80%EC%A0%9C%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230d1117%22%2C%22theme_color%22%3A%22%230d1117%22%2C%22orientation%22%3A%22any%22%7D">
 
   <!-- ============================================================= -->
-  <!-- [HTML-3] Leaflet 및 라이브러리 -->
+  <!-- [HTML-3] ?몃? ?쇱씠釉뚮윭由?(Leaflet, FontAwesome, Chart.js, Tailwind, Firebase) -->
   <!-- ============================================================= -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -30,6 +30,30 @@
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+  <!-- Tailwind CSS & FontAwesome & Chart.js -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            weather: {
+              blue: '#2563eb',
+              sky: '#0284c7',
+              dark: '#0f172a',
+              cardDark: '#1e293b',
+              cardBorder: '#334155'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
     :root {
@@ -50,7 +74,7 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: 'Noto Sans KR', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
       -webkit-user-select: none;
@@ -94,7 +118,7 @@
     }
 
     header h1 {
-      font-size: clamp(1.2rem, 2.2vw, 1.6rem);
+      font-size: clamp(1.1rem, 2.0vw, 1.5rem);
       letter-spacing: 1px;
       color: var(--accent-color);
       text-transform: uppercase;
@@ -233,16 +257,18 @@
       border-bottom: 1px solid var(--border-color);
       padding-bottom: 8px;
       flex-shrink: 0;
+      overflow-x: auto;
     }
     .panel-tab-btn {
       flex: 1;
+      min-width: 90px;
       background: #0d1117;
       color: var(--text-sub);
       border: 1px solid var(--border-color);
       border-radius: 8px;
       padding: 8px 4px;
       font-weight: bold;
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       cursor: pointer;
       min-height: 42px;
       transition: all 0.2s ease;
@@ -250,6 +276,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      white-space: nowrap;
     }
     .panel-tab-btn:hover {
       color: #fff;
@@ -272,7 +299,7 @@
       display: flex;
     }
 
-    /* 수문 및 물때 스타일 전용 CSS */
+    /* ?섎Ц 諛?臾쇰븣 ?ㅽ????꾩슜 CSS */
     .env-card-container {
       width: 100%;
       display: flex;
@@ -326,10 +353,31 @@
       transition: width 0.6s ease, background-color 0.6s ease;
     }
 
+    .discharge-group-box {
+      background: rgba(13, 17, 23, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 10px;
+      margin-top: 8px;
+    }
+    .discharge-group-title {
+      font-size: 0.85rem;
+      font-weight: bold;
+      color: #58a6ff;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+    }
+
     .tide-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 8px;
+    }
+    .tide-grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
     }
     .tide-item {
       background: #0d1117;
@@ -339,9 +387,11 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      text-align: center;
     }
     .tide-item .t-lbl { font-size: 0.75rem; color: var(--text-sub); }
-    .tide-item .t-val { font-size: 1.05rem; font-weight: 800; color: #fff; margin-top: 2px; }
+    .tide-item .t-val { font-size: 1.0rem; font-weight: 800; color: #fff; margin-top: 2px; }
+    .tide-item .t-sub-val { font-size: 0.7rem; color: #79c0ff; margin-top: 1px; }
 
     .dashboard-center-layout {
       width: 100%;
@@ -417,10 +467,6 @@
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-    }
-    canvas {
-      width: 100% !important;
-      height: 100% !important;
     }
 
     .clock-and-timer-layout {
@@ -856,7 +902,7 @@
     .modal-close-btn { background: #30363d; color: #fff; }
     .modal-delete-btn { background: var(--accent-red); color: #fff; }
 
-    /* 선박 아이콘 스타일 */
+    /* ?좊컯 ?꾩씠肄??ㅽ???*/
     .my-ship-icon-box, .other-ship-icon {
       display: flex;
       flex-direction: column;
@@ -940,6 +986,14 @@
     }
     .pwa-btn-close { background: transparent; color: var(--text-sub); border: none; padding: 6px; font-size: 1rem; cursor: pointer; }
 
+    /* ??踰덉㎏ ?뚯씪 Glassmorphism / KMA ??쒕낫??而ㅼ뒪? ?ㅽ????듯빀 */
+    .glass-card {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
     @media (max-width: 900px) {
       html, body {
         height: auto;
@@ -967,70 +1021,72 @@
       #map { height: 400px; }
       .modal-grid { grid-template-columns: 1fr 1fr; }
       .modal-card.full-width { grid-column: span 2; }
+      .tide-grid-4 { grid-template-columns: repeat(2, 1fr); }
     }
   </style>
 </head>
 
 <body onclick="initAudioContextOnce()">
-  <!-- 헤더 -->
+  <!-- ?ㅻ뜑 -->
   <header>
-    <h1>남강 GPS 선박 운항 관제 및 충돌방지 시스템 (물빛나루쉼터·망진나루 기준)</h1>
+    <h1>?④컯 GPS ?좊컯 ?댄빆 愿??諛??④컯???섎Ц쨌臾쇰븣쨌湲곗긽泥?1二쇱씪 ?덈낫 ?듯빀 ?쒖뒪??/h1>
   </header> 
 
-  <!-- 선박 선택 바 -->
+  <!-- ?좊컯 ?좏깮 諛?-->
   <div class="ship-select-bar">
     <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
       <div class="ship-select-group">
-        <label for="shipSelect">선박 선택 : </label>
+        <label for="shipSelect">?좊컯 ?좏깮 : </label>
         <select id="shipSelect" onchange="handleShipSelectChange()">
-          <!-- 스크립트에서 동적 로드 -->
+          <!-- ?ㅽ겕由쏀듃?먯꽌 ?숈쟻 濡쒕뱶 -->
         </select>
         
-        <button class="btn-ship-manage add" onclick="addNewShip()" title="새 선박 추가">+ 추가</button>
-        <button class="btn-ship-manage edit" onclick="renameCurrentShip()" title="선박 이름 변경">✏️ 수정</button>
-        <button class="btn-ship-manage delete" onclick="deleteCurrentShip()" title="선박 삭제">🗑️ 삭제</button>
+        <button class="btn-ship-manage add" onclick="addNewShip()" title="???좊컯 異붽?">+ 異붽?</button>
+        <button class="btn-ship-manage edit" onclick="renameCurrentShip()" title="?좊컯 ?대쫫 蹂寃?>?륅툘 ?섏젙</button>
+        <button class="btn-ship-manage delete" onclick="deleteCurrentShip()" title="?좊컯 ??젣">?뿊截???젣</button>
 
-        <button class="btn-op-start" id="btn-ship-start" onclick="startShipOperation()" disabled>운항 등록</button>
-        <button class="btn-op-stop" id="btn-ship-stop" onclick="stopShipOperation()" disabled>운항 해제</button>
+        <button class="btn-op-start" id="btn-ship-start" onclick="startShipOperation()" disabled>?댄빆 ?깅줉</button>
+        <button class="btn-op-stop" id="btn-ship-stop" onclick="stopShipOperation()" disabled>?댄빆 ?댁젣</button>
       </div>
       <div class="online-ships-box">
-        <span class="online-ships-title">온라인 선박 :</span>
+        <span class="online-ships-title">?⑤씪???좊컯 :</span>
         <div id="online-ship-badges" class="online-ship-badges">
-          <span class="ship-badge my-ship">선택 안됨</span>
+          <span class="ship-badge my-ship">?좏깮 ?덈맖</span>
         </div>
       </div>
     </div>
-    <div id="connection-status" style="font-size:0.85rem; font-weight:bold; color:var(--accent-green);">서버 연결 확인 중...</div>
+    <div id="connection-status" style="font-size:0.85rem; font-weight:bold; color:var(--accent-green);">?쒕쾭 ?곌껐 ?뺤씤 以?..</div>
   </div>
 
   <input type="file" id="log-backup-input" accept=".json" style="display:none;" onchange="importLogsBackup(event)">
 
-  <!-- 메인 대시보드 -->
+  <!-- 硫붿씤 ??쒕낫??-->
   <div class="dashboard-container">
     <div class="panel">
-      <!-- 네비게이션 탭 (3개 구조로 확장) -->
+      <!-- ?ㅻ퉬寃뚯씠????-->
       <div class="left-panel-nav">
-        <button class="panel-tab-btn active" onclick="switchLeftTab('control')">⚙️ 운항 제어 및 계측</button>
-        <button class="panel-tab-btn" onclick="switchLeftTab('env')">🏞️ 남강댐/물때 실시간</button>
-        <button class="panel-tab-btn" onclick="switchLeftTab('logs')">📜 운항 기록 내역</button>
+        <button class="panel-tab-btn active" onclick="switchLeftTab('control')">?숋툘 ?댄빆 ?쒖뼱 諛?怨꾩륫</button>
+        <button class="panel-tab-btn" onclick="switchLeftTab('env')">?룥截??④컯??臾쇰븣 ?ㅼ떆媛?/button>
+        <button class="panel-tab-btn" onclick="switchLeftTab('kma')">?뙟截?湲곗긽泥?1二쇱씪 ?덈낫</button>
+        <button class="panel-tab-btn" onclick="switchLeftTab('logs')">?뱶 ?댄빆 湲곕줉 ?댁뿭</button>
       </div>
 
-      <!-- 탭 1: 계측 제어 -->
+      <!-- ??1: 怨꾩륫 ?쒖뼱 -->
       <div id="tab-control" class="tab-content active">
         <div class="dashboard-center-layout">
           <div class="corner-card">
             <div class="corner-title" style="display:flex; justify-content:space-between; width:100%;">
-              <span>🌤️ 실시간 날씨</span>
-              <button id="btn-override-toggle" onclick="toggleOverrideWeather()" style="font-size:0.65rem; padding:2px 5px; background:#30363d; color:#00f2fe; border:1px solid #00f2fe; border-radius:4px; cursor:pointer;">API 연동 중</button>
+              <span>?뙟截??ㅼ떆媛??좎뵪</span>
+              <button id="btn-override-toggle" onclick="toggleOverrideWeather()" style="font-size:0.65rem; padding:2px 5px; background:#30363d; color:#00f2fe; border:1px solid #00f2fe; border-radius:4px; cursor:pointer;">API ?곕룞 以?/button>
             </div>
-            <div class="corner-value" id="val-weather">조회 중...</div>
-            <div class="corner-sub" id="sub-humidity">습도: --%</div>
+            <div class="corner-value" id="val-weather">議고쉶 以?..</div>
+            <div class="corner-sub" id="sub-humidity">?듬룄: --%</div>
           </div>
 
           <div class="corner-card">
-            <div class="corner-title">💨 실시간 풍속 (Wind)</div>
+            <div class="corner-title">?뮜 ?ㅼ떆媛??띿냽 (Wind)</div>
             <div class="corner-value" id="val-wind-speed">-- m/s</div>
-            <div class="corner-sub" id="sub-wind-dir">풍향: -- (-- Kts)</div>
+            <div class="corner-sub" id="sub-wind-dir">?랁뼢: -- (-- Kts)</div>
           </div>
 
           <div class="speedometer-box-center">
@@ -1038,14 +1094,14 @@
           </div>
 
           <div class="corner-card">
-            <div class="corner-title">🧭 방향계 (Compass)</div>
+            <div class="corner-title">?㎛ 諛⑺뼢怨?(Compass)</div>
             <div class="compass-container">
               <svg id="compass-icon" class="compass-svg" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="45" fill="#0d1117" stroke="#00f2fe" stroke-width="3"/>
-                <text x="50" y="18" fill="#ff7b72" font-size="12" font-weight="bold" text-anchor="middle">북</text>
-                <text x="50" y="88" fill="#ffffff" font-size="10" font-weight="bold" text-anchor="middle">남</text>
-                <text x="85" y="53" fill="#ffffff" font-size="10" font-weight="bold" text-anchor="middle">동</text>
-                <text x="15" y="53" fill="#ffffff" font-size="10" font-weight="bold" text-anchor="middle">서</text>
+                <text x="50" y="18" fill="#ff7b72" font-size="12" font-weight="bold" text-anchor="middle">遺?/text>
+                <text x="50" y="88" fill="#ffffff" font-size="10" font-weight="bold" text-anchor="middle">??/text>
+                <text x="85" y="53" fill="#ffffff" font-size="10" font-weight="bold" text-anchor="middle">??/text>
+                <text x="15" y="53" fill="#ffffff" font-size="10" font-weight="bold" text-anchor="middle">??/text>
                 <g id="compass-needle" transform="rotate(180, 50, 50)" style="transition: transform 0.3s ease-out;">
                   <polygon points="50,18 43,50 50,45" fill="#ff7b72"/>
                   <polygon points="50,18 57,50 50,45" fill="#ff4d4d"/>
@@ -1055,27 +1111,27 @@
                 </g>
               </svg>
               <div>
-                <div class="corner-value" id="val-heading">180° 남</div>
-                <div class="corner-sub" id="sub-heading-info">방위각: 180.0°</div>
+                <div class="corner-value" id="val-heading">180째 ??/div>
+                <div class="corner-sub" id="sub-heading-info">諛⑹쐞媛? 180.0째</div>
               </div>
             </div>
           </div>
 
           <div class="corner-card">
-            <div class="corner-title">🌡️ 실시간 기온 (Temp)</div>
-            <div class="corner-value" id="val-temp">-- ℃</div>
-            <div class="corner-sub" id="sub-water-temp">수온: -- ℃</div>
+            <div class="corner-title">?뙜截??ㅼ떆媛?湲곗삩 (Temp)</div>
+            <div class="corner-value" id="val-temp">-- ??/div>
+            <div class="corner-sub" id="sub-water-temp">?섏삩: -- ??/div>
           </div>
         </div>
 
         <div class="clock-and-timer-layout">
           <div class="clock-box">
-            <div class="clock-date" id="live-date">2026년 00월 00일 (월)</div>
-            <div class="clock-time" id="live-time">00시 00분 00초</div>
+            <div class="clock-date" id="live-date">2026??00??00??(??</div>
+            <div class="clock-time" id="live-time">00??00遺?00珥?/div>
           </div>
           <div class="active-timer-box" id="active-timer-box">
-            <span class="duration-label">소요 시간</span>
-            <span class="timer-val" id="timer">00시 00분 00초</span>
+            <span class="duration-label">?뚯슂 ?쒓컙</span>
+            <span class="timer-val" id="timer">00??00遺?00珥?/span>
           </div>
         </div>
 
@@ -1084,101 +1140,138 @@
             <div class="trip-inputs-wrapper">
               <div class="trip-inputs">
                 <div class="input-field">
-                  <label for="start-time-input">출항 시각</label>
+                  <label for="start-time-input">異쒗빆 ?쒓컖</label>
                   <input type="text" id="start-time-input" placeholder="00:00:00" readonly>
                 </div>
                 <div class="input-field">
-                  <label for="end-time-input">입항 시각</label>
+                  <label for="end-time-input">?낇빆 ?쒓컖</label>
                   <input type="text" id="end-time-input" placeholder="00:00:00" readonly>
                 </div>
               </div>
             </div>
           </div>
           <div class="btn-group">
-            <button class="btn btn-start" id="btnStart" onclick="startTracking()" disabled>출항 시작</button>
-            <button class="btn btn-stop" id="btnStopSave" onclick="stopAndSaveTracking()" disabled>도착 종료 및 저장</button>
+            <button class="btn btn-start" id="btnStart" onclick="startTracking()" disabled>異쒗빆 ?쒖옉</button>
+            <button class="btn btn-stop" id="btnStopSave" onclick="stopAndSaveTracking()" disabled>?꾩갑 醫낅즺 諛????/button>
           </div>
         </div>
       </div>
 
-      <!-- 탭 2: 물때 및 남강댐 실시간 정보 (신규) -->
+      <!-- ??2: 臾쇰븣 諛??④컯???ㅼ떆媛??뺣낫 -->
       <div id="tab-env" class="tab-content">
         <div class="env-card-container">
-          <!-- 남강댐 수문 실시간 현황 -->
+          <!-- ?④컯???섎Ц ?ㅼ떆媛??꾪솴 紐⑤뱢 -->
           <div class="env-section-box">
             <div class="env-section-title">
-              <span>💧 남강댐 실시간 수문 현황</span>
-              <span id="dam-status-badge" class="status-badge status-safe">안전</span>
+              <span>?뮛 ?④컯???곸꽭 諛⑸쪟 ?꾪솴 諛?怨꾩륫</span>
+              <span id="dam-status-badge" class="status-badge status-safe">?덉쟾</span>
             </div>
             
-            <div style="font-size:0.85rem; color:var(--text-sub); margin-bottom:4px;">
-              방류량 단계 시각화 (현재: <span id="dam-discharge-text" style="font-weight:bold; color:#fff;">--</span> ㎥/s)
-            </div>
-            
-            <div class="dam-gauge-bar">
-              <div id="dam-gauge-fill" class="dam-gauge-fill" style="width: 10%; background-color: var(--accent-green);"></div>
-            </div>
-            
-            <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-sub); margin-bottom:10px;">
-              <span>0 ㎥/s (안전)</span>
-              <span>150 (주의)</span>
-              <span>300 (경고)</span>
-              <span>500+ (위험)</span>
+            <!-- ?④컯??湲곗큹 二쇱슂 吏??-->
+            <div class="tide-grid-4" style="margin-bottom:10px;">
+              <div class="tide-item">
+                <span class="t-lbl">?꾩옱 ??섏쐞</span>
+                <span class="t-val" id="dam-water-level">-- EL.m</span>
+                <span class="t-sub-val">?곸닔?? 41.00 m</span>
+              </div>
+              <div class="tide-item">
+                <span class="t-lbl">怨꾪쉷 ?띿닔??/span>
+                <span class="t-val" style="color:var(--accent-red)">46.00 EL.m</span>
+                <span class="t-sub-val">理쒓퀬 ?쒓퀎 ?섏쐞</span>
+              </div>
+              <div class="tide-item">
+                <span class="t-lbl">??섏쑉 (%)</span>
+                <span class="t-val" id="dam-storage-rate" style="color:var(--accent-color)">-- %</span>
+                <span class="t-sub-val" id="dam-storage-vol">-- 諛깅쭔??/span>
+              </div>
+              <div class="tide-item">
+                <span class="t-lbl">珥덈떦 ?좎엯??/span>
+                <span class="t-val" id="dam-inflow-val">-- ??s</span>
+                <span class="t-sub-val">???좎엯 ?섎웾</span>
+              </div>
             </div>
 
-            <div class="tide-grid">
-              <div class="tide-item">
-                <span class="t-lbl">현재 방류량</span>
-                <span class="t-val" id="dam-discharge-val">-- ㎥/s</span>
+            <!-- ??섏쑉 Visual Bar -->
+            <div style="font-size:0.78rem; color:var(--text-sub); display:flex; justify-content:space-between; align-items:center;">
+              <span>?④컯????섏쑉 ?⑸웾 寃뚯씠吏</span>
+              <span id="dam-total-discharge-text" style="font-weight:bold; color:var(--accent-color);">珥?諛⑸쪟?? -- ??s</span>
+            </div>
+            <div class="dam-gauge-bar">
+              <div id="dam-gauge-fill" class="dam-gauge-fill" style="width: 0%; background-color: var(--accent-green);"></div>
+            </div>
+
+            <!-- ?④컯諛⑸㈃(蹂몃쪟) ?몃? 諛⑸쪟 ?꾪솴 -->
+            <div class="discharge-group-box">
+              <div class="discharge-group-title">
+                <span>?뙄 ?④컯 諛⑸㈃ (蹂몃쪟 諛⑸쪟)</span>
+                <span id="discharge-namgang-total" style="color:#00f2fe;">?⑷퀎: 0.0 ??s</span>
               </div>
-              <div class="tide-item">
-                <span class="t-lbl">현재 저수위</span>
-                <span class="t-val" id="dam-water-level">-- EL.m</span>
+              <div class="tide-grid">
+                <div class="tide-item">
+                  <span class="t-lbl">???④컯 蹂몃쪟 諛쒖쟾諛⑸쪟</span>
+                  <span class="t-val" id="discharge-namgang-hydro">-- ??s</span>
+                </div>
+                <div class="tide-item">
+                  <span class="t-lbl">?슞 ?④컯 蹂몃쪟 ?섎Ц諛⑸쪟</span>
+                  <span class="t-val" id="discharge-namgang-gate">-- ??s</span>
+                  <span class="t-sub-val" id="gate-namgang-count">媛쒕갑: 0 / 3 媛?/span>
+                </div>
               </div>
-              <div class="tide-item">
-                <span class="t-lbl">초당 유입량</span>
-                <span class="t-val" id="dam-inflow-val">-- ㎥/s</span>
+            </div>
+
+            <!-- ?ъ쿇留뚮갑硫?媛?붿쿇) ?몃? 諛⑸쪟 ?꾪솴 -->
+            <div class="discharge-group-box">
+              <div class="discharge-group-title" style="color:var(--accent-yellow);">
+                <span>?뙄 ?ъ쿇留?諛⑸㈃ (媛?붿쿇 諛⑸쪟)</span>
+                <span id="discharge-gahwa-total" style="color:var(--accent-yellow);">?⑷퀎: 0.0 ??s</span>
               </div>
-              <div class="tide-item">
-                <span class="t-lbl">계획 홍수위</span>
-                <span class="t-val" style="color:var(--accent-red)">46.00 EL.m</span>
+              <div class="tide-grid">
+                <div class="tide-item">
+                  <span class="t-lbl">??媛?붿쿇 諛쒖쟾諛⑸쪟</span>
+                  <span class="t-val" id="discharge-gahwa-hydro">-- ??s</span>
+                </div>
+                <div class="tide-item">
+                  <span class="t-lbl">?슞 媛?붿쿇 ?섎Ц諛⑸쪟</span>
+                  <span class="t-val" id="discharge-gahwa-gate">-- ??s</span>
+                  <span class="t-sub-val" id="gate-gahwa-count">媛쒕갑: 0 / 12 媛?/span>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- 남강 / 사천만 연동 물때 정보 -->
+          <!-- ?④컯 / ?ъ쿇留??곕룞 臾쇰븣 ?뺣낫 -->
           <div class="env-section-box">
             <div class="env-section-title">
-              <span>🌊 남강 하류 및 인근 물때(조석) 정보</span>
-              <span style="font-size:0.75rem; color:var(--accent-color);">삼천포/사천만 기준</span>
+              <span>?뙄 ?④컯 ?섎쪟 諛??멸렐 臾쇰븣(議곗꽍) ?뺣낫</span>
+              <span style="font-size:0.75rem; color:var(--accent-color);">?쇱쿇???ъ쿇留?湲곗?</span>
             </div>
             
             <div class="tide-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom: 8px;">
               <div class="tide-item">
-                <span class="t-lbl">오늘의 물때</span>
-                <span class="t-val" id="tide-name" style="color:var(--accent-color)">7물 (사리)</span>
+                <span class="t-lbl">?ㅻ뒛??臾쇰븣</span>
+                <span class="t-val" id="tide-name" style="color:var(--accent-color)">7臾?(?щ━)</span>
               </div>
               <div class="tide-item">
-                <span class="t-lbl">현재 수위 상태</span>
-                <span class="t-val" id="tide-current-state">🔺 만조 진행 중</span>
+                <span class="t-lbl">?꾩옱 ?섏쐞 ?곹깭</span>
+                <span class="t-val" id="tide-current-state">?뵼 留뚯“ 吏꾪뻾 以?/span>
               </div>
             </div>
 
             <div class="tide-grid">
               <div class="tide-item">
-                <span class="t-lbl">1차 만조 (밀물)</span>
+                <span class="t-lbl">1李?留뚯“ (諛臾?</span>
                 <span class="t-val" id="tide-high-1">05:20 (310cm)</span>
               </div>
               <div class="tide-item">
-                <span class="t-lbl">1차 간조 (썰물)</span>
+                <span class="t-lbl">1李?媛꾩“ (?곕Ъ)</span>
                 <span class="t-val" id="tide-low-1">11:45 (85cm)</span>
               </div>
               <div class="tide-item">
-                <span class="t-lbl">2차 만조 (밀물)</span>
+                <span class="t-lbl">2李?留뚯“ (諛臾?</span>
                 <span class="t-val" id="tide-high-2">17:50 (325cm)</span>
               </div>
               <div class="tide-item">
-                <span class="t-lbl">2차 간조 (썰물)</span>
+                <span class="t-lbl">2李?媛꾩“ (?곕Ъ)</span>
                 <span class="t-val" id="tide-low-2">23:55 (70cm)</span>
               </div>
             </div>
@@ -1186,56 +1279,315 @@
         </div>
       </div>
 
-      <!-- 탭 3: 기록 관리 -->
+      <!-- ??3: ??쒕?援?湲곗긽泥?1二쇱씪 ?좎뵪 ??쒕낫??(?듯빀 ?댁떇) -->
+      <div id="tab-kma" class="tab-content">
+        <div class="w-full space-y-4 text-slate-100 text-left">
+          <!-- KMA HEADER & CONTROL -->
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-3 border-b border-slate-800 gap-3">
+            <div class="flex items-center gap-2">
+              <div class="bg-gradient-to-tr from-blue-600 to-sky-400 p-2 rounded-xl shadow-lg">
+                <i class="fa-solid font-bold text-lg fa-cloud-sun-rain text-white"></i>
+              </div>
+              <div>
+                <h2 class="text-base font-bold text-white">湲곗긽泥??쇱씠釉??좎뵪 ??쒕낫??/h2>
+                <p class="text-[11px] text-slate-400 flex items-center gap-1">
+                  <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span id="kma-last-updated">?ㅼ떆媛??낅뜲?댄듃 以?..</span>
+                </p>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+              <div class="relative flex-1 sm:w-48">
+                <i class="fa-solid fa-location-dot absolute left-2.5 top-1/2 -translate-y-1/2 text-sky-400 text-xs"></i>
+                <select id="kma-location-select" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg pl-8 pr-6 py-2 focus:ring-1 focus:ring-sky-500 outline-none appearance-none cursor-pointer">
+                  <option value="jinju">寃쎌긽?⑤룄 吏꾩＜??(?꾩옱 ?꾩튂)</option>
+                  <option value="seoul">?쒖슱?밸퀎??/option>
+                  <option value="busan">遺?곌킅??떆</option>
+                  <option value="daegu">?援ш킅??떆</option>
+                  <option value="incheon">?몄쿇愿묒뿭??/option>
+                  <option value="gwangju">愿묒＜愿묒뿭??/option>
+                  <option value="daejeon">??꾧킅??떆</option>
+                  <option value="ulsan">?몄궛愿묒뿭??/option>
+                  <option value="jeju">?쒖＜?밸퀎?먯튂??/option>
+                  <option value="changwon">寃쎌긽?⑤룄 李쎌썝??/option>
+                </select>
+                <i class="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-500 pointer-events-none"></i>
+              </div>
+
+              <button id="kma-btn-refresh" class="p-2 bg-slate-900 border border-slate-700 hover:bg-slate-800 text-slate-300 rounded-lg text-xs" title="?덈줈怨좎묠">
+                <i class="fa-solid fa-arrows-rotate"></i>
+              </button>
+
+              <button id="kma-btn-open-modal" class="px-2.5 py-2 bg-sky-600/20 border border-sky-500/30 hover:bg-sky-600/30 text-sky-400 text-xs font-semibold rounded-lg flex items-center gap-1">
+                <i class="fa-solid fa-key"></i>
+                <span>API ???ㅼ젙</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- KMA SUB NAVIGATION TABS -->
+          <div class="flex border-b border-slate-800 mb-3">
+            <button id="kma-tab-btn-weekly" onclick="switchKmaSubTab('weekly')" class="px-4 py-2 font-semibold text-xs border-b-2 border-sky-400 text-sky-400 flex items-center gap-1.5 transition">
+              <i class="fa-solid fa-calendar-week"></i> 1二쇱씪 ?덈낫
+            </button>
+            <button id="kma-tab-btn-today" onclick="switchKmaSubTab('today')" class="px-4 py-2 font-semibold text-xs border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition">
+              <i class="fa-solid fa-clock"></i> ?ㅻ뒛???곸꽭 諛??쒓컙蹂?
+            </button>
+          </div>
+
+          <!-- KMA SUB TAB 1: WEEKLY -->
+          <div id="kma-sub-weekly" class="space-y-4">
+            <!-- HERO BANNER -->
+            <div class="glass-card rounded-2xl p-4 relative overflow-hidden bg-gradient-to-r from-slate-900/90 via-sky-950/40 to-slate-900/90">
+              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <div class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-sky-500/10 text-sky-400 text-[11px] border border-sky-500/20 mb-1.5">
+                    <i class="fa-solid fa-shield-halved"></i> 湲곗긽泥??듯빀 二쇨컙?덈낫
+                  </div>
+                  <h3 id="kma-weekly-location-name" class="text-xl font-bold text-white">寃쎌긽?⑤룄 吏꾩＜??1二쇱씪 ?덈낫</h3>
+                  <p class="text-slate-400 text-xs">7?쇨컙 湲곗삩 異붿씠 諛?媛뺤닔 ?뺣쪧 ?ㅼ떆媛?議고쉶</p>
+                </div>
+                <div class="flex items-center gap-4 bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                  <div class="text-center px-1">
+                    <p class="text-[10px] text-slate-400">二쇨컙 ?됯퇏</p>
+                    <p id="kma-avg-temp" class="text-lg font-bold text-sky-400">18.5째C</p>
+                  </div>
+                  <div class="h-6 w-px bg-slate-800"></div>
+                  <div class="text-center px-1">
+                    <p class="text-[10px] text-slate-400">理쒓퀬 媛뺤닔?뺣쪧</p>
+                    <p id="kma-max-pop" class="text-lg font-bold text-indigo-400">80%</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 7-DAY CARDS GRID -->
+            <div>
+              <h4 class="text-sm font-bold text-white mb-2.5 flex items-center gap-1.5">
+                <i class="fa-solid fa-calendar-days text-sky-400"></i> ?쇰퀎 ?곸꽭 ?좎뵪
+              </h4>
+              <div id="kma-weekly-cards-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2.5">
+                <!-- JS ?숈쟻 ?앹꽦 -->
+              </div>
+            </div>
+
+            <!-- CHARTS SECTION -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div class="lg:col-span-2 glass-card rounded-xl p-4 border border-slate-800">
+                <div class="flex justify-between items-center mb-2">
+                  <h4 class="text-xs font-bold text-white flex items-center gap-1.5">
+                    <i class="fa-solid fa-chart-line text-sky-400"></i> 湲곗삩 蹂??異붿씠 (째C)
+                  </h4>
+                  <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded">湲곗긽泥???以묎린 ?덈낫</span>
+                </div>
+                <div class="h-52 relative">
+                  <canvas id="kmaWeeklyTempChart"></canvas>
+                </div>
+              </div>
+
+              <div class="glass-card rounded-xl p-4 border border-slate-800">
+                <div class="flex justify-between items-center mb-2">
+                  <h4 class="text-xs font-bold text-white flex items-center gap-1.5">
+                    <i class="fa-solid fa-umbrella text-indigo-400"></i> 媛뺤닔 ?뺣쪧 (%)
+                  </h4>
+                  <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded">?쇰퀎 媛뺤슦</span>
+                </div>
+                <div class="h-52 relative">
+                  <canvas id="kmaWeeklyPopChart"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- METRICS SUMMARY -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="glass-card p-3 rounded-xl border border-slate-800 flex items-center gap-3">
+                <div class="p-2.5 bg-amber-500/10 text-amber-400 rounded-lg text-lg">
+                  <i class="fa-solid fa-sun"></i>
+                </div>
+                <div>
+                  <p class="text-[10px] text-slate-400">二쇨컙 理쒕떎 留묒? ??/p>
+                  <p id="kma-sunny-days-count" class="text-xs font-bold text-slate-100">4?쇨컙 ?붿갹??/p>
+                </div>
+              </div>
+              <div class="glass-card p-3 rounded-xl border border-slate-800 flex items-center gap-3">
+                <div class="p-2.5 bg-blue-500/10 text-blue-400 rounded-lg text-lg">
+                  <i class="fa-solid fa-cloud-rain"></i>
+                </div>
+                <div>
+                  <p class="text-[10px] text-slate-400">鍮????덈낫??/p>
+                  <p id="kma-rainy-days-count" class="text-xs font-bold text-slate-100">2??鍮??덉긽</p>
+                </div>
+              </div>
+              <div class="glass-card p-3 rounded-xl border border-slate-800 flex items-center gap-3">
+                <div class="p-2.5 bg-teal-500/10 text-teal-400 rounded-lg text-lg">
+                  <i class="fa-solid fa-wind"></i>
+                </div>
+                <div>
+                  <p class="text-[10px] text-slate-400">?됯퇏 諛붾엺 ?멸린</p>
+                  <p id="kma-avg-wind-speed" class="text-xs font-bold text-slate-100">3.2 m/s (?쏀븳 諛붾엺)</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- KMA SUB TAB 2: TODAY & HOURLY -->
+          <div id="kma-sub-today" class="space-y-4 hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div class="glass-card rounded-2xl p-4 bg-gradient-to-br from-sky-900/40 via-slate-900 to-slate-900 flex flex-col justify-between">
+                <div>
+                  <div class="flex justify-between items-start">
+                    <div>
+                      <span class="px-2.5 py-0.5 bg-sky-500/20 text-sky-300 text-[10px] font-medium rounded-full">?ㅼ떆媛?愿痢?/span>
+                      <h4 id="kma-current-location-text" class="text-base font-bold text-white mt-1">寃쎌긽?⑤룄 吏꾩＜??/h4>
+                    </div>
+                    <i id="kma-current-weather-icon" class="fa-solid fa-sun text-4xl text-amber-400"></i>
+                  </div>
+                  <div class="mt-4">
+                    <div id="kma-current-temp" class="text-5xl font-extrabold text-white tracking-tight">21째</div>
+                    <p id="kma-current-weather-desc" class="text-sm font-medium text-slate-300 mt-1">留묒쓬 (泥닿컧 22.4째)</p>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-800 text-center">
+                  <div>
+                    <p class="text-[10px] text-slate-400">理쒖? 湲곗삩</p>
+                    <p id="kma-today-min-temp" class="text-xs font-bold text-blue-400">12째C</p>
+                  </div>
+                  <div>
+                    <p class="text-[10px] text-slate-400">理쒓퀬 湲곗삩</p>
+                    <p id="kma-today-max-temp" class="text-xs font-bold text-rose-400">23째C</p>
+                  </div>
+                  <div>
+                    <p class="text-[10px] text-slate-400">?듬룄</p>
+                    <p id="kma-today-humidity" class="text-xs font-bold text-sky-400">48%</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- AIR METRICS -->
+              <div class="lg:col-span-2 glass-card rounded-2xl p-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
+                  <div class="flex justify-between text-slate-400 text-[10px]">
+                    <span>誘몄꽭癒쇱?</span>
+                    <i class="fa-solid fa-dust"></i>
+                  </div>
+                  <div class="my-1">
+                    <p class="text-xl font-bold text-emerald-400">32 <span class="text-[10px] font-normal text-slate-400">????/span></p>
+                    <span class="inline-block text-[9px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded mt-0.5">醫뗭쓬</span>
+                  </div>
+                  <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+                    <div class="bg-emerald-400 h-full w-[30%]"></div>
+                  </div>
+                </div>
+
+                <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
+                  <div class="flex justify-between text-slate-400 text-[10px]">
+                    <span>珥덈??몃㉫吏</span>
+                    <i class="fa-solid fa-smog"></i>
+                  </div>
+                  <div class="my-1">
+                    <p class="text-xl font-bold text-emerald-400">15 <span class="text-[10px] font-normal text-slate-400">????/span></p>
+                    <span class="inline-block text-[9px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded mt-0.5">醫뗭쓬</span>
+                  </div>
+                  <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+                    <div class="bg-emerald-400 h-full w-[25%]"></div>
+                  </div>
+                </div>
+
+                <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
+                  <div class="flex justify-between text-slate-400 text-[10px]">
+                    <span>?먯쇅??吏??/span>
+                    <i class="fa-solid fa-sun"></i>
+                  </div>
+                  <div class="my-1">
+                    <p class="text-xl font-bold text-amber-400">6 <span class="text-[10px] font-normal text-slate-400">UV</span></p>
+                    <span class="inline-block text-[9px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded mt-0.5">?믪쓬</span>
+                  </div>
+                  <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+                    <div class="bg-amber-400 h-full w-[60%]"></div>
+                  </div>
+                </div>
+
+                <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
+                  <div class="flex justify-between text-slate-400 text-[10px]">
+                    <span>?띿냽 / ?랁뼢</span>
+                    <i class="fa-solid fa-compass"></i>
+                  </div>
+                  <div class="my-1">
+                    <p class="text-xl font-bold text-sky-400">2.8 <span class="text-[10px] font-normal text-slate-400">m/s</span></p>
+                    <span class="inline-block text-[9px] bg-sky-500/20 text-sky-300 px-1.5 py-0.5 rounded mt-0.5">?⑥꽌??/span>
+                  </div>
+                  <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+                    <div class="bg-sky-400 h-full w-[35%]"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- HOURLY SCROLL -->
+            <div class="glass-card rounded-xl p-4 border border-slate-800">
+              <h4 class="text-xs font-bold text-white mb-3 flex items-center gap-1.5">
+                <i class="fa-solid fa-clock text-sky-400"></i> ?쒓컙蹂??덈낫 (24?쒓컙)
+              </h4>
+              <div id="kma-hourly-forecast-container" class="flex gap-3 overflow-x-auto pb-2">
+                <!-- JS ?숈쟻 ?앹꽦 -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ??4: 湲곕줉 愿由?-->
       <div id="tab-logs" class="tab-content">
         <div class="log-header-bar">
           <div class="log-title-row">
-            <div class="log-title">운항 기록 내역</div>
+            <div class="log-title">?댄빆 湲곕줉 ?댁뿭</div>
             <div style="display:flex; gap:6px;">
-              <button class="btn-action-sm" onclick="exportLogsToCSV()" title="CSV 내보내기">CSV</button>
-              <button class="btn-action-sm blue" onclick="exportLogsBackup()" title="백업 다운로드">백업</button>
-              <button class="btn-action-sm" style="background:#8957e5" onclick="triggerLogBackupInput()" title="복원하기">복원</button>
+              <button class="btn-action-sm" onclick="exportLogsToCSV()" title="CSV ?대낫?닿린">CSV</button>
+              <button class="btn-action-sm blue" onclick="exportLogsBackup()" title="諛깆뾽 ?ㅼ슫濡쒕뱶">諛깆뾽</button>
+              <button class="btn-action-sm" style="background:#8957e5" onclick="triggerLogBackupInput()" title="蹂듭썝?섍린">蹂듭썝</button>
             </div>
           </div>
           <div class="search-box">
             <input type="date" id="search-date-input">
-            <button class="btn-search" onclick="filterLogsByDate()">검색</button>
-            <button class="btn-reset-search" onclick="resetLogFilter()">초기화</button>
+            <button class="btn-search" onclick="filterLogsByDate()">寃??/button>
+            <button class="btn-reset-search" onclick="resetLogFilter()">珥덇린??/button>
           </div>
         </div>
         <div class="log-list-box" id="log-list-container"></div>
       </div>
     </div>
 
-    <!-- 우측 GIS 및 지도 패널 -->
+    <!-- ?곗륫 GIS 諛?吏???⑤꼸 -->
     <div class="panel data-panel">
       <div class="status-display-box">
-        <div class="guide-text" id="status-guide-text">[상태] 물빛나루쉼터·망진나루 수역 연동 대기 중...</div>
+        <div class="guide-text" id="status-guide-text">[?곹깭] 臾쇰튆?섎（?쇳꽣쨌留앹쭊?섎（ ?섏뿭 ?곕룞 ?湲?以?..</div>
       </div>
 
       <div class="route-control-bar" style="flex-wrap: nowrap; overflow-x: auto; gap: 8px; justify-content: flex-start;">
         <div style="display:flex; gap:6px; align-items:center; flex-shrink: 0;">
-          <button class="btn-reset btn-center-mode active-tracking" id="btn-center-mode-toggle" onclick="toggleCenterMode()">중심 추적(회전)</button>
-          <button class="btn-reset btn-survey-mode" id="btn-survey-mode-toggle" onclick="toggleSurveyMode()">📷 촬영·측량 모드 OFF</button>
-          <button class="btn-reset btn-calibrate" id="btn-calibrate-toggle" onclick="toggleCalibrationMode()">위치 수동보정</button>
-          <button class="btn-reset" onclick="resetCalibration()">GPS 원복</button>
-          <button class="btn-reset" onclick="resetTrack()">궤적 초기화</button>
-          <button class="btn-reset" onclick="resetRoute()">항로 초기화</button>
-          <button class="btn-reset" onclick="resetZones()">구역 초기화</button>
+          <button class="btn-reset btn-center-mode active-tracking" id="btn-center-mode-toggle" onclick="toggleCenterMode()">以묒떖 異붿쟻(?뚯쟾)</button>
+          <button class="btn-reset btn-survey-mode" id="btn-survey-mode-toggle" onclick="toggleSurveyMode()">?벜 珥ъ쁺쨌痢〓웾 紐⑤뱶 OFF</button>
+          <button class="btn-reset btn-calibrate" id="btn-calibrate-toggle" onclick="toggleCalibrationMode()">?꾩튂 ?섎룞蹂댁젙</button>
+          <button class="btn-reset" onclick="resetCalibration()">GPS ?먮났</button>
+          <button class="btn-reset" onclick="resetTrack()">沅ㅼ쟻 珥덇린??/button>
+          <button class="btn-reset" onclick="resetRoute()">??줈 珥덇린??/button>
+          <button class="btn-reset" onclick="resetZones()">援ъ뿭 珥덇린??/button>
         </div>
 
         <div style="width: 1px; background: var(--border-color); flex-shrink: 0; align-self: stretch; margin: 2px 0;"></div>
 
         <div style="display:flex; gap: 10px; align-items:center; flex-shrink:0; margin-left: auto;">
           <div class="alarm-switch-container">
-            <span>💬 확인창</span>
+            <span>?뮠 ?뺤씤李?/span>
             <label class="switch">
               <input type="checkbox" id="confirmAlertToggle" onchange="toggleConfirmAlert()" checked>
               <span class="slider"></span>
             </label>
           </div>
           <div class="alarm-switch-container">
-            <span>🔔 알람소리</span>
+            <span>?뵒 ?뚮엺?뚮━</span>
             <label class="switch">
               <input type="checkbox" id="alarmToggle" checked>
               <span class="slider"></span>
@@ -1246,19 +1598,19 @@
 
       <div class="grid-info">
         <div class="info-card">
-          <div class="info-label">현재 속도</div>
+          <div class="info-label">?꾩옱 ?띾룄</div>
           <div class="info-value highlight" id="dual-speed-display">0.0 km/h (0.0 Kts)</div>
         </div>
         <div class="info-card">
-          <div class="info-label">GPS 좌표</div>
-          <div class="info-value" id="gps-coords" style="font-size: 1.05rem;">GPS 탐색 중...</div>
+          <div class="info-label">GPS 醫뚰몴</div>
+          <div class="info-value" id="gps-coords" style="font-size: 1.05rem;">GPS ?먯깋 以?..</div>
         </div>
         <div class="info-card">
-          <div class="info-label">이동 거리</div>
+          <div class="info-label">?대룞 嫄곕━</div>
           <div class="info-value track" id="track-distance">0.00 km (0.00 NM)</div>
         </div>
         <div class="info-card">
-          <div class="info-label">목적지 잔여거리</div>
+          <div class="info-label">紐⑹쟻吏 ?붿뿬嫄곕━</div>
           <div class="info-value" id="dist-remaining">-- km</div>
         </div>
       </div>
@@ -1269,72 +1621,107 @@
     </div>
   </div>
 
-  <!-- 상세 정보 모달 -->
+  <!-- 湲곗긽泥?API ???ㅼ젙 紐⑤떖 (?댁떇 ?듯빀) -->
+  <div id="kma-modal-api" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[10000] flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl p-6 max-w-lg w-full mx-4 shadow-2xl relative text-left">
+      <button id="kma-btn-close-modal" class="absolute top-5 right-5 text-slate-400 hover:text-white transition">
+        <i class="fa-solid fa-xmark text-xl"></i>
+      </button>
+      <div class="flex items-center gap-3 mb-4">
+        <div class="p-3 bg-sky-500/10 text-sky-400 rounded-xl">
+          <i class="fa-solid fa-key text-xl"></i>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-white">怨듦났?곗씠?고룷??API ???ㅼ젙</h3>
+          <p class="text-xs text-slate-400">湲곗긽泥??④린?덈낫 & 以묎린?덈낫 ?쒕퉬??API</p>
+        </div>
+      </div>
+
+      <p class="text-sm text-slate-300 mb-4 leading-relaxed">
+        怨듦났?곗씠?고룷??data.go.kr)?먯꽌 諛쒓툒諛쏆쑝??<span class="text-sky-400 font-semibold">湲곗긽泥?API Key</span>瑜??낅젰?섏떆硫??쇱씠釉??곗씠?곗? ?곕룞?⑸땲?? (誘몄엯????吏?ν삎 ?쒕??덉씠?섏쓣 ?쒓났?⑸땲??
+      </p>
+
+      <div class="space-y-4 mb-6">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">?쒕퉬???몄쬆??(Encoding/Decoding Key)</label>
+          <input type="text" id="kma-api-key-input" placeholder="?몄쬆?ㅻ? ?ш린??遺숈뿬?ｌ쑝?몄슂" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-sky-500 transition">
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3">
+        <button id="kma-btn-save-key" class="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-semibold text-sm rounded-xl transition shadow-lg shadow-sky-600/30">
+          ??????숆린??
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ?곸꽭 ?뺣낫 紐⑤떖 -->
   <div class="modal-overlay" id="detail-modal">
     <div class="modal-content">
       <div class="modal-header">
-        <span id="modal-title">운항 상세 정보</span>
-        <span style="cursor:pointer; font-size:1.5rem;" onclick="closeModal()">✖</span>
+        <span id="modal-title">?댄빆 ?곸꽭 ?뺣낫</span>
+        <span style="cursor:pointer; font-size:1.5rem;" onclick="closeModal()">??/span>
       </div>
       <div class="modal-grid">
         <div class="modal-card full-width">
-          <div class="m-label">운항 일자</div>
+          <div class="m-label">?댄빆 ?쇱옄</div>
           <div class="m-val highlight" id="m-date">--</div>
         </div>
         <div class="modal-card">
-          <div class="m-label">소요 시간</div>
+          <div class="m-label">?뚯슂 ?쒓컙</div>
           <div class="m-val" id="m-duration">--</div>
         </div>
         <div class="modal-card">
-          <div class="m-label">출항 시각</div>
+          <div class="m-label">異쒗빆 ?쒓컖</div>
           <div class="m-val" id="m-start-time">--</div>
         </div>
         <div class="modal-card">
-          <div class="m-label">입항 시각</div>
+          <div class="m-label">?낇빆 ?쒓컖</div>
           <div class="m-val" id="m-end-time">--</div>
         </div>
         <div class="modal-card">
-          <div class="m-label">운항 거리</div>
+          <div class="m-label">?댄빆 嫄곕━</div>
           <div class="m-val" id="m-distance">--</div>
         </div>
         <div class="modal-card">
-          <div class="m-label">평균 속도</div>
+          <div class="m-label">?됯퇏 ?띾룄</div>
           <div class="m-val highlight" id="m-avg-speed">--</div>
         </div>
         <div class="modal-card">
-          <div class="m-label">최고 속도</div>
+          <div class="m-label">理쒓퀬 ?띾룄</div>
           <div class="m-val track" id="m-max-speed">--</div>
         </div>
       </div>
       <div>
-        <div class="modal-section-title">운항 궤적 지형도</div>
+        <div class="modal-section-title">?댄빆 沅ㅼ쟻 吏?뺣룄</div>
         <div id="modal-map"></div>
       </div>
       <div class="modal-btn-group">
-        <button class="modal-close-btn" onclick="closeModal()">닫기</button>
-        <button class="modal-delete-btn" id="modal-delete-btn">기록 삭제</button>
+        <button class="modal-close-btn" onclick="closeModal()">?リ린</button>
+        <button class="modal-delete-btn" id="modal-delete-btn">湲곕줉 ??젣</button>
       </div>
     </div>
   </div>
 
-  <!-- PWA 설치 배너 -->
+  <!-- PWA ?ㅼ튂 諛곕꼫 -->
   <div id="pwa-install-banner" class="pwa-install-banner" style="display: none;">
     <div class="pwa-install-info">
-      <span class="pwa-install-icon">📱</span>
+      <span class="pwa-install-icon">?벑</span>
       <div class="pwa-install-text">
-        <span class="pwa-install-title">앱 설치하기</span>
-        <span class="pwa-install-desc" id="pwa-install-desc">홈 화면에 추가하여 빠르게 앱으로 실행하세요.</span>
+        <span class="pwa-install-title">???ㅼ튂?섍린</span>
+        <span class="pwa-install-desc" id="pwa-install-desc">???붾㈃??異붽??섏뿬 鍮좊Ⅴ寃??깆쑝濡??ㅽ뻾?섏꽭??</span>
       </div>
     </div>
     <div class="pwa-btn-group">
-      <button class="pwa-btn-install" id="pwa-install-btn" onclick="installPWA()">설치</button>
-      <button class="pwa-btn-close" onclick="closePWABanner()">✕</button>
+      <button class="pwa-btn-install" id="pwa-install-btn" onclick="installPWA()">?ㅼ튂</button>
+      <button class="pwa-btn-close" onclick="closePWABanner()">??/button>
     </div>
   </div>
 
-  <!-- 스크립트 로직 -->
+  <!-- ?듯빀 ?ㅽ겕由쏀듃 濡쒖쭅 -->
   <script>
-    // [망진나루와 물빛나루쉼터 사이의 남강 수역 중심 좌표로 초기 설정]
+    // [留앹쭊?섎（? 臾쇰튆?섎（?쇳꽣 ?ъ씠???④컯 ?섏뿭 以묒떖 醫뚰몴]
     let currentLat = 35.1885, currentLng = 128.0832; 
     let actualGpsLat = currentLat, actualGpsLng = currentLng;
     let currentHeading = 0; 
@@ -1365,8 +1752,8 @@
     }
 
     const DEFAULT_SHIPS = [
-      "김시민 1호", "김시민 2호", "남강 3호", "남강 4호", 
-      "남강 5호", "남강 6호", "인명구조선", "안전관리선", "기타작업선"
+      "源?쒕? 1??, "源?쒕? 2??, "?④컯 3??, "?④컯 4??, 
+      "?④컯 5??, "?④컯 6??, "?몃챸援ъ“??, "?덉쟾愿由ъ꽑", "湲고??묒뾽??
     ];
 
     let customShipsList = [];
@@ -1389,7 +1776,7 @@
       try {
         localStorage.setItem('ship_custom_list', JSON.stringify(customShipsList));
       } catch (e) {
-        console.error("선박 목록 저장 실패:", e);
+        console.error("?좊컯 紐⑸줉 ????ㅽ뙣:", e);
       }
     }
 
@@ -1398,7 +1785,7 @@
       if (!selectEl) return;
 
       const currentVal = selectedName || selectEl.value;
-      selectEl.innerHTML = `<option value="">-- 선박을 선택하세요 --</option>`;
+      selectEl.innerHTML = `<option value="">-- ?좊컯???좏깮?섏꽭??--</option>`;
 
       customShipsList.forEach(name => {
         const option = document.createElement('option');
@@ -1413,43 +1800,43 @@
 
     function addNewShip() {
       if (isMyShipOperating) {
-        showNotification("운항 등록 중에는 선박 목록을 변경할 수 없습니다.");
+        showNotification("?댄빆 ?깅줉 以묒뿉???좊컯 紐⑸줉??蹂寃쏀븷 ???놁뒿?덈떎.");
         return;
       }
-      const newName = prompt("새로 추가할 선박 이름을 입력하세요:");
+      const newName = prompt("?덈줈 異붽????좊컯 ?대쫫???낅젰?섏꽭??");
       if (!newName || !newName.trim()) return;
 
       const cleanName = newName.trim();
       if (customShipsList.includes(cleanName)) {
-        showNotification("이미 존재하는 선박 이름입니다.");
+        showNotification("?대? 議댁옱?섎뒗 ?좊컯 ?대쫫?낅땲??");
         return;
       }
 
       customShipsList.push(cleanName);
       saveShipsList();
       renderShipSelectOptions(cleanName);
-      showNotification(`선박 [${cleanName}]이(가) 추가되었습니다.`);
+      showNotification(`?좊컯 [${cleanName}]??媛) 異붽??섏뿀?듬땲??`);
     }
 
     function renameCurrentShip() {
       if (isMyShipOperating) {
-        showNotification("운항 등록 중에는 선박 이름을 변경할 수 없습니다.");
+        showNotification("?댄빆 ?깅줉 以묒뿉???좊컯 ?대쫫??蹂寃쏀븷 ???놁뒿?덈떎.");
         return;
       }
       const selectEl = document.getElementById('shipSelect');
       const targetName = selectEl.value;
 
       if (!targetName) {
-        showNotification("이름을 변경할 선박을 먼저 선택해 주세요.");
+        showNotification("?대쫫??蹂寃쏀븷 ?좊컯??癒쇱? ?좏깮??二쇱꽭??");
         return;
       }
 
-      const updatedName = prompt(`선박 [${targetName}]의 변경할 새 이름을 입력하세요:`, targetName);
+      const updatedName = prompt(`?좊컯 [${targetName}]??蹂寃쏀븷 ???대쫫???낅젰?섏꽭??`, targetName);
       if (!updatedName || !updatedName.trim() || updatedName.trim() === targetName) return;
 
       const cleanName = updatedName.trim();
       if (customShipsList.includes(cleanName)) {
-        showNotification("이미 동일한 이름의 선박이 존재합니다.");
+        showNotification("?대? ?숈씪???대쫫???좊컯??議댁옱?⑸땲??");
         return;
       }
 
@@ -1458,20 +1845,20 @@
         customShipsList[index] = cleanName;
         saveShipsList();
         renderShipSelectOptions(cleanName);
-        showNotification(`선박 이름이 [${targetName}] ➡️ [${cleanName}](으)로 변경되었습니다.`);
+        showNotification(`?좊컯 ?대쫫??[${targetName}] ?∽툘 [${cleanName}](??濡?蹂寃쎈릺?덉뒿?덈떎.`);
       }
     }
 
     function deleteCurrentShip() {
       if (isMyShipOperating) {
-        showNotification("운항 등록 중에는 선박을 삭제할 수 없습니다.");
+        showNotification("?댄빆 ?깅줉 以묒뿉???좊컯????젣?????놁뒿?덈떎.");
         return;
       }
       const selectEl = document.getElementById('shipSelect');
       const targetName = selectEl.value;
 
       if (!targetName) {
-        showNotification("삭제할 선박을 먼저 선택해 주세요.");
+        showNotification("??젣???좊컯??癒쇱? ?좏깮??二쇱꽭??");
         return;
       }
 
@@ -1479,13 +1866,13 @@
         customShipsList = customShipsList.filter(name => name !== targetName);
         saveShipsList();
         renderShipSelectOptions("");
-        showNotification(`선박 [${targetName}]이(가) 삭제되었습니다.`);
+        showNotification(`?좊컯 [${targetName}]??媛) ??젣?섏뿀?듬땲??`);
       };
 
       if (!showConfirmAlerts) {
         performDelete();
       } else {
-        if (confirm(`정말로 선박 [${targetName}]을(를) 목록에서 삭제하시겠습니까?`)) {
+        if (confirm(`?뺣쭚濡??좊컯 [${targetName}]??瑜? 紐⑸줉?먯꽌 ??젣?섏떆寃좎뒿?덇퉴?`)) {
           performDelete();
         }
       }
@@ -1498,7 +1885,7 @@
     let rawPrecipitation = 0.0;
     let rawCloudCover = 20; 
     let rawUvIndex = 5.2;   
-    let currentWeatherText = "맑음";
+    let currentWeatherText = "留묒쓬";
 
     let lastFetchedLat = null;
     let lastFetchedLng = null;
@@ -1508,20 +1895,20 @@
       isWeatherOverride = !isWeatherOverride;
       const btn = document.getElementById('btn-override-toggle');
       if (isWeatherOverride) {
-        btn.innerText = "현장 보정 ON (순환)";
+        btn.innerText = "?꾩옣 蹂댁젙 ON (?쒗솚)";
         btn.style.background = "#2ea043";
         btn.style.color = "#ffffff";
         
-        if (currentWeatherText === "맑음") {
-          currentWeatherText = "흐림 / 구름많음";
+        if (currentWeatherText === "留묒쓬") {
+          currentWeatherText = "?먮┝ / 援щ쫫留롮쓬";
           rawCloudCover = 85;
           rawPrecipitation = 0.0;
           rawWindSpeedMs = 4.2;   
           rawWindDirDeg = 225;    
           rawTemp = 17.5;
           rawHumidity = 85;
-        } else if (currentWeatherText.includes("흐림") || currentWeatherText.includes("구름")) {
-          currentWeatherText = "비 / 강수";
+        } else if (currentWeatherText.includes("?먮┝") || currentWeatherText.includes("援щ쫫")) {
+          currentWeatherText = "鍮?/ 媛뺤닔";
           rawPrecipitation = 3.5; 
           rawCloudCover = 100;
           rawWindSpeedMs = 7.8;   
@@ -1529,7 +1916,7 @@
           rawTemp = 14.5;
           rawHumidity = 95;
         } else {
-          currentWeatherText = "맑음";
+          currentWeatherText = "留묒쓬";
           rawUvIndex = 7.8;
           rawPrecipitation = 0.0;
           rawCloudCover = 15;
@@ -1541,7 +1928,7 @@
 
         updateWeatherUI();
       } else {
-        btn.innerText = "API 연동 중";
+        btn.innerText = "API ?곕룞 以?;
         btn.style.background = "#30363d";
         btn.style.color = "#00f2fe";
         fetchLocationWeather(true);
@@ -1586,17 +1973,17 @@
           const isRainingCode = (weatherCode >= 51 && weatherCode <= 67) || (weatherCode >= 80 && weatherCode <= 82) || (weatherCode >= 95);
 
           if (rawPrecipitation >= 0.2 || isRainingCode) {
-            currentWeatherText = "비 / 강수";
+            currentWeatherText = "鍮?/ 媛뺤닔";
             if (rawPrecipitation === 0) rawPrecipitation = 0.5;
           } else if (weatherCode >= 71 && weatherCode <= 77) {
-            currentWeatherText = "눈";
+            currentWeatherText = "??;
           } else if (weatherCode === 45 || weatherCode === 48) {
-            currentWeatherText = "안개";
+            currentWeatherText = "?덇컻";
           } else if ((weatherCode >= 1 && weatherCode <= 3) || rawCloudCover > 40) {
-            currentWeatherText = "흐림 / 구름많음";
+            currentWeatherText = "?먮┝ / 援щ쫫留롮쓬";
             rawPrecipitation = 0.0;
           } else {
-            currentWeatherText = "맑음";
+            currentWeatherText = "留묒쓬";
             rawPrecipitation = 0.0;
           }
 
@@ -1606,7 +1993,7 @@
           updateWeatherUI();
         }
       } catch (e) {
-        console.warn("실시간 위치 기반 기상 API 수신 실패, 기본 기상 정보를 유지합니다.", e);
+        console.warn("?ㅼ떆媛?湲곗긽 API ?섏떊 ?ㅽ뙣, 湲곕낯 ?뺣낫瑜??좎??⑸땲??", e);
       }
     }
 
@@ -1625,76 +2012,97 @@
       const weatherValEl = document.getElementById('val-weather');
       const subHumidityEl = document.getElementById('sub-humidity');
 
-      if (currentWeatherText.includes("비") || currentWeatherText.includes("강수") || rawPrecipitation >= 0.2) {
+      if (currentWeatherText.includes("鍮?) || currentWeatherText.includes("媛뺤닔") || rawPrecipitation >= 0.2) {
         weatherValEl.innerText = `${currentWeatherText}`;
-        subHumidityEl.innerText = `강수량: ${rawPrecipitation.toFixed(1)} mm/h (습도 ${rawHumidity}%)`;
-      } else if (currentWeatherText.includes("흐림") || currentWeatherText.includes("구름") || rawCloudCover > 40) {
+        subHumidityEl.innerText = `媛뺤닔?? ${rawPrecipitation.toFixed(1)} mm/h (?듬룄 ${rawHumidity}%)`;
+      } else if (currentWeatherText.includes("?먮┝") || currentWeatherText.includes("援щ쫫") || rawCloudCover > 40) {
         weatherValEl.innerText = `${currentWeatherText}`;
-        subHumidityEl.innerText = `구름 양: ${rawCloudCover}% (습도 ${rawHumidity}%)`;
+        subHumidityEl.innerText = `援щ쫫 ?? ${rawCloudCover}% (?듬룄 ${rawHumidity}%)`;
       } else {
         weatherValEl.innerText = `${currentWeatherText}`;
-        subHumidityEl.innerText = `자외선(UV): ${rawUvIndex.toFixed(1)} (습도 ${rawHumidity}%)`;
+        subHumidityEl.innerText = `?먯쇅??UV): ${rawUvIndex.toFixed(1)} (?듬룄 ${rawHumidity}%)`;
       }
 
       document.getElementById('val-wind-speed').innerText = `${windSpeedMs.toFixed(1)} m/s`;
-      document.getElementById('sub-wind-dir').innerText = `풍향: ${windDirText} (${windSpeedKts.toFixed(1)} Kts)`;
+      document.getElementById('sub-wind-dir').innerText = `?랁뼢: ${windDirText} (${windSpeedKts.toFixed(1)} Kts)`;
 
-      document.getElementById('val-temp').innerText = `${rawTemp.toFixed(1)} ℃`;
+      document.getElementById('val-temp').innerText = `${rawTemp.toFixed(1)} ??;
       const waterTemp = (rawTemp * 0.85 + 2.0).toFixed(1);
-      document.getElementById('sub-water-temp').innerText = `수온: ${waterTemp} ℃`;
+      document.getElementById('sub-water-temp').innerText = `?섏삩: ${waterTemp} ??;
     }
 
-    // =============================================================
-    // [신규 기능] 남강댐 수문 및 물때 실시간 업데이트 및 시각화 로직
-    // =============================================================
-    let currentDamDischarge = 35.0; // 기본 방류량 (㎥/s)
-    let currentDamLevel = 38.45;    // 저수위 (EL.m)
-    let currentDamInflow = 42.10;   // 유입량 (㎥/s)
+    // ?④컯???섎Ц ?곗씠??
+    let damData = {
+      waterLevel: 38.45,
+      inflow: 48.20,
+      storageRate: 64.5,
+      storageVol: 199.3,
+      namgangHydro: 12.5,
+      namgangGate: 0.0,
+      namgangGateCount: 0,
+      gahwaHydro: 25.0,
+      gahwaGate: 0.0,
+      gahwaGateCount: 0
+    };
 
     async function fetchDamAndTideData() {
       try {
-        // 공공데이터/K-Water API 연동 지점 (실제 연동 시 fetch 적용 가능)
-        // 미연동 시 현장감 유지를 위한 자연스러운 미세 실시간 변동 연산
-        const dischargeDelta = (Math.random() * 2.0 - 1.0);
-        currentDamDischarge = Math.max(10.0, currentDamDischarge + dischargeDelta);
-        currentDamLevel = Math.max(30.0, Math.min(45.0, currentDamLevel + (Math.random() * 0.02 - 0.01)));
-        currentDamInflow = Math.max(10.0, currentDamDischarge + (Math.random() * 10 - 4));
+        damData.waterLevel = Math.max(30.0, Math.min(45.5, damData.waterLevel + (Math.random() * 0.01 - 0.005)));
+        damData.inflow = Math.max(10.0, damData.inflow + (Math.random() * 1.5 - 0.75));
+        
+        damData.namgangHydro = Math.max(0, damData.namgangHydro + (Math.random() * 0.4 - 0.2));
+        damData.gahwaHydro = Math.max(0, damData.gahwaHydro + (Math.random() * 0.6 - 0.3));
 
-        updateDamUI(currentDamDischarge, currentDamLevel, currentDamInflow);
+        damData.storageRate = Math.min(100, Math.max(10, ((damData.waterLevel - 15) / (46.0 - 15)) * 100));
+        damData.storageVol = (309.0 * (damData.storageRate / 100));
+
+        updateDamUI();
       } catch(e) {
-        console.warn("댐/물때 수신 예외:", e);
+        console.warn("?④컯???곗씠??媛깆떊 ?덉쇅:", e);
       }
     }
 
-    function updateDamUI(discharge, level, inflow) {
-      document.getElementById('dam-discharge-val').innerText = `${discharge.toFixed(1)} ㎥/s`;
-      document.getElementById('dam-discharge-text').innerText = `${discharge.toFixed(1)}`;
-      document.getElementById('dam-water-level').innerText = `${level.toFixed(2)} EL.m`;
-      document.getElementById('dam-inflow-val').innerText = `${inflow.toFixed(1)} ㎥/s`;
+    function updateDamUI() {
+      const namgangTotal = damData.namgangHydro + damData.namgangGate;
+      const gahwaTotal = damData.gahwaHydro + damData.gahwaGate;
+      const totalDischarge = namgangTotal + gahwaTotal;
+
+      document.getElementById('dam-water-level').innerText = `${damData.waterLevel.toFixed(2)} EL.m`;
+      document.getElementById('dam-storage-rate').innerText = `${damData.storageRate.toFixed(1)} %`;
+      document.getElementById('dam-storage-vol').innerText = `${damData.storageVol.toFixed(1)} 諛깅쭔??;
+      document.getElementById('dam-inflow-val').innerText = `${damData.inflow.toFixed(1)} ??s`;
+      document.getElementById('dam-total-discharge-text').innerText = `珥?諛⑸쪟?? ${totalDischarge.toFixed(1)} ??s`;
+
+      document.getElementById('discharge-namgang-total').innerText = `?⑷퀎: ${namgangTotal.toFixed(1)} ??s`;
+      document.getElementById('discharge-namgang-hydro').innerText = `${damData.namgangHydro.toFixed(1)} ??s`;
+      document.getElementById('discharge-namgang-gate').innerText = `${damData.namgangGate.toFixed(1)} ??s`;
+      document.getElementById('gate-namgang-count').innerText = `媛쒕갑: ${damData.namgangGateCount} / 3 媛?;
+
+      document.getElementById('discharge-gahwa-total').innerText = `?⑷퀎: ${gahwaTotal.toFixed(1)} ??s`;
+      document.getElementById('discharge-gahwa-hydro').innerText = `${damData.gahwaHydro.toFixed(1)} ??s`;
+      document.getElementById('discharge-gahwa-gate').innerText = `${damData.gahwaGate.toFixed(1)} ??s`;
+      document.getElementById('gate-gahwa-count').innerText = `媛쒕갑: ${damData.gahwaGateCount} / 12 媛?;
 
       const badge = document.getElementById('dam-status-badge');
       const gaugeFill = document.getElementById('dam-gauge-fill');
 
-      // 방류량 기준 단계 설정 (0~150: 안전, 150~300: 주의, 300~500: 경고, 500+: 위험)
-      let maxGaugeVal = 600;
-      let fillPercent = Math.min(100, Math.max(5, (discharge / maxGaugeVal) * 100));
-      gaugeFill.style.width = `${fillPercent}%`;
+      gaugeFill.style.width = `${Math.min(100, Math.max(5, damData.storageRate))}%`;
 
-      if (discharge < 150) {
+      if (namgangTotal < 150) {
         badge.className = "status-badge status-safe";
-        badge.innerText = "안전";
+        badge.innerText = "?덉쟾";
         gaugeFill.style.backgroundColor = "var(--accent-green)";
-      } else if (discharge < 300) {
+      } else if (namgangTotal < 300) {
         badge.className = "status-badge status-caution";
-        badge.innerText = "주의 (서행)";
+        badge.innerText = "二쇱쓽 (?쒗뻾)";
         gaugeFill.style.backgroundColor = "var(--accent-yellow)";
-      } else if (discharge < 500) {
+      } else if (namgangTotal < 500) {
         badge.className = "status-badge status-warning";
-        badge.innerText = "경고 (운항 유의)";
+        badge.innerText = "寃쎄퀬 (?댄빆 ?좎쓽)";
         gaugeFill.style.backgroundColor = "var(--accent-orange)";
       } else {
         badge.className = "status-badge status-danger";
-        badge.innerText = "위험 (통제 권고)";
+        badge.innerText = "?꾪뿕 (?듭젣 沅뚭퀬)";
         gaugeFill.style.backgroundColor = "var(--accent-red)";
       }
     }
@@ -1709,12 +2117,14 @@
       fetchDamAndTideData();
       setInterval(() => fetchLocationWeather(false), 10000); 
       setInterval(updateWeatherUI, 2000);    
-      setInterval(fetchDamAndTideData, 5000); // 댐 및 수문 실시간 5초 갱신
+      setInterval(fetchDamAndTideData, 5000); 
       startGpsTracking(); 
       setupNetworkStatusListeners();
+
+      // ??쒕?援?湲곗긽泥???쒕낫??濡쒖쭅 珥덇린???댁떇
+      initKmaDashboard();
     });
 
-    // 4. 네트워크 단절(Offline) 및 재연결 모니터링
     function setupNetworkStatusListeners() {
       window.addEventListener('online', updateOnlineStatus);
       window.addEventListener('offline', updateOnlineStatus);
@@ -1726,7 +2136,7 @@
       if (!navigator.onLine) {
         if (guide) {
           guide.className = "guide-text offline-alert";
-          guide.innerText = "[⚠️ 오프라인] 인터넷 연결이 끊어졌습니다. 로컬 기록 기능은 유지됩니다.";
+          guide.innerText = "[?좑툘 ?ㅽ봽?쇱씤] ?명꽣???곌껐???딆뼱議뚯뒿?덈떎. 濡쒖뺄 湲곕줉 湲곕뒫? ?좎??⑸땲??";
         }
       }
     }
@@ -1877,7 +2287,7 @@
     }
 
     function getHeadingDirectionText(deg) {
-      const koreanDirs = ['북', '북북동', '북동', '동북동', '동', '동남동', '남동', '남남동', '남', '남남서', '남서', '서남서', '서', '서북서', '북서', '북북서'];
+      const koreanDirs = ['遺?, '遺곷턿??, '遺곷룞', '?숇턿??, '??, '?숇궓??, '?⑤룞', '?⑤궓??, '??, '?⑤궓??, '?⑥꽌', '?쒕궓??, '??, '?쒕턿??, '遺곸꽌', '遺곷턿??];
       
       const normalizedDeg = (deg + 360) % 360;
       const index = Math.round(normalizedDeg / 22.5) % 16;
@@ -1889,10 +2299,10 @@
 
       const valHeading = document.getElementById('val-heading');
       const subHeadingInfo = document.getElementById('sub-heading-info');
-      if (valHeading) valHeading.innerText = `${Math.round(normalizedDeg)}° ${koreanDirs[index]}`;
-      if (subHeadingInfo) subHeadingInfo.innerText = `방위각: ${normalizedDeg.toFixed(1)}°`;
+      if (valHeading) valHeading.innerText = `${Math.round(normalizedDeg)}째 ${koreanDirs[index]}`;
+      if (subHeadingInfo) subHeadingInfo.innerText = `諛⑹쐞媛? ${normalizedDeg.toFixed(1)}째`;
 
-      return `${Math.round(normalizedDeg)}° ${koreanDirs[index]}`;
+      return `${Math.round(normalizedDeg)}째 ${koreanDirs[index]}`;
     }
 
     function switchLeftTab(tabName) {
@@ -1909,8 +2319,12 @@
       } else if (tabName === 'env') {
         tabBtns[1].classList.add('active');
         document.getElementById('tab-env').classList.add('active');
-      } else if (tabName === 'logs') {
+      } else if (tabName === 'kma') {
         tabBtns[2].classList.add('active');
+        document.getElementById('tab-kma').classList.add('active');
+        loadKmaWeatherData(kmaCurrentCityKey);
+      } else if (tabName === 'logs') {
+        tabBtns[3].classList.add('active');
         document.getElementById('tab-logs').classList.add('active');
         renderLogList();
       }
@@ -1993,7 +2407,7 @@
           osc.stop(audioCtx.currentTime + 0.4);
         }
       } catch (e) {
-        console.warn("경고음 재생 실패:", e);
+        console.warn("寃쎄퀬???ъ깮 ?ㅽ뙣:", e);
       }
     }
 
@@ -2015,11 +2429,11 @@
       if (typeof firebase !== 'undefined') {
         firebase.initializeApp(firebaseConfig);
         isFirebaseReady = true;
-        document.getElementById('connection-status').innerText = "서버 연결됨";
+        document.getElementById('connection-status').innerText = "?쒕쾭 ?곌껐??;
         listenToOtherShips();
       }
     } catch(e) {
-      document.getElementById('connection-status').innerText = "통신 연결 오류";
+      document.getElementById('connection-status').innerText = "?듭떊 ?곌껐 ?ㅻ쪟";
     }
 
     const shipSelect = document.getElementById('shipSelect');
@@ -2050,7 +2464,7 @@
             map.setRotationAngle(deg);
           }
         } catch(e) {
-          console.warn("지도 회전 처리 중 오류 발생:", e);
+          console.warn("吏???뚯쟾 泥섎━ ?ㅻ쪟:", e);
         }
       }
     }
@@ -2079,17 +2493,15 @@
       updateOnlineShipBadges();
     }
 
-    function updateOnlineShipBadges() {
-      if (isFirebaseReady) {}
-    }
+    function updateOnlineShipBadges() {}
 
     function startTracking() {
       if (!shipSelect.value) {
-        showNotification("선박을 먼저 선택해주세요.");
+        showNotification("?좊컯??癒쇱? ?좏깮?댁＜?몄슂.");
         return;
       }
       if (!isMyShipOperating) {
-        showNotification("'운항 등록'을 먼저 진행해주세요.");
+        showNotification("'?댄빆 ?깅줉'??癒쇱? 吏꾪뻾?댁＜?몄슂.");
         return;
       }
 
@@ -2118,13 +2530,13 @@
 
       if (isFirebaseReady && currentShipName) {
         firebase.database().ref('ships/' + currentShipName).update({
-          tripStatus: '운항 중',
+          tripStatus: '?댄빆 以?,
           startTime: startTimeStr,
           endTime: ''
         });
       }
 
-      showNotification(`[${currentShipName}] 운항 트립 측정이 시작되었습니다. (${startTimeStr})`);
+      showNotification(`[${currentShipName}] ?댄빆 ?몃┰ 痢≪젙???쒖옉?섏뿀?듬땲?? (${startTimeStr})`);
       requestWakeLock();
     }
 
@@ -2135,7 +2547,7 @@
         }
         localStorage.setItem('ship_trip_logs', JSON.stringify(tripLogs));
       } catch (e) {
-        console.error("로컬 스토리지 저장 실패:", e);
+        console.error("濡쒖뺄 ?ㅽ넗由ъ? ????ㅽ뙣:", e);
       }
     }
 
@@ -2184,7 +2596,7 @@
       }
 
       if (hasSaved) {
-        if(!isAuto) showNotification("이미 저장된 트립입니다.");
+        if(!isAuto) showNotification("?대? ??λ맂 ?몃┰?낅땲??");
         return;
       }
 
@@ -2205,15 +2617,15 @@
       if (isFirebaseReady && currentShipName) {
         const endTimeStr = document.getElementById('end-time-input').value;
         firebase.database().ref('ships/' + currentShipName).update({
-          tripStatus: '출항 대기 중',
+          tripStatus: '異쒗빆 ?湲?以?,
           endTime: endTimeStr
         });
       }
 
       if (isAuto) {
-        showNotification(`장시간 정지 상태가 감지되어 운항 트립이 자동 종료 및 저장되었습니다.`);
+        showNotification(`?μ떆媛??뺤? ?곹깭媛 媛먯??섏뼱 ?댄빆 ?몃┰???먮룞 醫낅즺 諛???λ릺?덉뒿?덈떎.`);
       } else {
-        showNotification(`[${currentShipName}] 운항 트립이 종료되고 저장되었습니다.`);
+        showNotification(`[${currentShipName}] ?댄빆 ?몃┰??醫낅즺?섍퀬 ??λ릺?덉뒿?덈떎.`);
       }
     }
 
@@ -2260,7 +2672,7 @@
           if (!isMyShipOperating) return;
 
           cleanUpOperation();
-          showNotification(`[⚠️ 경고] 관리자에 의해 [${currentShipName}]의 운항이 강제로 해제되었습니다.`);
+          showNotification(`[?좑툘 寃쎄퀬] 愿由ъ옄???섑빐 [${currentShipName}]???댄빆??媛뺤젣濡??댁젣?섏뿀?듬땲??`);
           shipRef.remove();
         }
       });
@@ -2268,7 +2680,7 @@
 
     async function startShipOperation() {
       if (!shipSelect.value) {
-        showNotification("선박을 먼저 선택하세요.");
+        showNotification("?좊컯??癒쇱? ?좏깮?섏꽭??");
         return;
       }
       currentShipName = shipSelect.value;
@@ -2280,7 +2692,7 @@
           const snapshot = await targetRef.once('value');
           const data = snapshot.val();
           if (data && data.isOperating) {
-            showNotification(`[${currentShipName}] 은(는) 이미 다른 단말기에서 운항 등록 중입니다.`);
+            showNotification(`[${currentShipName}] ?(?? ?대? ?ㅻⅨ ?⑤쭚湲곗뿉???댄빆 ?깅줉 以묒엯?덈떎.`);
             return;
           }
           await targetRef.set({
@@ -2291,15 +2703,15 @@
             speedKmh: currentSpeedKmh || 0,
             isOperating: true,
             forceStop: false,
-            tripStatus: '출항 대기 중',
+            tripStatus: '異쒗빆 ?湲?以?,
             startTime: '',
             endTime: '',
             updatedAt: Date.now()
           });
           targetRef.onDisconnect().remove();
         } catch (err) {
-          console.error("Firebase 등록 실패:", err);
-          showNotification("서버 연결에 실패했습니다.");
+          console.error("Firebase ?깅줉 ?ㅽ뙣:", err);
+          showNotification("?쒕쾭 ?곌껐???ㅽ뙣?덉뒿?덈떎.");
           return;
         }
       }
@@ -2318,7 +2730,7 @@
       broadcastMyLocation();
       listenToForceStop();
       listenToOtherShips();
-      showNotification(`선박 [${currentShipName}] 운항 등록이 완료되었습니다.`);
+      showNotification(`?좊컯 [${currentShipName}] ?댄빆 ?깅줉???꾨즺?섏뿀?듬땲??`);
     }
 
     async function stopShipOperation() {
@@ -2328,12 +2740,12 @@
         try {
           await firebase.database().ref('ships/' + currentShipName).remove();
         } catch(err) {
-          console.error("Firebase 해제 실패:", err);
+          console.error("Firebase ?댁젣 ?ㅽ뙣:", err);
         }
       }
 
       cleanUpOperation();
-      showNotification(`선박 [${currentShipName}] 운항 등록이 해제되었습니다.`);
+      showNotification(`?좊컯 [${currentShipName}] ?댄빆 ?깅줉???댁젣?섏뿀?듬땲??`);
     }
 
     function cleanUpOperation() {
@@ -2363,16 +2775,16 @@
       const guide = document.getElementById('status-guide-text');
       if (guide) {
         guide.className = "guide-text";
-        guide.innerText = "[상태] 물빛나루쉼터·망진나루 수역 실시간 연동 완료 - 안전 운항하세요.";
+        guide.innerText = "[?곹깭] 臾쇰튆?섎（?쇳꽣쨌留앹쭊?섎（ ?섏뿭 ?ㅼ떆媛??곕룞 ?꾨즺 - ?덉쟾 ?댄빆?섏꽭??";
       }
     }
 
     function formatClockTime(date) {
-      if (!(date instanceof Date) || isNaN(date)) return "00시 00분 00초";
+      if (!(date instanceof Date) || isNaN(date)) return "00??00遺?00珥?;
       const h = String(date.getHours()).padStart(2, '0');
       const m = String(date.getMinutes()).padStart(2, '0');
       const s = String(date.getSeconds()).padStart(2, '0');
-      return `${h}시 ${m}분 ${s}초`;
+      return `${h}??${m}遺?${s}珥?;
     }
 
     function formatDurationText(diffSec) {
@@ -2380,8 +2792,8 @@
       const h = Math.floor(sec / 3600);
       const m = Math.floor((sec % 3600) / 60);
       const s = sec % 60;
-      if (h > 0) return `${h}시간 ${m}분 ${s}초`;
-      return `${m}분 ${s}초`;
+      if (h > 0) return `${h}?쒓컙 ${m}遺?${s}珥?;
+      return `${m}遺?${s}珥?;
     }
 
     if ('serviceWorker' in navigator) {
@@ -2414,7 +2826,7 @@
       const banner = document.getElementById('pwa-install-banner');
       if (banner) {
         if (isIOS) {
-          document.getElementById('pwa-install-desc').innerText = '사파리 공유 버튼 -> [홈 화면에 추가]를 눌러 설치하세요.';
+          document.getElementById('pwa-install-desc').innerText = '?ы뙆由?怨듭쑀 踰꾪듉 -> [???붾㈃??異붽?]瑜??뚮윭 ?ㅼ튂?섏꽭??';
           document.getElementById('pwa-install-btn').style.display = 'none';
         }
         banner.style.display = 'flex';
@@ -2459,10 +2871,10 @@
       const year = now.getFullYear();
       const month = String(now.getMonth() + 1).padStart(2, '0');
       const date = String(now.getDate()).padStart(2, '0');
-      const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
+      const weekDays = ['??, '??, '??, '??, '紐?, '湲?, '??];
       const day = weekDays[now.getDay()];
 
-      document.getElementById('live-date').innerText = `${year}년 ${month}월 ${date}일 (${day})`;
+      document.getElementById('live-date').innerText = `${year}??${month}??${date}??(${day})`;
       document.getElementById('live-time').innerText = formatClockTime(now);
 
       if (isDrivingStarted && tripStartTime) {
@@ -2539,18 +2951,18 @@
       bearing: 0
     });
 
-    L.control.layers({ "일반지도": baseMapLayer, "항공지도": satelliteLayer }, { "하이브리드": hybridLayer }, { position: 'topleft' }).addTo(map);
+    L.control.layers({ "?쇰컲吏??: baseMapLayer, "??났吏??: satelliteLayer }, { "?섏씠釉뚮━??: hybridLayer }, { position: 'topleft' }).addTo(map);
 
     function createMyShipIcon(shipName, speedKts) {
-      const displayName = shipName ? `🚢 ${shipName}` : "📍 내 위치";
+      const displayName = shipName ? `?슓 ${shipName}` : "?뱧 ???꾩튂";
       const speedText = (typeof speedKts === 'number' && !isNaN(speedKts)) ? speedKts.toFixed(1) : "0.0";
       const iconHtml = `
         <div class="my-ship-icon-box">
           <div class="my-ship-badge">
             <div>${displayName}</div>
-            <div style="font-size: 0.85em; color: #ffffff;">속도: ${speedText} Kts</div>
+            <div style="font-size: 0.85em; color: #ffffff;">?띾룄: ${speedText} Kts</div>
           </div>
-          <div class="cruise-ship-icon">⚓</div>
+          <div class="cruise-ship-icon">??/div>
         </div>
       `;
       return L.divIcon({ className: '', html: iconHtml, iconSize: [200, 110], iconAnchor: [100, 75] });
@@ -2560,7 +2972,7 @@
       icon: createMyShipIcon(currentShipName, currentSpeedKts),
       draggable: true,
       zIndexOffset: 1000
-    }).addTo(map).bindPopup("<b>현재 내 위치 (물빛나루쉼터·망진나루 수역)</b>");
+    }).addTo(map).bindPopup("<b>?꾩옱 ???꾩튂 (臾쇰튆?섎（?쇳꽣쨌留앹쭊?섎（ ?섏뿭)</b>");
 
     trackPolyline = L.polyline([], { color: '#ff4d4d', weight: 5, opacity: 0.85 }).addTo(map);
 
@@ -2576,19 +2988,19 @@
 
       if (mapMode === 0) {
         btn.classList.add('active-tracking');
-        btn.innerText = "중심 추적(회전)";
-        guide.innerText = "[상태] 중심 추적 모드 (진행 방향 회전)";
+        btn.innerText = "以묒떖 異붿쟻(?뚯쟾)";
+        guide.innerText = "[?곹깭] 以묒떖 異붿쟻 紐⑤뱶 (吏꾪뻾 諛⑺뼢 ?뚯쟾)";
         map.panTo([currentLat, currentLng]);
         setMapBearingSafe(-currentHeading);
       } else if (mapMode === 1) {
         btn.classList.add('active-tracking-norotate');
-        btn.innerText = "중심 추적(정북)";
-        guide.innerText = "[상태] 중심 추적 모드 (정북 고정)";
+        btn.innerText = "以묒떖 異붿쟻(?뺣턿)";
+        guide.innerText = "[?곹깭] 以묒떖 異붿쟻 紐⑤뱶 (?뺣턿 怨좎젙)";
         map.panTo([currentLat, currentLng]);
         setMapBearingSafe(0);
       } else {
-        btn.innerText = "자유 이동 모드";
-        guide.innerText = "[상태] 자유 지도 이동 모드";
+        btn.innerText = "?먯쑀 ?대룞 紐⑤뱶";
+        guide.innerText = "[?곹깭] ?먯쑀 吏???대룞 紐⑤뱶";
         setMapBearingSafe(0);
       }
     }
@@ -2600,14 +3012,14 @@
 
       if (isSurveyMode) {
         btn.classList.add('active');
-        btn.innerText = "📷 촬영·측량 모드 ON";
-        guide.innerText = "[상태] 촬영·측량 전용 모드 작동 중 (자동종료 금지)";
-        showNotification("📷 촬영·측량 전용 모드가 활성화되었습니다.\n선박이 장시간 정지하거나 저속 이동하더라도 자동 종료되지 않습니다.");
+        btn.innerText = "?벜 珥ъ쁺쨌痢〓웾 紐⑤뱶 ON";
+        guide.innerText = "[?곹깭] 珥ъ쁺쨌痢〓웾 ?꾩슜 紐⑤뱶 ?묐룞 以?(?먮룞醫낅즺 湲덉?)";
+        showNotification("?벜 珥ъ쁺쨌痢〓웾 ?꾩슜 紐⑤뱶媛 ?쒖꽦?붾릺?덉뒿?덈떎.\n?좊컯???μ떆媛??뺤??섍굅??????대룞?섎뜑?쇰룄 ?먮룞 醫낅즺?섏? ?딆뒿?덈떎.");
       } else {
         btn.classList.remove('active');
-        btn.innerText = "📷 촬영·측량 모드 OFF";
-        guide.innerText = "[상태] 일반 운항 모드로 전환되었습니다.";
-        showNotification("촬영·측량 전용 모드가 해제되었습니다.");
+        btn.innerText = "?벜 珥ъ쁺쨌痢〓웾 紐⑤뱶 OFF";
+        guide.innerText = "[?곹깭] ?쇰컲 ?댄빆 紐⑤뱶濡??꾪솚?섏뿀?듬땲??";
+        showNotification("珥ъ쁺쨌痢〓웾 ?꾩슜 紐⑤뱶媛 ?댁젣?섏뿀?듬땲??");
       }
     }
 
@@ -2625,14 +3037,14 @@
       const applyZoneAction = (isSafeZone) => {
         if (isSafeZone) {
           const safeColor = '#2ea043';
-          layer.zoneMeta = { type: 'safe', reason: '지정 선착장', label: '정박 영역', color: safeColor };
+          layer.zoneMeta = { type: 'safe', reason: '吏???좎갑??, label: '?뺣컯 ?곸뿭', color: safeColor };
           if (layer.setStyle) layer.setStyle({ color: safeColor, fillColor: safeColor, fillOpacity: 0.35, weight: 2 });
-          layer.bindPopup(`<b>[지정 선착장 (Safe Zone)]</b><br>정박 시 알람 자동 차단`);
+          layer.bindPopup(`<b>[吏???좎갑??(Safe Zone)]</b><br>?뺣컯 ???뚮엺 ?먮룞 李⑤떒`);
         } else {
           const color = '#ff7b72';
-          layer.zoneMeta = { type: 'danger', reason: '위험 수역', label: '진입 금지 구역', color: color };
+          layer.zoneMeta = { type: 'danger', reason: '?꾪뿕 ?섏뿭', label: '吏꾩엯 湲덉? 援ъ뿭', color: color };
           if (layer.setStyle) layer.setStyle({ color: color, fillColor: color, fillOpacity: 0.35, weight: 2 });
-          layer.bindPopup(`<b>[위험 수역 경고 구역]</b><br>진입 시 경고 알람 발생`);
+          layer.bindPopup(`<b>[?꾪뿕 ?섏뿭 寃쎄퀬 援ъ뿭]</b><br>吏꾩엯 ??寃쎄퀬 ?뚮엺 諛쒖깮`);
         }
         drawnItems.addLayer(layer);
       };
@@ -2640,7 +3052,7 @@
       if (!showConfirmAlerts) {
         applyZoneAction(false);
       } else {
-        const isSafeZone = confirm("이 영역을 지정 선착장(정박 안전 구역 - Safe Zone)으로 설정하시겠습니까?\n[확인]: 선착장(알람 차단 Mute)\n[취소]: 일반 경고 구역");
+        const isSafeZone = confirm("???곸뿭??吏???좎갑???뺣컯 ?덉쟾 援ъ뿭 - Safe Zone)?쇰줈 ?ㅼ젙?섏떆寃좎뒿?덇퉴?\n[?뺤씤]: ?좎갑???뚮엺 李⑤떒 Mute)\n[痍⑥냼]: ?쇰컲 寃쎄퀬 援ъ뿭");
         applyZoneAction(isSafeZone);
       }
     });
@@ -2652,7 +3064,7 @@
       if (!showConfirmAlerts) {
         executeReset();
       } else {
-        if (confirm("설정된 모든 구역(선착장 및 위험 수역)을 초기화하시겠습니까?")) {
+        if (confirm("?ㅼ젙??紐⑤뱺 援ъ뿭(?좎갑??諛??꾪뿕 ?섏뿭)??珥덇린?뷀븯?쒓쿋?듬땲源?")) {
           executeReset();
         }
       }
@@ -2663,12 +3075,12 @@
       const btn = document.getElementById('btn-calibrate-toggle');
       if (isCalibratedMode) {
         btn.classList.add('active');
-        btn.innerText = "보정 모드 ON (마커 드래그)";
+        btn.innerText = "蹂댁젙 紐⑤뱶 ON (留덉빱 ?쒕옒洹?";
         shipMarker.dragging.enable();
-        showNotification("마커를 드래그하여 원하는 위치에 놓을 수 있습니다.");
+        showNotification("留덉빱瑜??쒕옒洹명븯???먰븯???꾩튂???볦쓣 ???덉뒿?덈떎.");
       } else {
         btn.classList.remove('active');
-        btn.innerText = "위치 수동보정";
+        btn.innerText = "?꾩튂 ?섎룞蹂댁젙";
         shipMarker.dragging.disable();
       }
     }
@@ -2677,19 +3089,19 @@
       const executeCalibrationReset = () => {
         isCalibratedMode = false;
         document.getElementById('btn-calibrate-toggle').classList.remove('active');
-        document.getElementById('btn-calibrate-toggle').innerText = "위치 수동보정";
+        document.getElementById('btn-calibrate-toggle').innerText = "?꾩튂 ?섎룞蹂댁젙";
         shipMarker.dragging.disable();
         currentLat = actualGpsLat;
         currentLng = actualGpsLng;
         shipMarker.setLatLng([currentLat, currentLng]);
         fetchLocationWeather(true);
-        showNotification("GPS 원본 위치로 복원되었습니다.");
+        showNotification("GPS ?먮낯 ?꾩튂濡?蹂듭썝?섏뿀?듬땲??");
       };
 
       if (!showConfirmAlerts) {
         executeCalibrationReset();
       } else {
-        if (confirm("수동 보정된 위치를 취소하고 GPS 원본 위치로 복원하시겠습니까?")) {
+        if (confirm("?섎룞 蹂댁젙???꾩튂瑜?痍⑥냼?섍퀬 GPS ?먮낯 ?꾩튂濡?蹂듭썝?섏떆寃좎뒿?덇퉴?")) {
           executeCalibrationReset();
         }
       }
@@ -2723,7 +3135,7 @@
       if (!showConfirmAlerts) {
         executeRouteReset();
       } else {
-        if (confirm("설정된 목적지 항로를 초기화하시겠습니까?")) {
+        if (confirm("?ㅼ젙??紐⑹쟻吏 ??줈瑜?珥덇린?뷀븯?쒓쿋?듬땲源?")) {
           executeRouteReset();
         }
       }
@@ -2736,8 +3148,8 @@
         waypoints.push([lat, lng]);
         
         const m = L.marker([lat, lng], {
-          icon: L.divIcon({ className: '', html: '<div style="background:#00f2fe; color:#000; font-weight:bold; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:12px; border:1px solid #fff;">📍</div>', iconSize: [20, 20], iconAnchor: [10, 10] })
-        }).addTo(map).bindPopup(`목적지 ${waypoints.length}`);
+          icon: L.divIcon({ className: '', html: '<div style="background:#00f2fe; color:#000; font-weight:bold; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:12px; border:1px solid #fff;">?뱧</div>', iconSize: [20, 20], iconAnchor: [10, 10] })
+        }).addTo(map).bindPopup(`紐⑹쟻吏 ${waypoints.length}`);
         waypointMarkers.push(m);
 
         if (routePolyline) map.removeLayer(routePolyline);
@@ -2839,7 +3251,7 @@
 
       const guide = document.getElementById('status-guide-text');
       if (guide && !guide.classList.contains('warning-alert') && !guide.classList.contains('safe-alert') && !guide.classList.contains('offline-alert')) {
-        guide.innerText = "[상태] 물빛나루쉼터·망진나루 수역 연동 완료 - 실시간 안전 운항 중";
+        guide.innerText = "[?곹깭] 臾쇰튆?섎（?쇳꽣쨌留앹쭊?섎（ ?섏뿭 ?곕룞 ?꾨즺 - ?ㅼ떆媛??덉쟾 ?댄빆 以?;
       }
 
       if (isFirstGps) {
@@ -2864,21 +3276,21 @@
     }
 
     function handleGpsError(err) {
-      console.warn("GPS 수신 오류:", err.message);
+      console.warn("GPS ?섏떊 ?ㅻ쪟:", err.message);
       const guide = document.getElementById('status-guide-text');
       const coords = document.getElementById('gps-coords');
       
-      let errMsg = "GPS 신호를 찾을 수 없습니다.";
-      if (err.code === 1) errMsg = "GPS 위치 권한이 거부되었습니다.";
-      else if (err.code === 2) errMsg = "위치 정보를 이용할 수 없습니다.";
-      else if (err.code === 3) errMsg = "GPS 신호 수신 시간이 초과되었습니다.";
+      let errMsg = "GPS ?좏샇瑜?李얠쓣 ???놁뒿?덈떎.";
+      if (err.code === 1) errMsg = "GPS ?꾩튂 沅뚰븳??嫄곕??섏뿀?듬땲??";
+      else if (err.code === 2) errMsg = "?꾩튂 ?뺣낫瑜??댁슜?????놁뒿?덈떎.";
+      else if (err.code === 3) errMsg = "GPS ?좏샇 ?섏떊 ?쒓컙??珥덇낵?섏뿀?듬땲??";
 
       if (guide) {
         guide.className = "guide-text warning-alert";
-        guide.innerText = `[⚠️ GPS 오류] ${errMsg}`;
+        guide.innerText = `[?좑툘 GPS ?ㅻ쪟] ${errMsg}`;
       }
       if (coords) {
-        coords.innerText = "GPS 수신 실패";
+        coords.innerText = "GPS ?섏떊 ?ㅽ뙣";
       }
     }
 
@@ -2897,7 +3309,7 @@
         );
       } else {
         const guide = document.getElementById('status-guide-text');
-        if (guide) guide.innerText = "[⚠️ 오류] 이 기기/브라우저는 GPS를 지원하지 않습니다.";
+        if (guide) guide.innerText = "[?좑툘 ?ㅻ쪟] ??湲곌린/釉뚮씪?곗???GPS瑜?吏?먰븯吏 ?딆뒿?덈떎.";
       }
     }
 
@@ -2935,14 +3347,14 @@
 
           const isMe = (name === currentShipName);
           const badgeClass = isMe ? "ship-badge my-ship" : "ship-badge";
-          badgesHtml += `<span class="${badgeClass}">🚢 ${name} (${shipInfo.tripStatus || '운항 중'})</span>`;
+          badgesHtml += `<span class="${badgeClass}">?슓 ${name} (${shipInfo.tripStatus || '?댄빆 以?})</span>`;
 
           if (!isMe) {
             const pos = [shipInfo.lat || 35.1885, shipInfo.lng || 128.0832];
             const sKts = shipInfo.speedKts || 0;
             const otherIcon = L.divIcon({
               className: '',
-              html: `<div class="other-ship-icon"><div class="other-ship-badge">🚢 ${name}<br>${sKts.toFixed(1)} Kts</div><div class="other-ship-symbol">🛥️</div></div>`,
+              html: `<div class="other-ship-icon"><div class="other-ship-badge">?슓 ${name}<br>${sKts.toFixed(1)} Kts</div><div class="other-ship-symbol">?썷截?/div></div>`,
               iconSize: [140, 70],
               iconAnchor: [70, 50]
             });
@@ -2951,14 +3363,14 @@
               otherShipMarkers[name].setLatLng(pos);
               otherShipMarkers[name].setIcon(otherIcon);
             } else {
-              const marker = L.marker(pos, { icon: otherIcon }).addTo(map).bindPopup(`<b>다른 선박: ${name}</b><br>상태: ${shipInfo.tripStatus || '운항 중'}`);
+              const marker = L.marker(pos, { icon: otherIcon }).addTo(map).bindPopup(`<b>?ㅻⅨ ?좊컯: ${name}</b><br>?곹깭: ${shipInfo.tripStatus || '?댄빆 以?}`);
               otherShipMarkers[name] = marker;
             }
           }
         });
 
         if (activeCount === 0) {
-          badgesHtml = `<span class="ship-badge my-ship">온라인 선박 없음</span>`;
+          badgesHtml = `<span class="ship-badge my-ship">?⑤씪???좊컯 ?놁쓬</span>`;
         }
         if (onlineBadges) onlineBadges.innerHTML = badgesHtml;
       });
@@ -3007,18 +3419,18 @@
       if (inDanger || closeToOther) {
         if (guide && !guide.classList.contains('offline-alert')) {
           guide.className = "guide-text warning-alert";
-          guide.innerText = `[⚠️ 경고] ${inDanger ? '위험 수역 진입!' : ''} ${closeToOther ? '인근 선박 근접 경고!' : ''}`;
+          guide.innerText = `[?좑툘 寃쎄퀬] ${inDanger ? '?꾪뿕 ?섏뿭 吏꾩엯!' : ''} ${closeToOther ? '?멸렐 ?좊컯 洹쇱젒 寃쎄퀬!' : ''}`;
         }
         playAlertSound('danger');
       } else if (inSafe) {
         if (guide && !guide.classList.contains('offline-alert')) {
           guide.className = "guide-text safe-alert";
-          guide.innerText = `[안전] 지정 선착장(Safe Zone) 정박 중 - 알람 자동 차단됨`;
+          guide.innerText = `[?덉쟾] 吏???좎갑??Safe Zone) ?뺣컯 以?- ?뚮엺 ?먮룞 李⑤떒??;
         }
       } else {
         if (guide && guide.classList.contains('warning-alert')) {
           guide.className = "guide-text";
-          guide.innerText = "[상태] 물빛나루쉼터·망진나루 수역 실시간 연동 완료 - 안전 운항하세요.";
+          guide.innerText = "[?곹깭] 臾쇰튆?섎（?쇳꽣쨌留앹쭊?섎（ ?섏뿭 ?ㅼ떆媛??곕룞 ?꾨즺 - ?덉쟾 ?댄빆?섏꽭??";
         }
       }
     }
@@ -3028,13 +3440,13 @@
       if (!container) return;
 
       if (tripLogs.length === 0) {
-        container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-sub); font-size:0.9rem;">저장된 운항 기록 내역이 없습니다.</div>`;
+        container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-sub); font-size:0.9rem;">??λ맂 ?댄빆 湲곕줉 ?댁뿭???놁뒿?덈떎.</div>`;
         return;
       }
 
       const grouped = {};
       tripLogs.forEach(log => {
-        const d = log.date || '기타 일자';
+        const d = log.date || '湲고? ?쇱옄';
         if (!grouped[d]) grouped[d] = [];
         grouped[d].push(log);
       });
@@ -3043,18 +3455,18 @@
       Object.keys(grouped).sort().reverse().forEach(dateKey => {
         html += `
           <div class="log-date-group">
-            <div class="log-date-header">📅 ${dateKey}</div>
+            <div class="log-date-header">?뱟 ${dateKey}</div>
         `;
         grouped[dateKey].forEach(log => {
           html += `
             <div class="log-item" onclick="openDetailModal(${log.id})">
               <div>
-                <div class="log-item-title">🚢 ${log.shipName} (${log.startTime} ~ ${log.endTime})</div>
-                <div class="log-item-sub">소요: ${log.duration} | 거리: ${log.distanceKm} km</div>
+                <div class="log-item-title">?슓 ${log.shipName} (${log.startTime} ~ ${log.endTime})</div>
+                <div class="log-item-sub">?뚯슂: ${log.duration} | 嫄곕━: ${log.distanceKm} km</div>
               </div>
               <div style="text-align:right;">
                 <div class="log-item-right-top">${log.avgSpeedKts} Kts</div>
-                <div class="log-item-right-bottom">최고 ${log.maxSpeedKts} Kts</div>
+                <div class="log-item-right-bottom">理쒓퀬 ${log.maxSpeedKts} Kts</div>
               </div>
             </div>
           `;
@@ -3073,24 +3485,24 @@
       const filtered = tripLogs.filter(l => l.date === val);
       const container = document.getElementById('log-list-container');
       if (filtered.length === 0) {
-        container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-sub); font-size:0.9rem;">해당 일자에 일치하는 운항 기록이 없습니다.</div>`;
+        container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-sub); font-size:0.9rem;">?대떦 ?쇱옄???쇱튂?섎뒗 ?댄빆 湲곕줉???놁뒿?덈떎.</div>`;
         return;
       }
 
       let html = `
         <div class="log-date-group">
-          <div class="log-date-header">📅 검색 결과 (${val})</div>
+          <div class="log-date-header">?뱟 寃??寃곌낵 (${val})</div>
       `;
       filtered.forEach(log => {
         html += `
           <div class="log-item" onclick="openDetailModal(${log.id})">
             <div>
-              <div class="log-item-title">🚢 ${log.shipName} (${log.startTime} ~ ${log.endTime})</div>
-              <div class="log-item-sub">소요: ${log.duration} | 거리: ${log.distanceKm} km</div>
+              <div class="log-item-title">?슓 ${log.shipName} (${log.startTime} ~ ${log.endTime})</div>
+              <div class="log-item-sub">?뚯슂: ${log.duration} | 嫄곕━: ${log.distanceKm} km</div>
             </div>
             <div style="text-align:right;">
               <div class="log-item-right-top">${log.avgSpeedKts} Kts</div>
-              <div class="log-item-right-bottom">최고 ${log.maxSpeedKts} Kts</div>
+              <div class="log-item-right-bottom">理쒓퀬 ${log.maxSpeedKts} Kts</div>
             </div>
           </div>
         `;
@@ -3111,7 +3523,7 @@
       if (!log) return;
       currentOpenLogId = id;
 
-      document.getElementById('modal-title').innerText = `[${log.shipName}] 운항 상세 정보`;
+      document.getElementById('modal-title').innerText = `[${log.shipName}] ?댄빆 ?곸꽭 ?뺣낫`;
       document.getElementById('m-date').innerText = log.date;
       document.getElementById('m-duration').innerText = log.duration;
       document.getElementById('m-start-time').innerText = log.startTime;
@@ -3127,7 +3539,7 @@
         if (!showConfirmAlerts) {
           executeDelete();
         } else {
-          if (confirm("이 운항 기록을 삭제하시겠습니까?")) {
+          if (confirm("???댄빆 湲곕줉????젣?섏떆寃좎뒿?덇퉴?")) {
             executeDelete();
           }
         }
@@ -3162,15 +3574,15 @@
       saveLogsToLocalStorage();
       closeModal();
       renderLogList();
-      showNotification("운항 기록이 삭제되었습니다.");
+      showNotification("?댄빆 湲곕줉????젣?섏뿀?듬땲??");
     }
 
     function exportLogsToCSV() {
       if (tripLogs.length === 0) {
-        showNotification("내보낼 운항 기록이 없습니다.");
+        showNotification("?대낫???댄빆 湲곕줉???놁뒿?덈떎.");
         return;
       }
-      let csv = '\uFEFF고유ID,선박명,운항일자,출항시각,입항시각,소요시간,거리(KM),평균속도(Kts),최고속도(Kts)\n';
+      let csv = '\uFEFF怨좎쑀ID,?좊컯紐??댄빆?쇱옄,異쒗빆?쒓컖,?낇빆?쒓컖,?뚯슂?쒓컙,嫄곕━(KM),?됯퇏?띾룄(Kts),理쒓퀬?띾룄(Kts)\n';
       tripLogs.forEach(l => {
         csv += `${l.id},${l.shipName},${l.date},${l.startTime},${l.endTime},${l.duration},${l.distanceKm},${l.avgSpeedKts},${l.maxSpeedKts}\n`;
       });
@@ -3178,20 +3590,20 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `남강선박_운항기록_${new Date().toISOString().split('T')[0]}.csv`;
+      a.download = `?④컯?좊컯_?댄빆湲곕줉_${new Date().toISOString().split('T')[0]}.csv`;
       a.click();
       URL.revokeObjectURL(url);
     }
 
     function exportLogsBackup() {
       if (tripLogs.length === 0) {
-        showNotification("백업할 운항 기록이 없습니다.");
+        showNotification("諛깆뾽???댄빆 湲곕줉???놁뒿?덈떎.");
         return;
       }
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tripLogs, null, 2));
       const a = document.createElement('a');
       a.href = dataStr;
-      a.download = `남강선박_백업_${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `?④컯?좊컯_諛깆뾽_${new Date().toISOString().split('T')[0]}.json`;
       a.click();
     }
 
@@ -3210,16 +3622,346 @@
             tripLogs = imported;
             saveLogsToLocalStorage();
             renderLogList();
-            showNotification("운항 기록 백업 파일이 성공적으로 복원되었습니다.");
+            showNotification("?댄빆 湲곕줉 諛깆뾽 ?뚯씪???깃났?곸쑝濡?蹂듭썝?섏뿀?듬땲??");
           } else {
-            showNotification("잘못된 백업 파일 형식입니다.");
+            showNotification("?섎せ??諛깆뾽 ?뚯씪 ?뺤떇?낅땲??");
           }
         } catch (err) {
-          showNotification("JSON 파싱 오류가 발생했습니다.");
+          showNotification("JSON ?뚯떛 ?ㅻ쪟媛 諛쒖깮?덉뒿?덈떎.");
         }
       };
       reader.readAsText(file);
       e.target.value = '';
+    }
+
+    // =============================================================
+    // [?듯빀 濡쒖쭅] ??踰덉㎏ ?뚯씪 - ??쒕?援?湲곗긽泥?1二쇱씪 ?좎뵪 ??쒕낫??JS
+    // =============================================================
+    const KMA_CITIES = {
+      jinju: { name: "寃쎌긽?⑤룄 吏꾩＜??, nx: 59, ny: 69, regId: "11H20701" },
+      seoul: { name: "?쒖슱?밸퀎??, nx: 60, ny: 127, regId: "11B10101" },
+      busan: { name: "遺?곌킅??떆", nx: 98, ny: 76, regId: "11H20201" },
+      daegu: { name: "?援ш킅??떆", nx: 89, ny: 90, regId: "11H10701" },
+      incheon: { name: "?몄쿇愿묒뿭??, nx: 55, ny: 124, regId: "11B20201" },
+      gwangju: { name: "愿묒＜愿묒뿭??, nx: 58, ny: 74, regId: "11F20501" },
+      daejeon: { name: "??꾧킅??떆", nx: 67, ny: 100, regId: "11C20401" },
+      ulsan: { name: "?몄궛愿묒뿭??, nx: 102, ny: 84, regId: "11H20101" },
+      jeju: { name: "?쒖＜?밸퀎?먯튂??, nx: 52, ny: 38, regId: "11G00201" },
+      changwon: { name: "寃쎌긽?⑤룄 李쎌썝??, nx: 90, ny: 77, regId: "11H20301" }
+    };
+
+    let kmaCurrentCityKey = "jinju";
+    let kmaTempChartInstance = null;
+    let kmaPopChartInstance = null;
+    let kmaApiKey = localStorage.getItem("kma_api_key") || "";
+
+    function initKmaDashboard() {
+      updateKmaLastUpdatedTime();
+      setupKmaEventListeners();
+    }
+
+    function setupKmaEventListeners() {
+      const locationSelect = document.getElementById("kma-location-select");
+      if (locationSelect) {
+        locationSelect.addEventListener("change", (e) => {
+          kmaCurrentCityKey = e.target.value;
+          loadKmaWeatherData(kmaCurrentCityKey);
+        });
+      }
+
+      const btnRefresh = document.getElementById("kma-btn-refresh");
+      if (btnRefresh) {
+        btnRefresh.addEventListener("click", () => {
+          updateKmaLastUpdatedTime();
+          loadKmaWeatherData(kmaCurrentCityKey);
+        });
+      }
+
+      const modal = document.getElementById("kma-modal-api");
+      const btnOpen = document.getElementById("kma-btn-open-modal");
+      const btnClose = document.getElementById("kma-btn-close-modal");
+      const btnSave = document.getElementById("kma-btn-save-key");
+      const keyInput = document.getElementById("kma-api-key-input");
+
+      if (keyInput && kmaApiKey) keyInput.value = kmaApiKey;
+
+      if (btnOpen && modal) {
+        btnOpen.addEventListener("click", () => {
+          modal.classList.remove("hidden");
+          setTimeout(() => modal.classList.remove("opacity-0"), 10);
+        });
+      }
+
+      const closeModalFunc = () => {
+        if (!modal) return;
+        modal.classList.add("opacity-0");
+        setTimeout(() => modal.classList.add("hidden"), 300);
+      };
+
+      if (btnClose) btnClose.addEventListener("click", closeModalFunc);
+
+      if (btnSave) {
+        btnSave.addEventListener("click", () => {
+          if (keyInput) {
+            kmaApiKey = keyInput.value.trim();
+            localStorage.setItem("kma_api_key", kmaApiKey);
+          }
+          closeModalFunc();
+          loadKmaWeatherData(kmaCurrentCityKey);
+        });
+      }
+    }
+
+    function updateKmaLastUpdatedTime() {
+      const now = new Date();
+      const timeStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')} 湲곗?`;
+      const el = document.getElementById("kma-last-updated");
+      if (el) el.innerText = `${timeStr} (湲곗긽泥??곕룞)`;
+    }
+
+    function switchKmaSubTab(tabName) {
+      const weeklyTab = document.getElementById("kma-sub-weekly");
+      const todayTab = document.getElementById("kma-sub-today");
+      const weeklyBtn = document.getElementById("kma-tab-btn-weekly");
+      const todayBtn = document.getElementById("kma-tab-btn-today");
+
+      if (tabName === "weekly") {
+        weeklyTab.classList.remove("hidden");
+        todayTab.classList.add("hidden");
+        weeklyBtn.className = "px-4 py-2 font-semibold text-xs border-b-2 border-sky-400 text-sky-400 flex items-center gap-1.5 transition";
+        todayBtn.className = "px-4 py-2 font-semibold text-xs border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition";
+      } else {
+        weeklyTab.classList.add("hidden");
+        todayTab.classList.remove("hidden");
+        todayBtn.className = "px-4 py-2 font-semibold text-xs border-b-2 border-sky-400 text-sky-400 flex items-center gap-1.5 transition";
+        weeklyBtn.className = "px-4 py-2 font-semibold text-xs border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition";
+      }
+    }
+
+    function generateKma7DayForecast(cityKey) {
+      const city = KMA_CITIES[cityKey];
+      const daysOfWeek = ['??, '??, '??, '??, '紐?, '湲?, '??];
+      const today = new Date();
+      const forecast = [];
+
+      const conditions = [
+        { status: "留묒쓬", icon: "fa-sun", color: "text-amber-400", pop: 10 },
+        { status: "援щ쫫議곌툑", icon: "fa-cloud-sun", color: "text-sky-300", pop: 20 },
+        { status: "援щ쫫留롮쓬", icon: "fa-cloud", color: "text-slate-300", pop: 30 },
+        { status: "?먮┝", icon: "fa-smog", color: "text-slate-400", pop: 40 },
+        { status: "鍮?, icon: "fa-cloud-showers-heavy", color: "text-blue-400", pop: 80 },
+        { status: "?뚮굹湲?, icon: "fa-cloud-sun-rain", color: "text-indigo-400", pop: 60 }
+      ];
+
+      let baseMin = cityKey === 'jinju' ? 12 : (cityKey === 'seoul' ? 10 : 14);
+      let baseMax = cityKey === 'jinju' ? 23 : (cityKey === 'seoul' ? 20 : 22);
+
+      for (let i = 0; i < 7; i++) {
+        const d = new Date();
+        d.setDate(today.getDate() + i);
+
+        const dayName = i === 0 ? "?ㅻ뒛" : (i === 1 ? "?댁씪" : `${daysOfWeek[d.getDay()]}?붿씪`);
+        const dateStr = `${d.getMonth() + 1}.${d.getDate()}`;
+
+        const variance = Math.sin(i * 1.5) * 3;
+        const minTemp = Math.round(baseMin + variance + (Math.random() * 2 - 1));
+        const maxTemp = Math.round(baseMax + variance + (Math.random() * 2 - 1));
+
+        let condIdx = Math.abs(Math.floor(Math.sin(i * 2 + (cityKey.length)) * conditions.length)) % conditions.length;
+        let cond = conditions[condIdx];
+
+        forecast.push({
+          day: dayName,
+          date: dateStr,
+          minTemp: minTemp,
+          maxTemp: maxTemp,
+          status: cond.status,
+          icon: cond.icon,
+          iconColor: cond.color,
+          pop: cond.pop,
+          humidity: Math.round(45 + Math.sin(i) * 20),
+          wind: (2.0 + (i % 3) * 0.7).toFixed(1)
+        });
+      }
+      return forecast;
+    }
+
+    function loadKmaWeatherData(cityKey) {
+      const cityName = KMA_CITIES[cityKey].name;
+      const weeklyLocName = document.getElementById("kma-weekly-location-name");
+      const currentLocText = document.getElementById("kma-current-location-text");
+      if (weeklyLocName) weeklyLocName.innerText = `${cityName} 1二쇱씪 ?덈낫`;
+      if (currentLocText) currentLocText.innerText = cityName;
+
+      const weeklyData = generateKma7DayForecast(cityKey);
+
+      renderKmaWeeklyCards(weeklyData);
+      renderKmaCharts(weeklyData);
+      updateKmaSummaryStats(weeklyData);
+      renderKmaHourlyData(weeklyData[0]);
+    }
+
+    function renderKmaWeeklyCards(weeklyData) {
+      const container = document.getElementById("kma-weekly-cards-container");
+      if (!container) return;
+      container.innerHTML = "";
+
+      weeklyData.forEach((item, index) => {
+        const isToday = index === 0;
+
+        const cardHtml = `
+          <div class="glass-card rounded-xl p-3 flex flex-col justify-between relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:border-sky-500/50 ${isToday ? 'ring-2 ring-sky-500/50 bg-gradient-to-b from-sky-900/30 to-slate-900' : ''}">
+            ${isToday ? '<span class="absolute top-1.5 right-1.5 px-1.5 py-0.5 bg-sky-500 text-[9px] font-bold text-white rounded-full">TODAY</span>' : ''}
+            <div>
+              <p class="text-xs font-bold text-white">${item.day}</p>
+              <p class="text-[10px] text-slate-400 mb-2">${item.date}</p>
+              
+              <div class="text-center my-2 py-1.5 bg-slate-900/40 rounded-lg border border-slate-800">
+                <i class="fa-solid ${item.icon} ${item.iconColor} text-2xl mb-1"></i>
+                <p class="text-[10px] font-medium text-slate-200">${item.status}</p>
+              </div>
+            </div>
+
+            <div class="space-y-1 mt-1 pt-1 border-t border-slate-800 text-[10px]">
+              <div class="flex justify-between items-center">
+                <span class="text-slate-400">理쒓퀬/理쒖?</span>
+                <span class="font-semibold text-slate-200"><span class="text-rose-400">${item.maxTemp}째</span> / <span class="text-blue-400">${item.minTemp}째</span></span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-400">媛뺤닔?뺣쪧</span>
+                <span class="font-semibold text-indigo-400"><i class="fa-solid fa-droplet text-[8px] mr-0.5"></i>${item.pop}%</span>
+              </div>
+            </div>
+          </div>
+        `;
+        container.innerHTML += cardHtml;
+      });
+    }
+
+    function renderKmaCharts(weeklyData) {
+      const labels = weeklyData.map(d => `${d.day}(${d.date})`);
+      const maxTemps = weeklyData.map(d => d.maxTemp);
+      const minTemps = weeklyData.map(d => d.minTemp);
+      const pops = weeklyData.map(d => d.pop);
+
+      const ctxTemp = document.getElementById('kmaWeeklyTempChart');
+      if (ctxTemp) {
+        if (kmaTempChartInstance) kmaTempChartInstance.destroy();
+        kmaTempChartInstance = new Chart(ctxTemp.getContext('2d'), {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: '理쒓퀬 湲곗삩 (째C)',
+                data: maxTemps,
+                borderColor: '#f43f5e',
+                backgroundColor: 'rgba(244, 63, 94, 0.1)',
+                borderWidth: 2,
+                tension: 0.3,
+                fill: true
+              },
+              {
+                label: '理쒖? 湲곗삩 (째C)',
+                data: minTemps,
+                borderColor: '#38bdf8',
+                backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                borderWidth: 2,
+                tension: 0.3,
+                fill: true
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 } } } },
+            scales: {
+              x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', font: { size: 9 } } },
+              y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', font: { size: 9 } } }
+            }
+          }
+        });
+      }
+
+      const ctxPop = document.getElementById('kmaWeeklyPopChart');
+      if (ctxPop) {
+        if (kmaPopChartInstance) kmaPopChartInstance.destroy();
+        kmaPopChartInstance = new Chart(ctxPop.getContext('2d'), {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: '媛뺤닔 ?뺣쪧 (%)',
+              data: pops,
+              backgroundColor: 'rgba(99, 102, 241, 0.7)',
+              borderRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 } } } },
+            scales: {
+              x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 9 } } },
+              y: { max: 100, grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', font: { size: 9 } } }
+            }
+          }
+        });
+      }
+    }
+
+    function updateKmaSummaryStats(weeklyData) {
+      const avgTemp = (weeklyData.reduce((acc, cur) => acc + (cur.maxTemp + cur.minTemp)/2, 0) / 7).toFixed(1);
+      const maxPop = Math.max(...weeklyData.map(d => d.pop));
+      const sunnyCount = weeklyData.filter(d => d.status.includes("留묒쓬") || d.status.includes("援щ쫫議곌툑")).length;
+      const rainyCount = weeklyData.filter(d => d.status.includes("鍮?) || d.status.includes("?뚮굹湲?)).length;
+
+      const avgEl = document.getElementById("kma-avg-temp");
+      const popEl = document.getElementById("kma-max-pop");
+      const sunnyEl = document.getElementById("kma-sunny-days-count");
+      const rainyEl = document.getElementById("kma-rainy-days-count");
+
+      if (avgEl) avgEl.innerText = `${avgTemp}째C`;
+      if (popEl) popEl.innerText = `${maxPop}%`;
+      if (sunnyEl) sunnyEl.innerText = `${sunnyCount}?쇨컙 ?붿갹??;
+      if (rainyEl) rainyEl.innerText = `${rainyCount}??鍮??뚮굹湲?;
+    }
+
+    function renderKmaHourlyData(todayData) {
+      const tempEl = document.getElementById("kma-current-temp");
+      const descEl = document.getElementById("kma-current-weather-desc");
+      const minEl = document.getElementById("kma-today-min-temp");
+      const maxEl = document.getElementById("kma-today-max-temp");
+      const humEl = document.getElementById("kma-today-humidity");
+
+      if (tempEl) tempEl.innerText = `${todayData.maxTemp}째`;
+      if (descEl) descEl.innerText = `${todayData.status} (泥닿컧 ${(todayData.maxTemp + 0.8).toFixed(1)}째)`;
+      if (minEl) minEl.innerText = `${todayData.minTemp}째C`;
+      if (maxEl) maxEl.innerText = `${todayData.maxTemp}째C`;
+      if (humEl) humEl.innerText = `${todayData.humidity}%`;
+
+      const hourlyContainer = document.getElementById("kma-hourly-forecast-container");
+      if (!hourlyContainer) return;
+      hourlyContainer.innerHTML = "";
+
+      const currentHour = new Date().getHours();
+      for (let i = 0; i < 24; i += 2) {
+        const hourTime = (currentHour + i) % 24;
+        const timeStr = `${String(hourTime).padStart(2, '0')}:00`;
+        const tempOffset = Math.sin((i / 24) * Math.PI * 2) * 4;
+        const hourlyTemp = Math.round(todayData.minTemp + (todayData.maxTemp - todayData.minTemp) * 0.7 + tempOffset);
+
+        const itemHtml = `
+          <div class="flex-shrink-0 w-16 bg-slate-900/60 border border-slate-800 rounded-xl p-2 text-center flex flex-col justify-between items-center">
+            <span class="text-[10px] text-slate-400 font-medium">${timeStr}</span>
+            <i class="fa-solid ${todayData.icon} ${todayData.iconColor} text-lg my-2"></i>
+            <span class="text-xs font-bold text-white">${hourlyTemp}째</span>
+            <span class="text-[9px] text-indigo-400 mt-0.5"><i class="fa-solid fa-droplet text-[7px]"></i> ${todayData.pop}%</span>
+          </div>
+        `;
+        hourlyContainer.innerHTML += itemHtml;
+      }
     }
   </script>
 </body>
