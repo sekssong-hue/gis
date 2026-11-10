@@ -6,10 +6,10 @@
   <!-- ============================================================= -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>남강 GPS 선박 운항 관제 및 남강댐 수문·물때·기상청 1주일 예보 통합 시스템</title>
+  <title>남강 GPS 선박 운항 관제 및 수문·물때 통합 시스템</title>
 
   <!-- ============================================================= -->
-  <!-- [HTML-2] PWA 메타 태그 및 외부 매니페스트 링크 -->
+  <!-- [HTML-2] PWA 메타 태그 및 외부 매니페스트 링크 권장 구조 -->
   <!-- ============================================================= -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -19,7 +19,7 @@
   <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22GPS%20%EC%84%A0%EB%B0%95%20%EA%B4%80%EC%A0%9C%20%EC%8B%9C%EC%8A%A4%ED%85%9C%22%2C%22short_name%22%3A%22GPS%EA%B4%80%EC%A0%9C%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230d1117%22%2C%22theme_color%22%3A%22%230d1117%22%2C%22orientation%22%3A%22any%22%7D">
 
   <!-- ============================================================= -->
-  <!-- [HTML-3] 외부 라이브러리 (Leaflet, FontAwesome, Chart.js, Tailwind, Firebase) -->
+  <!-- [HTML-3] Leaflet 및 라이브러리 -->
   <!-- ============================================================= -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -30,30 +30,6 @@
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-
-  <!-- Tailwind CSS & FontAwesome & Chart.js -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            weather: {
-              blue: '#2563eb',
-              sky: '#0284c7',
-              dark: '#0f172a',
-              cardDark: '#1e293b',
-              cardBorder: '#334155'
-            }
-          }
-        }
-      }
-    }
-  </script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
     :root {
@@ -74,7 +50,7 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Noto Sans KR', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
       -webkit-user-select: none;
@@ -118,7 +94,7 @@
     }
 
     header h1 {
-      font-size: clamp(1.1rem, 2.0vw, 1.5rem);
+      font-size: clamp(1.2rem, 2.2vw, 1.6rem);
       letter-spacing: 1px;
       color: var(--accent-color);
       text-transform: uppercase;
@@ -257,18 +233,16 @@
       border-bottom: 1px solid var(--border-color);
       padding-bottom: 8px;
       flex-shrink: 0;
-      overflow-x: auto;
     }
     .panel-tab-btn {
       flex: 1;
-      min-width: 90px;
       background: #0d1117;
       color: var(--text-sub);
       border: 1px solid var(--border-color);
       border-radius: 8px;
       padding: 8px 4px;
       font-weight: bold;
-      font-size: 0.8rem;
+      font-size: 0.82rem;
       cursor: pointer;
       min-height: 42px;
       transition: all 0.2s ease;
@@ -276,7 +250,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      white-space: nowrap;
     }
     .panel-tab-btn:hover {
       color: #fff;
@@ -353,31 +326,10 @@
       transition: width 0.6s ease, background-color 0.6s ease;
     }
 
-    .discharge-group-box {
-      background: rgba(13, 17, 23, 0.6);
-      border: 1px solid var(--border-color);
-      border-radius: 10px;
-      padding: 10px;
-      margin-top: 8px;
-    }
-    .discharge-group-title {
-      font-size: 0.85rem;
-      font-weight: bold;
-      color: #58a6ff;
-      margin-bottom: 8px;
-      display: flex;
-      justify-content: space-between;
-    }
-
     .tide-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 8px;
-    }
-    .tide-grid-4 {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
     }
     .tide-item {
       background: #0d1117;
@@ -387,11 +339,9 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      text-align: center;
     }
     .tide-item .t-lbl { font-size: 0.75rem; color: var(--text-sub); }
-    .tide-item .t-val { font-size: 1.0rem; font-weight: 800; color: #fff; margin-top: 2px; }
-    .tide-item .t-sub-val { font-size: 0.7rem; color: #79c0ff; margin-top: 1px; }
+    .tide-item .t-val { font-size: 1.05rem; font-weight: 800; color: #fff; margin-top: 2px; }
 
     .dashboard-center-layout {
       width: 100%;
@@ -467,6 +417,10 @@
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+    }
+    canvas {
+      width: 100% !important;
+      height: 100% !important;
     }
 
     .clock-and-timer-layout {
@@ -986,14 +940,6 @@
     }
     .pwa-btn-close { background: transparent; color: var(--text-sub); border: none; padding: 6px; font-size: 1rem; cursor: pointer; }
 
-    /* 두 번째 파일 Glassmorphism / KMA 대시보드 커스텀 스타일 통합 */
-    .glass-card {
-      background: rgba(30, 41, 59, 0.7);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
     @media (max-width: 900px) {
       html, body {
         height: auto;
@@ -1021,7 +967,6 @@
       #map { height: 400px; }
       .modal-grid { grid-template-columns: 1fr 1fr; }
       .modal-card.full-width { grid-column: span 2; }
-      .tide-grid-4 { grid-template-columns: repeat(2, 1fr); }
     }
   </style>
 </head>
@@ -1029,7 +974,7 @@
 <body onclick="initAudioContextOnce()">
   <!-- 헤더 -->
   <header>
-    <h1>남강 GPS 선박 운항 관제 및 남강댐 수문·물때·기상청 1주일 예보 통합 시스템</h1>
+    <h1>남강 GPS 선박 운항 관제 및 충돌방지 시스템 (물빛나루쉼터·망진나루 기준)</h1>
   </header> 
 
   <!-- 선박 선택 바 -->
@@ -1063,11 +1008,10 @@
   <!-- 메인 대시보드 -->
   <div class="dashboard-container">
     <div class="panel">
-      <!-- 네비게이션 탭 -->
+      <!-- 네비게이션 탭 (3개 구조로 확장) -->
       <div class="left-panel-nav">
         <button class="panel-tab-btn active" onclick="switchLeftTab('control')">⚙️ 운항 제어 및 계측</button>
         <button class="panel-tab-btn" onclick="switchLeftTab('env')">🏞️ 남강댐/물때 실시간</button>
-        <button class="panel-tab-btn" onclick="switchLeftTab('kma')">🌤️ 기상청 1주일 예보</button>
         <button class="panel-tab-btn" onclick="switchLeftTab('logs')">📜 운항 기록 내역</button>
       </div>
 
@@ -1157,84 +1101,47 @@
         </div>
       </div>
 
-      <!-- 탭 2: 물때 및 남강댐 실시간 정보 -->
+      <!-- 탭 2: 물때 및 남강댐 실시간 정보 (신규) -->
       <div id="tab-env" class="tab-content">
         <div class="env-card-container">
-          <!-- 남강댐 수문 실시간 현황 모듈 -->
+          <!-- 남강댐 수문 실시간 현황 -->
           <div class="env-section-box">
             <div class="env-section-title">
-              <span>💧 남강댐 상세 방류 현황 및 계측</span>
+              <span>💧 남강댐 실시간 수문 현황</span>
               <span id="dam-status-badge" class="status-badge status-safe">안전</span>
             </div>
             
-            <!-- 남강댐 기초 주요 지표 -->
-            <div class="tide-grid-4" style="margin-bottom:10px;">
+            <div style="font-size:0.85rem; color:var(--text-sub); margin-bottom:4px;">
+              방류량 단계 시각화 (현재: <span id="dam-discharge-text" style="font-weight:bold; color:#fff;">--</span> ㎥/s)
+            </div>
+            
+            <div class="dam-gauge-bar">
+              <div id="dam-gauge-fill" class="dam-gauge-fill" style="width: 10%; background-color: var(--accent-green);"></div>
+            </div>
+            
+            <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-sub); margin-bottom:10px;">
+              <span>0 ㎥/s (안전)</span>
+              <span>150 (주의)</span>
+              <span>300 (경고)</span>
+              <span>500+ (위험)</span>
+            </div>
+
+            <div class="tide-grid">
+              <div class="tide-item">
+                <span class="t-lbl">현재 방류량</span>
+                <span class="t-val" id="dam-discharge-val">-- ㎥/s</span>
+              </div>
               <div class="tide-item">
                 <span class="t-lbl">현재 저수위</span>
                 <span class="t-val" id="dam-water-level">-- EL.m</span>
-                <span class="t-sub-val">상수위: 41.00 m</span>
-              </div>
-              <div class="tide-item">
-                <span class="t-lbl">계획 홍수위</span>
-                <span class="t-val" style="color:var(--accent-red)">46.00 EL.m</span>
-                <span class="t-sub-val">최고 한계 수위</span>
-              </div>
-              <div class="tide-item">
-                <span class="t-lbl">저수율 (%)</span>
-                <span class="t-val" id="dam-storage-rate" style="color:var(--accent-color)">-- %</span>
-                <span class="t-sub-val" id="dam-storage-vol">-- 백만㎥</span>
               </div>
               <div class="tide-item">
                 <span class="t-lbl">초당 유입량</span>
                 <span class="t-val" id="dam-inflow-val">-- ㎥/s</span>
-                <span class="t-sub-val">댐 유입 수량</span>
               </div>
-            </div>
-
-            <!-- 저수율 Visual Bar -->
-            <div style="font-size:0.78rem; color:var(--text-sub); display:flex; justify-content:space-between; align-items:center;">
-              <span>남강댐 저수율 용량 게이지</span>
-              <span id="dam-total-discharge-text" style="font-weight:bold; color:var(--accent-color);">총 방류량: -- ㎥/s</span>
-            </div>
-            <div class="dam-gauge-bar">
-              <div id="dam-gauge-fill" class="dam-gauge-fill" style="width: 0%; background-color: var(--accent-green);"></div>
-            </div>
-
-            <!-- 남강방면(본류) 세부 방류 현황 -->
-            <div class="discharge-group-box">
-              <div class="discharge-group-title">
-                <span>🌊 남강 방면 (본류 방류)</span>
-                <span id="discharge-namgang-total" style="color:#00f2fe;">합계: 0.0 ㎥/s</span>
-              </div>
-              <div class="tide-grid">
-                <div class="tide-item">
-                  <span class="t-lbl">⚡ 남강 본류 발전방류</span>
-                  <span class="t-val" id="discharge-namgang-hydro">-- ㎥/s</span>
-                </div>
-                <div class="tide-item">
-                  <span class="t-lbl">🚪 남강 본류 수문방류</span>
-                  <span class="t-val" id="discharge-namgang-gate">-- ㎥/s</span>
-                  <span class="t-sub-val" id="gate-namgang-count">개방: 0 / 3 개</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- 사천만방면(가화천) 세부 방류 현황 -->
-            <div class="discharge-group-box">
-              <div class="discharge-group-title" style="color:var(--accent-yellow);">
-                <span>🌊 사천만 방면 (가화천 방류)</span>
-                <span id="discharge-gahwa-total" style="color:var(--accent-yellow);">합계: 0.0 ㎥/s</span>
-              </div>
-              <div class="tide-grid">
-                <div class="tide-item">
-                  <span class="t-lbl">⚡ 가화천 발전방류</span>
-                  <span class="t-val" id="discharge-gahwa-hydro">-- ㎥/s</span>
-                </div>
-                <div class="tide-item">
-                  <span class="t-lbl">🚪 가화천 수문방류</span>
-                  <span class="t-val" id="discharge-gahwa-gate">-- ㎥/s</span>
-                  <span class="t-sub-val" id="gate-gahwa-count">개방: 0 / 12 개</span>
-                </div>
+              <div class="tide-item">
+                <span class="t-lbl">계획 홍수위</span>
+                <span class="t-val" style="color:var(--accent-red)">46.00 EL.m</span>
               </div>
             </div>
           </div>
@@ -1279,266 +1186,7 @@
         </div>
       </div>
 
-      <!-- 탭 3: 대한민국 기상청 1주일 날씨 대시보드 (통합 이식) -->
-      <div id="tab-kma" class="tab-content">
-        <div class="w-full space-y-4 text-slate-100 text-left">
-          <!-- KMA HEADER & CONTROL -->
-          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-3 border-b border-slate-800 gap-3">
-            <div class="flex items-center gap-2">
-              <div class="bg-gradient-to-tr from-blue-600 to-sky-400 p-2 rounded-xl shadow-lg">
-                <i class="fa-solid font-bold text-lg fa-cloud-sun-rain text-white"></i>
-              </div>
-              <div>
-                <h2 class="text-base font-bold text-white">기상청 라이브 날씨 대시보드</h2>
-                <p class="text-[11px] text-slate-400 flex items-center gap-1">
-                  <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span id="kma-last-updated">실시간 업데이트 중...</span>
-                </p>
-              </div>
-            </div>
-
-            <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-              <div class="relative flex-1 sm:w-48">
-                <i class="fa-solid fa-location-dot absolute left-2.5 top-1/2 -translate-y-1/2 text-sky-400 text-xs"></i>
-                <select id="kma-location-select" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg pl-8 pr-6 py-2 focus:ring-1 focus:ring-sky-500 outline-none appearance-none cursor-pointer">
-                  <option value="jinju">경상남도 진주시 (현재 위치)</option>
-                  <option value="seoul">서울특별시</option>
-                  <option value="busan">부산광역시</option>
-                  <option value="daegu">대구광역시</option>
-                  <option value="incheon">인천광역시</option>
-                  <option value="gwangju">광주광역시</option>
-                  <option value="daejeon">대전광역시</option>
-                  <option value="ulsan">울산광역시</option>
-                  <option value="jeju">제주특별자치도</option>
-                  <option value="changwon">경상남도 창원시</option>
-                </select>
-                <i class="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-500 pointer-events-none"></i>
-              </div>
-
-              <button id="kma-btn-refresh" class="p-2 bg-slate-900 border border-slate-700 hover:bg-slate-800 text-slate-300 rounded-lg text-xs" title="새로고침">
-                <i class="fa-solid fa-arrows-rotate"></i>
-              </button>
-
-              <button id="kma-btn-open-modal" class="px-2.5 py-2 bg-sky-600/20 border border-sky-500/30 hover:bg-sky-600/30 text-sky-400 text-xs font-semibold rounded-lg flex items-center gap-1">
-                <i class="fa-solid fa-key"></i>
-                <span>API 키 설정</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- KMA SUB NAVIGATION TABS -->
-          <div class="flex border-b border-slate-800 mb-3">
-            <button id="kma-tab-btn-weekly" onclick="switchKmaSubTab('weekly')" class="px-4 py-2 font-semibold text-xs border-b-2 border-sky-400 text-sky-400 flex items-center gap-1.5 transition">
-              <i class="fa-solid fa-calendar-week"></i> 1주일 예보
-            </button>
-            <button id="kma-tab-btn-today" onclick="switchKmaSubTab('today')" class="px-4 py-2 font-semibold text-xs border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition">
-              <i class="fa-solid fa-clock"></i> 오늘의 상세 및 시간별
-            </button>
-          </div>
-
-          <!-- KMA SUB TAB 1: WEEKLY -->
-          <div id="kma-sub-weekly" class="space-y-4">
-            <!-- HERO BANNER -->
-            <div class="glass-card rounded-2xl p-4 relative overflow-hidden bg-gradient-to-r from-slate-900/90 via-sky-950/40 to-slate-900/90">
-              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                  <div class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-sky-500/10 text-sky-400 text-[11px] border border-sky-500/20 mb-1.5">
-                    <i class="fa-solid fa-shield-halved"></i> 기상청 통합 주간예보
-                  </div>
-                  <h3 id="kma-weekly-location-name" class="text-xl font-bold text-white">경상남도 진주시 1주일 예보</h3>
-                  <p class="text-slate-400 text-xs">7일간 기온 추이 및 강수 확률 실시간 조회</p>
-                </div>
-                <div class="flex items-center gap-4 bg-slate-900/60 p-3 rounded-xl border border-slate-800">
-                  <div class="text-center px-1">
-                    <p class="text-[10px] text-slate-400">주간 평균</p>
-                    <p id="kma-avg-temp" class="text-lg font-bold text-sky-400">18.5°C</p>
-                  </div>
-                  <div class="h-6 w-px bg-slate-800"></div>
-                  <div class="text-center px-1">
-                    <p class="text-[10px] text-slate-400">최고 강수확률</p>
-                    <p id="kma-max-pop" class="text-lg font-bold text-indigo-400">80%</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 7-DAY CARDS GRID -->
-            <div>
-              <h4 class="text-sm font-bold text-white mb-2.5 flex items-center gap-1.5">
-                <i class="fa-solid fa-calendar-days text-sky-400"></i> 일별 상세 날씨
-              </h4>
-              <div id="kma-weekly-cards-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2.5">
-                <!-- JS 동적 생성 -->
-              </div>
-            </div>
-
-            <!-- CHARTS SECTION -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <div class="lg:col-span-2 glass-card rounded-xl p-4 border border-slate-800">
-                <div class="flex justify-between items-center mb-2">
-                  <h4 class="text-xs font-bold text-white flex items-center gap-1.5">
-                    <i class="fa-solid fa-chart-line text-sky-400"></i> 기온 변화 추이 (°C)
-                  </h4>
-                  <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded">기상청 단/중기 예보</span>
-                </div>
-                <div class="h-52 relative">
-                  <canvas id="kmaWeeklyTempChart"></canvas>
-                </div>
-              </div>
-
-              <div class="glass-card rounded-xl p-4 border border-slate-800">
-                <div class="flex justify-between items-center mb-2">
-                  <h4 class="text-xs font-bold text-white flex items-center gap-1.5">
-                    <i class="fa-solid fa-umbrella text-indigo-400"></i> 강수 확률 (%)
-                  </h4>
-                  <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded">일별 강우</span>
-                </div>
-                <div class="h-52 relative">
-                  <canvas id="kmaWeeklyPopChart"></canvas>
-                </div>
-              </div>
-            </div>
-
-            <!-- METRICS SUMMARY -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div class="glass-card p-3 rounded-xl border border-slate-800 flex items-center gap-3">
-                <div class="p-2.5 bg-amber-500/10 text-amber-400 rounded-lg text-lg">
-                  <i class="fa-solid fa-sun"></i>
-                </div>
-                <div>
-                  <p class="text-[10px] text-slate-400">주간 최다 맑은 날</p>
-                  <p id="kma-sunny-days-count" class="text-xs font-bold text-slate-100">4일간 화창함</p>
-                </div>
-              </div>
-              <div class="glass-card p-3 rounded-xl border border-slate-800 flex items-center gap-3">
-                <div class="p-2.5 bg-blue-500/10 text-blue-400 rounded-lg text-lg">
-                  <i class="fa-solid fa-cloud-rain"></i>
-                </div>
-                <div>
-                  <p class="text-[10px] text-slate-400">비/눈 예보일</p>
-                  <p id="kma-rainy-days-count" class="text-xs font-bold text-slate-100">2일 비 예상</p>
-                </div>
-              </div>
-              <div class="glass-card p-3 rounded-xl border border-slate-800 flex items-center gap-3">
-                <div class="p-2.5 bg-teal-500/10 text-teal-400 rounded-lg text-lg">
-                  <i class="fa-solid fa-wind"></i>
-                </div>
-                <div>
-                  <p class="text-[10px] text-slate-400">평균 바람 세기</p>
-                  <p id="kma-avg-wind-speed" class="text-xs font-bold text-slate-100">3.2 m/s (약한 바람)</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- KMA SUB TAB 2: TODAY & HOURLY -->
-          <div id="kma-sub-today" class="space-y-4 hidden">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <div class="glass-card rounded-2xl p-4 bg-gradient-to-br from-sky-900/40 via-slate-900 to-slate-900 flex flex-col justify-between">
-                <div>
-                  <div class="flex justify-between items-start">
-                    <div>
-                      <span class="px-2.5 py-0.5 bg-sky-500/20 text-sky-300 text-[10px] font-medium rounded-full">실시간 관측</span>
-                      <h4 id="kma-current-location-text" class="text-base font-bold text-white mt-1">경상남도 진주시</h4>
-                    </div>
-                    <i id="kma-current-weather-icon" class="fa-solid fa-sun text-4xl text-amber-400"></i>
-                  </div>
-                  <div class="mt-4">
-                    <div id="kma-current-temp" class="text-5xl font-extrabold text-white tracking-tight">21°</div>
-                    <p id="kma-current-weather-desc" class="text-sm font-medium text-slate-300 mt-1">맑음 (체감 22.4°)</p>
-                  </div>
-                </div>
-
-                <div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-800 text-center">
-                  <div>
-                    <p class="text-[10px] text-slate-400">최저 기온</p>
-                    <p id="kma-today-min-temp" class="text-xs font-bold text-blue-400">12°C</p>
-                  </div>
-                  <div>
-                    <p class="text-[10px] text-slate-400">최고 기온</p>
-                    <p id="kma-today-max-temp" class="text-xs font-bold text-rose-400">23°C</p>
-                  </div>
-                  <div>
-                    <p class="text-[10px] text-slate-400">습도</p>
-                    <p id="kma-today-humidity" class="text-xs font-bold text-sky-400">48%</p>
-                  </div>
-                </div>
-              </div>
-
-              <!-- AIR METRICS -->
-              <div class="lg:col-span-2 glass-card rounded-2xl p-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
-                  <div class="flex justify-between text-slate-400 text-[10px]">
-                    <span>미세먼지</span>
-                    <i class="fa-solid fa-dust"></i>
-                  </div>
-                  <div class="my-1">
-                    <p class="text-xl font-bold text-emerald-400">32 <span class="text-[10px] font-normal text-slate-400">㎍/㎥</span></p>
-                    <span class="inline-block text-[9px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded mt-0.5">좋음</span>
-                  </div>
-                  <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
-                    <div class="bg-emerald-400 h-full w-[30%]"></div>
-                  </div>
-                </div>
-
-                <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
-                  <div class="flex justify-between text-slate-400 text-[10px]">
-                    <span>초미세먼지</span>
-                    <i class="fa-solid fa-smog"></i>
-                  </div>
-                  <div class="my-1">
-                    <p class="text-xl font-bold text-emerald-400">15 <span class="text-[10px] font-normal text-slate-400">㎍/㎥</span></p>
-                    <span class="inline-block text-[9px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded mt-0.5">좋음</span>
-                  </div>
-                  <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
-                    <div class="bg-emerald-400 h-full w-[25%]"></div>
-                  </div>
-                </div>
-
-                <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
-                  <div class="flex justify-between text-slate-400 text-[10px]">
-                    <span>자외선 지수</span>
-                    <i class="fa-solid fa-sun"></i>
-                  </div>
-                  <div class="my-1">
-                    <p class="text-xl font-bold text-amber-400">6 <span class="text-[10px] font-normal text-slate-400">UV</span></p>
-                    <span class="inline-block text-[9px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded mt-0.5">높음</span>
-                  </div>
-                  <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
-                    <div class="bg-amber-400 h-full w-[60%]"></div>
-                  </div>
-                </div>
-
-                <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800 flex flex-col justify-between">
-                  <div class="flex justify-between text-slate-400 text-[10px]">
-                    <span>풍속 / 풍향</span>
-                    <i class="fa-solid fa-compass"></i>
-                  </div>
-                  <div class="my-1">
-                    <p class="text-xl font-bold text-sky-400">2.8 <span class="text-[10px] font-normal text-slate-400">m/s</span></p>
-                    <span class="inline-block text-[9px] bg-sky-500/20 text-sky-300 px-1.5 py-0.5 rounded mt-0.5">남서풍</span>
-                  </div>
-                  <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
-                    <div class="bg-sky-400 h-full w-[35%]"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- HOURLY SCROLL -->
-            <div class="glass-card rounded-xl p-4 border border-slate-800">
-              <h4 class="text-xs font-bold text-white mb-3 flex items-center gap-1.5">
-                <i class="fa-solid fa-clock text-sky-400"></i> 시간별 예보 (24시간)
-              </h4>
-              <div id="kma-hourly-forecast-container" class="flex gap-3 overflow-x-auto pb-2">
-                <!-- JS 동적 생성 -->
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 탭 4: 기록 관리 -->
+      <!-- 탭 3: 기록 관리 -->
       <div id="tab-logs" class="tab-content">
         <div class="log-header-bar">
           <div class="log-title-row">
@@ -1621,41 +1269,6 @@
     </div>
   </div>
 
-  <!-- 기상청 API 키 설정 모달 (이식 통합) -->
-  <div id="kma-modal-api" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[10000] flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
-    <div class="bg-slate-900 border border-slate-700 rounded-3xl p-6 max-w-lg w-full mx-4 shadow-2xl relative text-left">
-      <button id="kma-btn-close-modal" class="absolute top-5 right-5 text-slate-400 hover:text-white transition">
-        <i class="fa-solid fa-xmark text-xl"></i>
-      </button>
-      <div class="flex items-center gap-3 mb-4">
-        <div class="p-3 bg-sky-500/10 text-sky-400 rounded-xl">
-          <i class="fa-solid fa-key text-xl"></i>
-        </div>
-        <div>
-          <h3 class="text-xl font-bold text-white">공공데이터포럼 API 키 설정</h3>
-          <p class="text-xs text-slate-400">기상청 단기예보 & 중기예보 서비스 API</p>
-        </div>
-      </div>
-
-      <p class="text-sm text-slate-300 mb-4 leading-relaxed">
-        공공데이터포럼(data.go.kr)에서 발급받으신 <span class="text-sky-400 font-semibold">기상청 API Key</span>를 입력하시면 라이브 데이터와 연동됩니다. (미입력 시 지능형 시뮬레이션을 제공합니다)
-      </p>
-
-      <div class="space-y-4 mb-6">
-        <div>
-          <label class="block text-xs font-semibold text-slate-400 mb-1">서비스 인증키 (Encoding/Decoding Key)</label>
-          <input type="text" id="kma-api-key-input" placeholder="인증키를 여기에 붙여넣으세요" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-sky-500 transition">
-        </div>
-      </div>
-
-      <div class="flex justify-end gap-3">
-        <button id="kma-btn-save-key" class="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-semibold text-sm rounded-xl transition shadow-lg shadow-sky-600/30">
-          저장 후 동기화
-        </button>
-      </div>
-    </div>
-  </div>
-
   <!-- 상세 정보 모달 -->
   <div class="modal-overlay" id="detail-modal">
     <div class="modal-content">
@@ -1719,9 +1332,9 @@
     </div>
   </div>
 
-  <!-- 통합 스크립트 로직 -->
+  <!-- 스크립트 로직 -->
   <script>
-    // [망진나루와 물빛나루쉼터 사이의 남강 수역 중심 좌표]
+    // [망진나루와 물빛나루쉼터 사이의 남강 수역 중심 좌표로 초기 설정]
     let currentLat = 35.1885, currentLng = 128.0832; 
     let actualGpsLat = currentLat, actualGpsLng = currentLng;
     let currentHeading = 0; 
@@ -1993,7 +1606,7 @@
           updateWeatherUI();
         }
       } catch (e) {
-        console.warn("실시간 기상 API 수신 실패, 기본 정보를 유지합니다.", e);
+        console.warn("실시간 위치 기반 기상 API 수신 실패, 기본 기상 정보를 유지합니다.", e);
       }
     }
 
@@ -2031,72 +1644,51 @@
       document.getElementById('sub-water-temp').innerText = `수온: ${waterTemp} ℃`;
     }
 
-    // 남강댐 수문 데이터
-    let damData = {
-      waterLevel: 38.45,
-      inflow: 48.20,
-      storageRate: 64.5,
-      storageVol: 199.3,
-      namgangHydro: 12.5,
-      namgangGate: 0.0,
-      namgangGateCount: 0,
-      gahwaHydro: 25.0,
-      gahwaGate: 0.0,
-      gahwaGateCount: 0
-    };
+    // =============================================================
+    // [신규 기능] 남강댐 수문 및 물때 실시간 업데이트 및 시각화 로직
+    // =============================================================
+    let currentDamDischarge = 35.0; // 기본 방류량 (㎥/s)
+    let currentDamLevel = 38.45;    // 저수위 (EL.m)
+    let currentDamInflow = 42.10;   // 유입량 (㎥/s)
 
     async function fetchDamAndTideData() {
       try {
-        damData.waterLevel = Math.max(30.0, Math.min(45.5, damData.waterLevel + (Math.random() * 0.01 - 0.005)));
-        damData.inflow = Math.max(10.0, damData.inflow + (Math.random() * 1.5 - 0.75));
-        
-        damData.namgangHydro = Math.max(0, damData.namgangHydro + (Math.random() * 0.4 - 0.2));
-        damData.gahwaHydro = Math.max(0, damData.gahwaHydro + (Math.random() * 0.6 - 0.3));
+        // 공공데이터/K-Water API 연동 지점 (실제 연동 시 fetch 적용 가능)
+        // 미연동 시 현장감 유지를 위한 자연스러운 미세 실시간 변동 연산
+        const dischargeDelta = (Math.random() * 2.0 - 1.0);
+        currentDamDischarge = Math.max(10.0, currentDamDischarge + dischargeDelta);
+        currentDamLevel = Math.max(30.0, Math.min(45.0, currentDamLevel + (Math.random() * 0.02 - 0.01)));
+        currentDamInflow = Math.max(10.0, currentDamDischarge + (Math.random() * 10 - 4));
 
-        damData.storageRate = Math.min(100, Math.max(10, ((damData.waterLevel - 15) / (46.0 - 15)) * 100));
-        damData.storageVol = (309.0 * (damData.storageRate / 100));
-
-        updateDamUI();
+        updateDamUI(currentDamDischarge, currentDamLevel, currentDamInflow);
       } catch(e) {
-        console.warn("남강댐 데이터 갱신 예외:", e);
+        console.warn("댐/물때 수신 예외:", e);
       }
     }
 
-    function updateDamUI() {
-      const namgangTotal = damData.namgangHydro + damData.namgangGate;
-      const gahwaTotal = damData.gahwaHydro + damData.gahwaGate;
-      const totalDischarge = namgangTotal + gahwaTotal;
-
-      document.getElementById('dam-water-level').innerText = `${damData.waterLevel.toFixed(2)} EL.m`;
-      document.getElementById('dam-storage-rate').innerText = `${damData.storageRate.toFixed(1)} %`;
-      document.getElementById('dam-storage-vol').innerText = `${damData.storageVol.toFixed(1)} 백만㎥`;
-      document.getElementById('dam-inflow-val').innerText = `${damData.inflow.toFixed(1)} ㎥/s`;
-      document.getElementById('dam-total-discharge-text').innerText = `총 방류량: ${totalDischarge.toFixed(1)} ㎥/s`;
-
-      document.getElementById('discharge-namgang-total').innerText = `합계: ${namgangTotal.toFixed(1)} ㎥/s`;
-      document.getElementById('discharge-namgang-hydro').innerText = `${damData.namgangHydro.toFixed(1)} ㎥/s`;
-      document.getElementById('discharge-namgang-gate').innerText = `${damData.namgangGate.toFixed(1)} ㎥/s`;
-      document.getElementById('gate-namgang-count').innerText = `개방: ${damData.namgangGateCount} / 3 개`;
-
-      document.getElementById('discharge-gahwa-total').innerText = `합계: ${gahwaTotal.toFixed(1)} ㎥/s`;
-      document.getElementById('discharge-gahwa-hydro').innerText = `${damData.gahwaHydro.toFixed(1)} ㎥/s`;
-      document.getElementById('discharge-gahwa-gate').innerText = `${damData.gahwaGate.toFixed(1)} ㎥/s`;
-      document.getElementById('gate-gahwa-count').innerText = `개방: ${damData.gahwaGateCount} / 12 개`;
+    function updateDamUI(discharge, level, inflow) {
+      document.getElementById('dam-discharge-val').innerText = `${discharge.toFixed(1)} ㎥/s`;
+      document.getElementById('dam-discharge-text').innerText = `${discharge.toFixed(1)}`;
+      document.getElementById('dam-water-level').innerText = `${level.toFixed(2)} EL.m`;
+      document.getElementById('dam-inflow-val').innerText = `${inflow.toFixed(1)} ㎥/s`;
 
       const badge = document.getElementById('dam-status-badge');
       const gaugeFill = document.getElementById('dam-gauge-fill');
 
-      gaugeFill.style.width = `${Math.min(100, Math.max(5, damData.storageRate))}%`;
+      // 방류량 기준 단계 설정 (0~150: 안전, 150~300: 주의, 300~500: 경고, 500+: 위험)
+      let maxGaugeVal = 600;
+      let fillPercent = Math.min(100, Math.max(5, (discharge / maxGaugeVal) * 100));
+      gaugeFill.style.width = `${fillPercent}%`;
 
-      if (namgangTotal < 150) {
+      if (discharge < 150) {
         badge.className = "status-badge status-safe";
         badge.innerText = "안전";
         gaugeFill.style.backgroundColor = "var(--accent-green)";
-      } else if (namgangTotal < 300) {
+      } else if (discharge < 300) {
         badge.className = "status-badge status-caution";
         badge.innerText = "주의 (서행)";
         gaugeFill.style.backgroundColor = "var(--accent-yellow)";
-      } else if (namgangTotal < 500) {
+      } else if (discharge < 500) {
         badge.className = "status-badge status-warning";
         badge.innerText = "경고 (운항 유의)";
         gaugeFill.style.backgroundColor = "var(--accent-orange)";
@@ -2117,14 +1709,12 @@
       fetchDamAndTideData();
       setInterval(() => fetchLocationWeather(false), 10000); 
       setInterval(updateWeatherUI, 2000);    
-      setInterval(fetchDamAndTideData, 5000); 
+      setInterval(fetchDamAndTideData, 5000); // 댐 및 수문 실시간 5초 갱신
       startGpsTracking(); 
       setupNetworkStatusListeners();
-
-      // 대한민국 기상청 대시보드 로직 초기화 이식
-      initKmaDashboard();
     });
 
+    // 4. 네트워크 단절(Offline) 및 재연결 모니터링
     function setupNetworkStatusListeners() {
       window.addEventListener('online', updateOnlineStatus);
       window.addEventListener('offline', updateOnlineStatus);
@@ -2319,12 +1909,8 @@
       } else if (tabName === 'env') {
         tabBtns[1].classList.add('active');
         document.getElementById('tab-env').classList.add('active');
-      } else if (tabName === 'kma') {
-        tabBtns[2].classList.add('active');
-        document.getElementById('tab-kma').classList.add('active');
-        loadKmaWeatherData(kmaCurrentCityKey);
       } else if (tabName === 'logs') {
-        tabBtns[3].classList.add('active');
+        tabBtns[2].classList.add('active');
         document.getElementById('tab-logs').classList.add('active');
         renderLogList();
       }
@@ -2464,7 +2050,7 @@
             map.setRotationAngle(deg);
           }
         } catch(e) {
-          console.warn("지도 회전 처리 오류:", e);
+          console.warn("지도 회전 처리 중 오류 발생:", e);
         }
       }
     }
@@ -2493,7 +2079,9 @@
       updateOnlineShipBadges();
     }
 
-    function updateOnlineShipBadges() {}
+    function updateOnlineShipBadges() {
+      if (isFirebaseReady) {}
+    }
 
     function startTracking() {
       if (!shipSelect.value) {
@@ -3632,336 +3220,6 @@
       };
       reader.readAsText(file);
       e.target.value = '';
-    }
-
-    // =============================================================
-    // [통합 로직] 두 번째 파일 - 대한민국 기상청 1주일 날씨 대시보드 JS
-    // =============================================================
-    const KMA_CITIES = {
-      jinju: { name: "경상남도 진주시", nx: 59, ny: 69, regId: "11H20701" },
-      seoul: { name: "서울특별시", nx: 60, ny: 127, regId: "11B10101" },
-      busan: { name: "부산광역시", nx: 98, ny: 76, regId: "11H20201" },
-      daegu: { name: "대구광역시", nx: 89, ny: 90, regId: "11H10701" },
-      incheon: { name: "인천광역시", nx: 55, ny: 124, regId: "11B20201" },
-      gwangju: { name: "광주광역시", nx: 58, ny: 74, regId: "11F20501" },
-      daejeon: { name: "대전광역시", nx: 67, ny: 100, regId: "11C20401" },
-      ulsan: { name: "울산광역시", nx: 102, ny: 84, regId: "11H20101" },
-      jeju: { name: "제주특별자치도", nx: 52, ny: 38, regId: "11G00201" },
-      changwon: { name: "경상남도 창원시", nx: 90, ny: 77, regId: "11H20301" }
-    };
-
-    let kmaCurrentCityKey = "jinju";
-    let kmaTempChartInstance = null;
-    let kmaPopChartInstance = null;
-    let kmaApiKey = localStorage.getItem("kma_api_key") || "";
-
-    function initKmaDashboard() {
-      updateKmaLastUpdatedTime();
-      setupKmaEventListeners();
-    }
-
-    function setupKmaEventListeners() {
-      const locationSelect = document.getElementById("kma-location-select");
-      if (locationSelect) {
-        locationSelect.addEventListener("change", (e) => {
-          kmaCurrentCityKey = e.target.value;
-          loadKmaWeatherData(kmaCurrentCityKey);
-        });
-      }
-
-      const btnRefresh = document.getElementById("kma-btn-refresh");
-      if (btnRefresh) {
-        btnRefresh.addEventListener("click", () => {
-          updateKmaLastUpdatedTime();
-          loadKmaWeatherData(kmaCurrentCityKey);
-        });
-      }
-
-      const modal = document.getElementById("kma-modal-api");
-      const btnOpen = document.getElementById("kma-btn-open-modal");
-      const btnClose = document.getElementById("kma-btn-close-modal");
-      const btnSave = document.getElementById("kma-btn-save-key");
-      const keyInput = document.getElementById("kma-api-key-input");
-
-      if (keyInput && kmaApiKey) keyInput.value = kmaApiKey;
-
-      if (btnOpen && modal) {
-        btnOpen.addEventListener("click", () => {
-          modal.classList.remove("hidden");
-          setTimeout(() => modal.classList.remove("opacity-0"), 10);
-        });
-      }
-
-      const closeModalFunc = () => {
-        if (!modal) return;
-        modal.classList.add("opacity-0");
-        setTimeout(() => modal.classList.add("hidden"), 300);
-      };
-
-      if (btnClose) btnClose.addEventListener("click", closeModalFunc);
-
-      if (btnSave) {
-        btnSave.addEventListener("click", () => {
-          if (keyInput) {
-            kmaApiKey = keyInput.value.trim();
-            localStorage.setItem("kma_api_key", kmaApiKey);
-          }
-          closeModalFunc();
-          loadKmaWeatherData(kmaCurrentCityKey);
-        });
-      }
-    }
-
-    function updateKmaLastUpdatedTime() {
-      const now = new Date();
-      const timeStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')} 기준`;
-      const el = document.getElementById("kma-last-updated");
-      if (el) el.innerText = `${timeStr} (기상청 연동)`;
-    }
-
-    function switchKmaSubTab(tabName) {
-      const weeklyTab = document.getElementById("kma-sub-weekly");
-      const todayTab = document.getElementById("kma-sub-today");
-      const weeklyBtn = document.getElementById("kma-tab-btn-weekly");
-      const todayBtn = document.getElementById("kma-tab-btn-today");
-
-      if (tabName === "weekly") {
-        weeklyTab.classList.remove("hidden");
-        todayTab.classList.add("hidden");
-        weeklyBtn.className = "px-4 py-2 font-semibold text-xs border-b-2 border-sky-400 text-sky-400 flex items-center gap-1.5 transition";
-        todayBtn.className = "px-4 py-2 font-semibold text-xs border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition";
-      } else {
-        weeklyTab.classList.add("hidden");
-        todayTab.classList.remove("hidden");
-        todayBtn.className = "px-4 py-2 font-semibold text-xs border-b-2 border-sky-400 text-sky-400 flex items-center gap-1.5 transition";
-        weeklyBtn.className = "px-4 py-2 font-semibold text-xs border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-1.5 transition";
-      }
-    }
-
-    function generateKma7DayForecast(cityKey) {
-      const city = KMA_CITIES[cityKey];
-      const daysOfWeek = ['일', '월', '화', '수', '목', '금', '토'];
-      const today = new Date();
-      const forecast = [];
-
-      const conditions = [
-        { status: "맑음", icon: "fa-sun", color: "text-amber-400", pop: 10 },
-        { status: "구름조금", icon: "fa-cloud-sun", color: "text-sky-300", pop: 20 },
-        { status: "구름많음", icon: "fa-cloud", color: "text-slate-300", pop: 30 },
-        { status: "흐림", icon: "fa-smog", color: "text-slate-400", pop: 40 },
-        { status: "비", icon: "fa-cloud-showers-heavy", color: "text-blue-400", pop: 80 },
-        { status: "소나기", icon: "fa-cloud-sun-rain", color: "text-indigo-400", pop: 60 }
-      ];
-
-      let baseMin = cityKey === 'jinju' ? 12 : (cityKey === 'seoul' ? 10 : 14);
-      let baseMax = cityKey === 'jinju' ? 23 : (cityKey === 'seoul' ? 20 : 22);
-
-      for (let i = 0; i < 7; i++) {
-        const d = new Date();
-        d.setDate(today.getDate() + i);
-
-        const dayName = i === 0 ? "오늘" : (i === 1 ? "내일" : `${daysOfWeek[d.getDay()]}요일`);
-        const dateStr = `${d.getMonth() + 1}.${d.getDate()}`;
-
-        const variance = Math.sin(i * 1.5) * 3;
-        const minTemp = Math.round(baseMin + variance + (Math.random() * 2 - 1));
-        const maxTemp = Math.round(baseMax + variance + (Math.random() * 2 - 1));
-
-        let condIdx = Math.abs(Math.floor(Math.sin(i * 2 + (cityKey.length)) * conditions.length)) % conditions.length;
-        let cond = conditions[condIdx];
-
-        forecast.push({
-          day: dayName,
-          date: dateStr,
-          minTemp: minTemp,
-          maxTemp: maxTemp,
-          status: cond.status,
-          icon: cond.icon,
-          iconColor: cond.color,
-          pop: cond.pop,
-          humidity: Math.round(45 + Math.sin(i) * 20),
-          wind: (2.0 + (i % 3) * 0.7).toFixed(1)
-        });
-      }
-      return forecast;
-    }
-
-    function loadKmaWeatherData(cityKey) {
-      const cityName = KMA_CITIES[cityKey].name;
-      const weeklyLocName = document.getElementById("kma-weekly-location-name");
-      const currentLocText = document.getElementById("kma-current-location-text");
-      if (weeklyLocName) weeklyLocName.innerText = `${cityName} 1주일 예보`;
-      if (currentLocText) currentLocText.innerText = cityName;
-
-      const weeklyData = generateKma7DayForecast(cityKey);
-
-      renderKmaWeeklyCards(weeklyData);
-      renderKmaCharts(weeklyData);
-      updateKmaSummaryStats(weeklyData);
-      renderKmaHourlyData(weeklyData[0]);
-    }
-
-    function renderKmaWeeklyCards(weeklyData) {
-      const container = document.getElementById("kma-weekly-cards-container");
-      if (!container) return;
-      container.innerHTML = "";
-
-      weeklyData.forEach((item, index) => {
-        const isToday = index === 0;
-
-        const cardHtml = `
-          <div class="glass-card rounded-xl p-3 flex flex-col justify-between relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:border-sky-500/50 ${isToday ? 'ring-2 ring-sky-500/50 bg-gradient-to-b from-sky-900/30 to-slate-900' : ''}">
-            ${isToday ? '<span class="absolute top-1.5 right-1.5 px-1.5 py-0.5 bg-sky-500 text-[9px] font-bold text-white rounded-full">TODAY</span>' : ''}
-            <div>
-              <p class="text-xs font-bold text-white">${item.day}</p>
-              <p class="text-[10px] text-slate-400 mb-2">${item.date}</p>
-              
-              <div class="text-center my-2 py-1.5 bg-slate-900/40 rounded-lg border border-slate-800">
-                <i class="fa-solid ${item.icon} ${item.iconColor} text-2xl mb-1"></i>
-                <p class="text-[10px] font-medium text-slate-200">${item.status}</p>
-              </div>
-            </div>
-
-            <div class="space-y-1 mt-1 pt-1 border-t border-slate-800 text-[10px]">
-              <div class="flex justify-between items-center">
-                <span class="text-slate-400">최고/최저</span>
-                <span class="font-semibold text-slate-200"><span class="text-rose-400">${item.maxTemp}°</span> / <span class="text-blue-400">${item.minTemp}°</span></span>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-slate-400">강수확률</span>
-                <span class="font-semibold text-indigo-400"><i class="fa-solid fa-droplet text-[8px] mr-0.5"></i>${item.pop}%</span>
-              </div>
-            </div>
-          </div>
-        `;
-        container.innerHTML += cardHtml;
-      });
-    }
-
-    function renderKmaCharts(weeklyData) {
-      const labels = weeklyData.map(d => `${d.day}(${d.date})`);
-      const maxTemps = weeklyData.map(d => d.maxTemp);
-      const minTemps = weeklyData.map(d => d.minTemp);
-      const pops = weeklyData.map(d => d.pop);
-
-      const ctxTemp = document.getElementById('kmaWeeklyTempChart');
-      if (ctxTemp) {
-        if (kmaTempChartInstance) kmaTempChartInstance.destroy();
-        kmaTempChartInstance = new Chart(ctxTemp.getContext('2d'), {
-          type: 'line',
-          data: {
-            labels: labels,
-            datasets: [
-              {
-                label: '최고 기온 (°C)',
-                data: maxTemps,
-                borderColor: '#f43f5e',
-                backgroundColor: 'rgba(244, 63, 94, 0.1)',
-                borderWidth: 2,
-                tension: 0.3,
-                fill: true
-              },
-              {
-                label: '최저 기온 (°C)',
-                data: minTemps,
-                borderColor: '#38bdf8',
-                backgroundColor: 'rgba(56, 189, 248, 0.1)',
-                borderWidth: 2,
-                tension: 0.3,
-                fill: true
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 } } } },
-            scales: {
-              x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', font: { size: 9 } } },
-              y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', font: { size: 9 } } }
-            }
-          }
-        });
-      }
-
-      const ctxPop = document.getElementById('kmaWeeklyPopChart');
-      if (ctxPop) {
-        if (kmaPopChartInstance) kmaPopChartInstance.destroy();
-        kmaPopChartInstance = new Chart(ctxPop.getContext('2d'), {
-          type: 'bar',
-          data: {
-            labels: labels,
-            datasets: [{
-              label: '강수 확률 (%)',
-              data: pops,
-              backgroundColor: 'rgba(99, 102, 241, 0.7)',
-              borderRadius: 6
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 } } } },
-            scales: {
-              x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 9 } } },
-              y: { max: 100, grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', font: { size: 9 } } }
-            }
-          }
-        });
-      }
-    }
-
-    function updateKmaSummaryStats(weeklyData) {
-      const avgTemp = (weeklyData.reduce((acc, cur) => acc + (cur.maxTemp + cur.minTemp)/2, 0) / 7).toFixed(1);
-      const maxPop = Math.max(...weeklyData.map(d => d.pop));
-      const sunnyCount = weeklyData.filter(d => d.status.includes("맑음") || d.status.includes("구름조금")).length;
-      const rainyCount = weeklyData.filter(d => d.status.includes("비") || d.status.includes("소나기")).length;
-
-      const avgEl = document.getElementById("kma-avg-temp");
-      const popEl = document.getElementById("kma-max-pop");
-      const sunnyEl = document.getElementById("kma-sunny-days-count");
-      const rainyEl = document.getElementById("kma-rainy-days-count");
-
-      if (avgEl) avgEl.innerText = `${avgTemp}°C`;
-      if (popEl) popEl.innerText = `${maxPop}%`;
-      if (sunnyEl) sunnyEl.innerText = `${sunnyCount}일간 화창함`;
-      if (rainyEl) rainyEl.innerText = `${rainyCount}일 비/소나기`;
-    }
-
-    function renderKmaHourlyData(todayData) {
-      const tempEl = document.getElementById("kma-current-temp");
-      const descEl = document.getElementById("kma-current-weather-desc");
-      const minEl = document.getElementById("kma-today-min-temp");
-      const maxEl = document.getElementById("kma-today-max-temp");
-      const humEl = document.getElementById("kma-today-humidity");
-
-      if (tempEl) tempEl.innerText = `${todayData.maxTemp}°`;
-      if (descEl) descEl.innerText = `${todayData.status} (체감 ${(todayData.maxTemp + 0.8).toFixed(1)}°)`;
-      if (minEl) minEl.innerText = `${todayData.minTemp}°C`;
-      if (maxEl) maxEl.innerText = `${todayData.maxTemp}°C`;
-      if (humEl) humEl.innerText = `${todayData.humidity}%`;
-
-      const hourlyContainer = document.getElementById("kma-hourly-forecast-container");
-      if (!hourlyContainer) return;
-      hourlyContainer.innerHTML = "";
-
-      const currentHour = new Date().getHours();
-      for (let i = 0; i < 24; i += 2) {
-        const hourTime = (currentHour + i) % 24;
-        const timeStr = `${String(hourTime).padStart(2, '0')}:00`;
-        const tempOffset = Math.sin((i / 24) * Math.PI * 2) * 4;
-        const hourlyTemp = Math.round(todayData.minTemp + (todayData.maxTemp - todayData.minTemp) * 0.7 + tempOffset);
-
-        const itemHtml = `
-          <div class="flex-shrink-0 w-16 bg-slate-900/60 border border-slate-800 rounded-xl p-2 text-center flex flex-col justify-between items-center">
-            <span class="text-[10px] text-slate-400 font-medium">${timeStr}</span>
-            <i class="fa-solid ${todayData.icon} ${todayData.iconColor} text-lg my-2"></i>
-            <span class="text-xs font-bold text-white">${hourlyTemp}°</span>
-            <span class="text-[9px] text-indigo-400 mt-0.5"><i class="fa-solid fa-droplet text-[7px]"></i> ${todayData.pop}%</span>
-          </div>
-        `;
-        hourlyContainer.innerHTML += itemHtml;
-      }
     }
   </script>
 </body>
