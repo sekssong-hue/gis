@@ -197,14 +197,59 @@
       color: var(--accent-color);
     }
 
+    /* 좌우 패널 분할 레이아웃 (Flex + Resizer) */
     .dashboard-container {
-      display: grid;
-      grid-template-columns: minmax(380px, 1.15fr) minmax(380px, 1.35fr);
-      gap: clamp(10px, 1.5vw, 15px);
+      display: flex;
+      flex-direction: row;
+      align-items: stretch;
       flex: 1;
       min-height: 0;
       width: 100%;
       overflow: hidden;
+    }
+
+    #left-panel {
+      flex: 0 0 44%;
+      min-width: 280px;
+      max-width: 75%;
+    }
+
+    #right-panel {
+      flex: 1 1 auto;
+      min-width: 300px;
+    }
+
+    /* 좌우 패널 크기 조절 핸들바 */
+    .panel-resizer {
+      width: 12px;
+      margin: 0 3px;
+      cursor: col-resize;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      touch-action: none;
+      z-index: 20;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+    .panel-resizer::after {
+      content: "";
+      width: 4px;
+      height: 48px;
+      background-color: var(--border-color);
+      border-radius: 4px;
+      transition: background-color 0.2s, height 0.2s;
+    }
+    .panel-resizer:hover,
+    .panel-resizer.dragging {
+      background: rgba(0, 242, 254, 0.12);
+    }
+    .panel-resizer:hover::after,
+    .panel-resizer.dragging::after {
+      background-color: var(--accent-color);
+      height: 72px;
+      box-shadow: 0 0 8px var(--accent-color);
     }
 
     .panel {
@@ -217,7 +262,6 @@
       align-items: center;
       justify-content: flex-start;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-      width: 100%;
       height: 100%;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
@@ -275,10 +319,11 @@
       display: flex;
     }
 
-    /* 아날로그 속도계 단독 중앙 배치 */
+    /* 아날로그 속도계 및 크기 조절 UI */
     .dashboard-center-layout {
       width: 100%;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       margin-bottom: 10px;
@@ -286,13 +331,70 @@
       background: rgba(0, 0, 0, 0.2);
       border: 1px solid var(--border-color);
       border-radius: 14px;
-      padding: 14px;
+      padding: 10px 14px 14px 14px;
+      gap: 8px;
+    }
+
+    .gauge-size-toolbar {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px dashed rgba(48, 54, 61, 0.8);
+      font-size: 0.8rem;
+      color: var(--text-sub);
+    }
+    .gauge-size-toolbar-title {
+      font-weight: bold;
+      color: var(--accent-color);
+      white-space: nowrap;
+    }
+    .gauge-size-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      justify-content: flex-end;
+    }
+    .btn-gauge-step {
+      background: #21262d;
+      color: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      width: 28px;
+      height: 28px;
+      font-weight: bold;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+    .btn-gauge-step:hover {
+      border-color: var(--accent-color);
+      color: var(--accent-color);
+    }
+    #gauge-size-slider {
+      width: 110px;
+      max-width: 45%;
+      accent-color: var(--accent-color);
+      cursor: pointer;
+    }
+    #gauge-size-label {
+      font-family: 'Consolas', monospace;
+      font-weight: bold;
+      color: #ffffff;
+      min-width: 44px;
+      text-align: right;
     }
 
     .speedometer-box-center {
       position: relative;
-      width: 100%;
-      max-width: 280px;
+      width: 280px;
+      max-width: 100%;
       aspect-ratio: 1;
       display: flex;
       align-items: center;
@@ -663,13 +765,12 @@
     #map {
       position: relative;
       width: 100%;
-      height: 480px;
-      min-height: 380px;
+      flex: 1;
+      min-height: 360px;
       border-radius: 12px;
       border: 2px solid var(--border-color);
       cursor: crosshair;
       z-index: 1;
-      flex-shrink: 0;
       touch-action: pan-x pan-y;
     }
 
@@ -829,18 +930,24 @@
         overflow: auto;
       }
       .dashboard-container { 
-         grid-template-columns: 1fr;
-         overflow: visible;
+        flex-direction: column;
+        overflow: visible;
+        gap: 12px;
+      }
+      #left-panel, #right-panel {
+        flex: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+      }
+      .panel-resizer {
+        display: none;
       }
       .panel {
         height: auto;
         overflow: visible;
       }
-      .speedometer-box-center {
-        max-width: 240px;
-        margin: 0 auto;
-      }
-      #map { height: 400px; }
+      #map { height: 400px; flex: none; }
       .modal-grid { grid-template-columns: 1fr 1fr; }
       .modal-card.full-width { grid-column: span 2; }
     }
@@ -882,9 +989,9 @@
   <input type="file" id="log-backup-input" accept=".json" style="display:none;" onchange="importLogsBackup(event)">
 
   <!-- 메인 대시보드 -->
-  <div class="dashboard-container">
-    <div class="panel">
-      <!-- 네비게이션 탭 (남강댐, 날씨 탭 삭제됨) -->
+  <div class="dashboard-container" id="dashboard-container">
+    <div class="panel" id="left-panel">
+      <!-- 네비게이션 탭 -->
       <div class="left-panel-nav">
         <button class="panel-tab-btn active" onclick="switchLeftTab('control')">⚙️ 운항 제어 및 계측</button>
         <button class="panel-tab-btn" onclick="switchLeftTab('logs')">📜 운항 기록 내역</button>
@@ -892,9 +999,18 @@
 
       <!-- 탭 1: 계측 제어 -->
       <div id="tab-control" class="tab-content active">
-        <!-- 아날로그 속도계 단독 영역 (주위 실시간 날씨·방위각·풍향·온도 카드 삭제됨) -->
+        <!-- 아날로그 속도계 및 크기 조절 컨트롤 -->
         <div class="dashboard-center-layout">
-          <div class="speedometer-box-center">
+          <div class="gauge-size-toolbar">
+            <span class="gauge-size-toolbar-title">⏱️ 계기판 크기</span>
+            <div class="gauge-size-controls">
+              <button type="button" class="btn-gauge-step" onclick="stepSpeedometerSize(-20)" title="계기판 축소">−</button>
+              <input type="range" id="gauge-size-slider" min="140" max="420" step="10" value="280" oninput="setSpeedometerSize(this.value)">
+              <button type="button" class="btn-gauge-step" onclick="stepSpeedometerSize(20)" title="계기판 확대">+</button>
+              <span id="gauge-size-label">280px</span>
+            </div>
+          </div>
+          <div class="speedometer-box-center" id="speedometer-box">
             <canvas id="speedometer" width="400" height="400"></canvas>
           </div>
         </div>
@@ -953,8 +1069,11 @@
       </div>
     </div>
 
+    <!-- 좌우 패널 크기 조절 드래그 바 -->
+    <div class="panel-resizer" id="panel-resizer" title="드래그하여 좌우 패널 크기 조절"></div>
+
     <!-- 우측 GIS 및 지도 패널 -->
-    <div class="panel data-panel">
+    <div class="panel data-panel" id="right-panel">
       <div class="status-display-box">
         <div class="guide-text" id="status-guide-text">[상태] 물빛나루쉼터·망진나루 수역 연동 대기 중...</div>
       </div>
@@ -1088,6 +1207,104 @@
     let isCalibratedMode = false, isFirstGps = true;
 
     let showConfirmAlerts = true;
+
+    /* =============================================================
+       [UI 레이아웃 제어] 계기판 크기 조절 & 좌우 패널 분할 조절
+       ============================================================= */
+    function setSpeedometerSize(sizeVal) {
+      const clamped = Math.min(420, Math.max(140, parseInt(sizeVal, 10) || 280));
+      const box = document.getElementById('speedometer-box');
+      const slider = document.getElementById('gauge-size-slider');
+      const label = document.getElementById('gauge-size-label');
+
+      if (box) box.style.width = clamped + 'px';
+      if (slider) slider.value = clamped;
+      if (label) label.innerText = clamped + 'px';
+
+      try {
+        localStorage.setItem('ship_gauge_size', String(clamped));
+      } catch (e) {}
+
+      drawSpeedometer(currentSpeedKts, currentSpeedKmh);
+    }
+
+    function stepSpeedometerSize(delta) {
+      const slider = document.getElementById('gauge-size-slider');
+      const current = slider ? parseInt(slider.value, 10) : 280;
+      setSpeedometerSize(current + delta);
+    }
+
+    function initLayoutPreferences() {
+      try {
+        const savedGaugeSize = localStorage.getItem('ship_gauge_size');
+        if (savedGaugeSize) {
+          setSpeedometerSize(savedGaugeSize);
+        }
+        const savedLeftPct = localStorage.getItem('ship_left_panel_pct');
+        const leftPanel = document.getElementById('left-panel');
+        if (savedLeftPct && leftPanel && window.innerWidth > 900) {
+          leftPanel.style.flex = `0 0 ${savedLeftPct}%`;
+        }
+      } catch (e) {}
+    }
+
+    function initPanelResizer() {
+      const resizer = document.getElementById('panel-resizer');
+      const leftPanel = document.getElementById('left-panel');
+      const container = document.getElementById('dashboard-container');
+      if (!resizer || !leftPanel || !container) return;
+
+      let isDragging = false;
+
+      const onPointerDown = (e) => {
+        if (window.innerWidth <= 900) return;
+        isDragging = true;
+        resizer.classList.add('dragging');
+        document.body.style.cursor = 'col-resize';
+        e.preventDefault();
+      };
+
+      const onPointerMove = (e) => {
+        if (!isDragging) return;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const rect = container.getBoundingClientRect();
+        const offsetX = clientX - rect.left;
+        let pct = (offsetX / rect.width) * 100;
+        pct = Math.min(72, Math.max(22, pct));
+
+        leftPanel.style.flex = `0 0 ${pct.toFixed(2)}%`;
+
+        if (typeof map !== 'undefined' && map) {
+          map.invalidateSize({ animate: false });
+        }
+      };
+
+      const onPointerUp = () => {
+        if (!isDragging) return;
+        isDragging = false;
+        resizer.classList.remove('dragging');
+        document.body.style.cursor = '';
+
+        const rect = container.getBoundingClientRect();
+        const leftRect = leftPanel.getBoundingClientRect();
+        const finalPct = ((leftRect.width / rect.width) * 100).toFixed(2);
+        try {
+          localStorage.setItem('ship_left_panel_pct', finalPct);
+        } catch (e) {}
+
+        if (typeof map !== 'undefined' && map) {
+          setTimeout(() => map.invalidateSize(), 50);
+        }
+      };
+
+      resizer.addEventListener('mousedown', onPointerDown);
+      window.addEventListener('mousemove', onPointerMove);
+      window.addEventListener('mouseup', onPointerUp);
+
+      resizer.addEventListener('touchstart', onPointerDown, { passive: false });
+      window.addEventListener('touchmove', onPointerMove, { passive: false });
+      window.addEventListener('touchend', onPointerUp);
+    }
 
     function toggleConfirmAlert() {
       const toggleEl = document.getElementById('confirmAlertToggle');
@@ -1241,6 +1458,8 @@
     let isGpsActive = false;
 
     window.addEventListener('DOMContentLoaded', () => {
+      initLayoutPreferences();
+      initPanelResizer();
       loadShipsList();
       drawSpeedometer(0, 0);
       updateClock();
