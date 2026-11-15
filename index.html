@@ -209,8 +209,8 @@
     }
 
     #left-panel {
-      flex: 0 0 44%;
-      min-width: 320px;
+      flex: 0 0 45%;
+      min-width: 340px;
       max-width: 75%;
     }
 
@@ -403,28 +403,31 @@
     }
 
     .gauge-surround-card {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid var(--border-color);
-      border-radius: 10px;
-      padding: 8px 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1.5px solid var(--border-color);
+      border-radius: 12px;
+      padding: 10px 12px;
       width: 100%;
-      min-height: 64px;
+      min-height: 72px;
       display: flex;
       flex-direction: column;
       justify-content: center;
       text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
     .gauge-surround-card .card-title {
-      font-size: 0.75rem;
+      font-size: 0.82rem;
       color: var(--accent-color);
-      font-weight: bold;
+      font-weight: 800;
       margin-bottom: 2px;
+      letter-spacing: 0.5px;
     }
     .gauge-surround-card .card-value {
-      font-size: 0.9rem;
-      font-weight: 800;
+      font-weight: 900;
       color: #ffffff;
       font-family: 'Consolas', monospace;
+      letter-spacing: -0.5px;
+      white-space: nowrap;
     }
 
     .speedometer-box-center {
@@ -1037,7 +1040,7 @@
 
       <!-- 탭 1: 계측 제어 -->
       <div id="tab-control" class="tab-content active">
-        <!-- 아날로그 속도계 및 4방향 카드 배치 레이아웃 -->
+        <!-- 아날로그 속도계 및 4방향 확장 카드 배치 레이아웃 -->
         <div class="dashboard-center-layout">
           <div class="gauge-size-toolbar">
             <span class="gauge-size-toolbar-title">⏱️ 계기판 크기</span>
@@ -1050,10 +1053,10 @@
           </div>
 
           <div class="gauge-surround-grid">
-            <!-- 왼쪽 위: 일출 / 일몰 시간 -->
+            <!-- 왼쪽 위 (일출/일몰) -->
             <div class="gauge-surround-card">
               <div class="card-title">🌅 일출 / 일몰</div>
-              <div class="card-value" id="sun-times">06:52 / 17:44</div>
+              <div class="card-value" id="sun-times" style="font-size: 0.95rem;">06:52 / 17:44</div>
             </div>
 
             <!-- 중앙: 아날로그 속도계 -->
@@ -1061,22 +1064,22 @@
               <canvas id="speedometer" width="400" height="400"></canvas>
             </div>
 
-            <!-- 오른쪽 위: 달 모양 (월상) -->
+            <!-- 오른쪽 위 (달 모양) -->
             <div class="gauge-surround-card">
               <div class="card-title" id="moon-phase-title">🌙 달 모양 (상현)</div>
-              <div class="card-value" id="moon-phase-val">🌓 54%</div>
+              <div class="card-value" id="moon-phase-val" style="font-size: 0.95rem;">🌓 54%</div>
             </div>
 
-            <!-- 왼쪽 아래: 당일 운항 횟수 및 총 운항 시간 -->
+            <!-- 왼쪽 아래 (당일 날짜, 운항 횟수, 총 시간 초단위, 운항 거리) -->
             <div class="gauge-surround-card">
               <div class="card-title">📊 당일 운항/누적</div>
-              <div class="card-value" id="today-stats">0회 (0분)</div>
+              <div class="card-value" id="today-stats" style="font-size: 0.8rem; line-height: 1.3;">2026-00-00<br>0회 | 0초<br>0.00 km</div>
             </div>
 
-            <!-- 오른쪽 아래: 직전 운항 소요 시간 및 거리 -->
+            <!-- 오른쪽 아래 (직전 운항: 소요시간 초단위, 운항거리) -->
             <div class="gauge-surround-card">
               <div class="card-title">🏁 직전 운항 결과</div>
-              <div class="card-value" id="last-trip-stats" style="font-size: 0.8rem;">정보 없음</div>
+              <div class="card-value" id="last-trip-stats" style="font-size: 0.85rem; line-height: 1.3;">기록 없음</div>
             </div>
           </div>
         </div>
@@ -1275,21 +1278,20 @@
     let showConfirmAlerts = true;
 
     /* =============================================================
-       [UI 추가 정보 계산 기능] 일출·일몰, 달 모양, 당일 운항 통계 등
+       [UI 추가 정보 계산 기능] 일출·일몰, 달 모양, 당일 통계, 직전 결과
        ============================================================= */
     function updateSurroundWidgets() {
       const now = new Date();
       const todayStr = now.toISOString().split('T')[0];
 
-      // 1. 일출/일몰 대략적 계산 (진주 위도 기준 보정값 적용)
-      // 춘추분/하지/동지 근처 태양 적위 감안 근사 계산
+      // 1. 일출/일몰 계산 (진주 위도 기준 근사)
       const startOfYear = new Date(now.getFullYear(), 0, 1);
       const dayOfYear = Math.floor((now - startOfYear) / 86400000);
       const declination = 23.45 * Math.sin(((2 * Math.PI) / 365) * (dayOfYear - 81));
       const latRad = currentLat * (Math.PI / 180);
       const decRad = declination * (Math.PI / 180);
       const hourAngle = Math.acos(-Math.tan(latRad) * Math.tan(decRad));
-      const solarNoon = 12.5; // KST 보정 근사
+      const solarNoon = 12.5; 
       const halfDayHours = (hourAngle * 180 / Math.PI) / 15;
       
       const sunriseHour = solarNoon - halfDayHours;
@@ -1306,8 +1308,8 @@
         sunEl.innerText = `${formatHoursToTime(sunriseHour)} / ${formatHoursToTime(sunsetHour)}`;
       }
 
-      // 2. 달 모양 (월상) 계산 (대략적인 29.53일 주기의 삭망월 기준)
-      const knownNewMoon = new Date('2026-01-19T00:00:00Z'); // 기준 삭일
+      // 2. 달 모양 (월상) 계산
+      const knownNewMoon = new Date('2026-01-19T00:00:00Z');
       const diffDays = (now - knownNewMoon) / (1000 * 60 * 60 * 24);
       const moonAge = diffDays % 29.530588853;
       const illumination = (1 - Math.cos((moonAge / 29.53) * 2 * Math.PI)) / 2 * 100;
@@ -1327,32 +1329,37 @@
       if (moonTitleEl) moonTitleEl.innerText = `🌙 ${moonName}`;
       if (moonValEl) moonValEl.innerText = `${moonIcon} ${illumination.toFixed(0)}%`;
 
-      // 3. 당일 운항 횟수 및 총 운항 시간 계산
+      // 3. 당일 운항 횟수, 총 운항 시간(초 단위), 총 운항 거리 계산
       const todayLogs = tripLogs.filter(l => l.date === todayStr);
       const todayCount = todayLogs.length;
-      let totalMin = 0;
+      let totalSec = 0;
+      let totalKm = 0;
       todayLogs.forEach(l => {
-        if (l.duration) {
+        if (l.distanceKm) totalKm += parseFloat(l.distanceKm) || 0;
+        if (l.durationSec) {
+          totalSec += l.durationSec;
+        } else if (l.duration) {
           const parts = l.duration.split(' ');
-          let m = 0;
+          let s = 0;
           parts.forEach(p => {
-            if (p.includes('시간')) m += parseInt(p) * 60;
-            if (p.includes('분')) m += parseInt(p);
+            if (p.includes('시간')) s += parseInt(p) * 3600;
+            if (p.includes('분')) s += parseInt(p) * 60;
+            if (p.includes('초')) s += parseInt(p);
           });
-          totalMin += m;
+          totalSec += s;
         }
       });
       const statsEl = document.getElementById('today-stats');
       if (statsEl) {
-        statsEl.innerText = `${todayCount}회 (${totalMin}분)`;
+        statsEl.innerHTML = `${todayStr}<br>${todayCount}회 | ${formatDurationText(totalSec)}<br>${totalKm.toFixed(2)} km`;
       }
 
-      // 4. 직전 운항 소요 시간 및 거리 표시
+      // 4. 직전 운항 결과 (소요시간, 운항거리만 표시 - 시간 삭제됨)
       const lastTripEl = document.getElementById('last-trip-stats');
       if (tripLogs.length > 0) {
-        const last = tripLogs[0]; // 가장 최근 기록
+        const last = tripLogs[0]; 
         if (lastTripEl) {
-          lastTripEl.innerHTML = `${last.duration}<br><span style="color:var(--accent-color);">${last.distanceKm} km</span>`;
+          lastTripEl.innerHTML = `소요: ${last.duration}<br>거리: <span style="color:var(--accent-color);">${last.distanceKm} km</span>`;
         }
       } else {
         if (lastTripEl) lastTripEl.innerText = "기록 없음";
@@ -1360,7 +1367,7 @@
     }
 
     /* =============================================================
-       [UI 레이아웃 제어] 계기판 크기 조절 & 좌우 패널 분할 조절
+       [UI 레이아웃 제어] 계기판 크기 연동형 4방향 글자 크기 조절
        ============================================================= */
     function setSpeedometerSize(sizeVal) {
       const clamped = Math.min(380, Math.max(140, parseInt(sizeVal, 10) || 260));
@@ -1371,6 +1378,19 @@
       if (box) box.style.width = clamped + 'px';
       if (slider) slider.value = clamped;
       if (label) label.innerText = clamped + 'px';
+
+      // 계기판 크기에 비례하여 4방향 카드 글자 크기 동적 조절 (한 줄 유지)
+      const ratio = clamped / 260; 
+      const cardTitleSize = Math.max(0.72, Math.min(0.95, 0.82 * ratio));
+      const cardValueSize = Math.max(0.70, Math.min(0.95, 0.80 * ratio));
+
+      const surroundCards = document.querySelectorAll('.gauge-surround-card');
+      surroundCards.forEach(card => {
+        const titleEl = card.querySelector('.card-title');
+        const valEl = card.querySelector('.card-value');
+        if (titleEl) titleEl.style.fontSize = `${cardTitleSize}rem`;
+        if (valEl) valEl.style.fontSize = `${cardValueSize}rem`;
+      });
 
       try {
         localStorage.setItem('ship_gauge_size', String(clamped));
@@ -1390,13 +1410,17 @@
         const savedGaugeSize = localStorage.getItem('ship_gauge_size');
         if (savedGaugeSize) {
           setSpeedometerSize(savedGaugeSize);
+        } else {
+          setSpeedometerSize(260);
         }
         const savedLeftPct = localStorage.getItem('ship_left_panel_pct');
         const leftPanel = document.getElementById('left-panel');
         if (savedLeftPct && leftPanel && window.innerWidth > 900) {
           leftPanel.style.flex = `0 0 ${savedLeftPct}%`;
         }
-      } catch (e) {}
+      } catch (e) {
+        setSpeedometerSize(260);
+      }
     }
 
     function initPanelResizer() {
@@ -2024,7 +2048,7 @@
       const endTimeStr = formatHHMMSS(endTime);
       document.getElementById('end-time-input').value = endTimeStr;
 
-      const durationSec = (endTime.getTime() - tripStartTime.getTime()) / 1000;
+      const durationSec = Math.floor((endTime.getTime() - tripStartTime.getTime()) / 1000);
       const durationStr = formatDurationText(durationSec);
 
       let avgSpeed = 0;
@@ -2039,6 +2063,7 @@
         date: tripStartTime.toISOString().split('T')[0],
         startTime: document.getElementById('start-time-input').value,
         endTime: endTimeStr,
+        durationSec: durationSec,
         duration: durationStr,
         distanceKm: totalTrackDistKm.toFixed(2),
         avgSpeedKts: avgSpeed.toFixed(1),
@@ -2048,7 +2073,7 @@
 
       tripLogs.unshift(newLog);
       saveLogsToLocalStorage();
-      updateSurroundWidgets(); // 직전 운항 및 당일 통계 갱신
+      updateSurroundWidgets(); 
 
       document.getElementById('active-timer-box').classList.remove('show');
       releaseWakeLock();
@@ -2256,13 +2281,14 @@
       return `${h}시 ${m}분 ${s}초`;
     }
 
-    function formatDurationText(diffSec) {
-      const sec = Math.max(0, Math.floor(diffSec));
-      const h = Math.floor(sec / 3600);
-      const m = Math.floor((sec % 3600) / 60);
-      const s = sec % 60;
+    function formatDurationText(sec) {
+      const sTotal = Math.max(0, Math.floor(sec));
+      const h = Math.floor(sTotal / 3600);
+      const m = Math.floor((sTotal % 3600) / 60);
+      const s = sTotal % 60;
       if (h > 0) return `${h}시간 ${m}분 ${s}초`;
-      return `${m}분 ${s}초`;
+      if (m > 0) return `${m}분 ${s}초`;
+      return `${s}초`;
     }
 
     if ('serviceWorker' in navigator) {
@@ -3018,7 +3044,7 @@
           modalMap.invalidateSize();
         }
 
-        if (modalPolyline) modalMap.removeLink ? modalMap.removeLayer(modalPolyline) : modalMap.removeLayer(modalPolyline);
+        if (modalPolyline) modalMap.removeLayer(modalPolyline);
         if (log.path && log.path.length > 0) {
           modalPolyline = L.polyline(log.path, { color: '#ff4d4d', weight: 4 }).addTo(modalMap);
           modalMap.fitBounds(modalPolyline.getBounds(), { padding: [20, 20] });
