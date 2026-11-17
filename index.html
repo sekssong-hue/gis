@@ -1035,8 +1035,8 @@
         <button class="btn-ship-manage edit" onclick="renameCurrentShip()" title="선박 이름 변경">✏️ 수정</button>
         <button class="btn-ship-manage delete" onclick="deleteCurrentShip()" title="선박 삭제">🗑️ 삭제</button>
 
-        <button class="btn-op-start" id="btn-ship-start" onclick="startShipOperation()" disabled>운항 등록</button>
-        <button class="btn-op-stop" id="btn-ship-stop" onclick="stopShipOperation()" disabled>운항 해제</button>
+        <button class="btn-op-start" id="btn-ship-start" onclick="confirmStartShipOperation()" disabled>운항 등록</button>
+        <button class="btn-op-stop" id="btn-ship-stop" onclick="confirmStopShipOperation()" disabled>운항 해제</button>
       </div>
       <div class="online-ships-box">
         <span class="online-ships-title">온라인 선박 :</span>
@@ -1134,8 +1134,8 @@
             </div>
           </div>
           <div class="btn-group">
-            <button class="btn btn-start" id="btnStart" onclick="startTracking()" disabled>출항 시작</button>
-            <button class="btn btn-stop" id="btnStopSave" onclick="stopAndSaveTracking()" disabled>도착 종료 및 저장</button>
+            <button class="btn btn-start" id="btnStart" onclick="confirmStartTracking()" disabled>출항 시작</button>
+            <button class="btn btn-stop" id="btnStopSave" onclick="confirmStopAndSaveTracking()" disabled>도착 종료 및 저장</button>
           </div>
         </div>
       </div>
@@ -1914,8 +1914,9 @@
     let tripSpeedList = [];
     let tripMaxSpeed = 0;
 
-    const STOP_THRESHOLD_SPEED = 0.1;
-    const STOP_HOLD_TIME_MS = 300000;
+    // 정지 감지 기준 속도(0.2 Kts 미만) 및 정지 지속 대기 시간(60초 = 1분)으로 현실화 조정
+    const STOP_THRESHOLD_SPEED = 0.2;
+    const STOP_HOLD_TIME_MS = 60000;
 
     let audioCtx = null;
     let lastAlertTime = 0;
@@ -2064,7 +2065,8 @@
 
     function updateOnlineShipBadges() {}
 
-    function startTracking() {
+    // 출항 시작 버튼 클릭 시 취소 가능한 확인창 연결
+    function confirmStartTracking() {
       if (!shipSelect.value) {
         showNotification("선박을 먼저 선택해주세요.");
         return;
@@ -2074,6 +2076,20 @@
         return;
       }
 
+      const runStart = () => {
+        startTracking();
+      };
+
+      if (!showConfirmAlerts) {
+        runStart();
+      } else {
+        if (confirm(`[${currentShipName}] 출항을 시작하시겠습니까?`)) {
+          runStart();
+        }
+      }
+    }
+
+    function startTracking() {
       resetTrack();
       tripSpeedList = [];
       tripMaxSpeed = 0;
@@ -2101,12 +2117,67 @@
         firebase.database().ref('ships/' + currentShipName).update({
           tripStatus: '운항 중',
           startTime: startTimeStr,
-          endTime: ''
+          endTime: '',
+          updatedAt: Date.now()
         });
       }
 
       showNotification(`[${currentShipName}] 운항 트립 측정이 시작되었습니다. (${startTimeStr})`);
       requestWakeLock();
+    }
+
+    // 도착 종료 및 저장 버튼 클릭 시 취소 가능한 확인창 연결
+    function confirmStopAndSaveTracking() {
+      const runStop = () => {
+        stopAndSaveTracking(false);
+      };
+
+      if (!showConfirmAlerts) {
+        runStop();
+      } else {
+        if (confirm(`[${currentShipName}] 운항을 도착 종료하고 저장하시겠습니까?`)) {
+          runStop();
+        }
+      }
+    }
+
+    // 운항 등록 버튼 클릭 시 취소 가능한 확인창 연결
+    function confirmStartShipOperation() {
+      if (!shipSelect.value) {
+        showNotification("선박을 먼저 선택하세요.");
+        return;
+      }
+      const targetName = shipSelect.value;
+      if (isMyShipOperating) return;
+
+      const runOpStart = () => {
+        startShipOperation();
+      };
+
+      if (!showConfirmAlerts) {
+        runOpStart();
+      } else {
+        if (confirm(`선박 [${targetName}]의 운항을 등록하시겠습니까?`)) {
+          runOpStart();
+        }
+      }
+    }
+
+    // 운항 해제 버튼 클릭 시 취소 가능한 확인창 연결
+    function confirmStopShipOperation() {
+      if (!isMyShipOperating) return;
+
+      const runOpStop = () => {
+        stopShipOperation();
+      };
+
+      if (!showConfirmAlerts) {
+        runOpStop();
+      } else {
+        if (confirm(`선박 [${currentShipName}]의 운항 등록을 해제하시겠습니까?`)) {
+          runOpStop();
+        }
+      }
     }
 
     function saveLogsToLocalStorage() {
@@ -2156,7 +2227,7 @@
       releaseWakeLock();
     }
 
-    function stopAndSaveTracking(isAuto = false) {
+    async function stopAndSaveTracking(isAuto = false) {
       if (!tripStartTime) {
         tripStartTime = new Date(Date.now() - 60000);
       }
@@ -2180,21 +2251,33 @@
 
       hasSaved = true;
       isDrivingStarted = false;
+      isNavigating = false;
+      currentSpeedKts = 0;
+      currentSpeedKmh = 0;
+      drawSpeedometer(0, 0);
 
       btnStopSave.disabled = true;
       btnStart.disabled = !isMyShipOperating;
       locationBadge.style.display = 'none';
 
+      // 입항 시 서버 상태를 '출항 대기 중' 및 속도 0으로 즉시 강제 동기화
       if (isFirebaseReady && currentShipName) {
         const endTimeStr = document.getElementById('end-time-input').value;
-        firebase.database().ref('ships/' + currentShipName).update({
-          tripStatus: '출항 대기 중',
-          endTime: endTimeStr
-        });
+        try {
+          await firebase.database().ref('ships/' + currentShipName).update({
+            tripStatus: '출항 대기 중',
+            endTime: endTimeStr,
+            speedKts: 0,
+            speedKmh: 0,
+            updatedAt: Date.now()
+          });
+        } catch (err) {
+          console.error("입항 상태 서버 업데이트 오류:", err);
+        }
       }
 
       if (isAuto) {
-        showNotification(`장시간 정지 상태가 감지되어 운항 트립이 자동 종료 및 저장되었습니다.`);
+        showNotification(`1분 이상 정지 상태가 감지되어 운항 트립이 자동 종료 및 저장되었습니다.`);
       } else {
         showNotification(`[${currentShipName}] 운항 트립이 종료되고 저장되었습니다.`);
       }
@@ -2250,10 +2333,6 @@
     }
 
     async function startShipOperation() {
-      if (!shipSelect.value) {
-        showNotification("선박을 먼저 선택하세요.");
-        return;
-      }
       currentShipName = shipSelect.value;
       if (isMyShipOperating) return;
 
@@ -2306,6 +2385,10 @@
 
     async function stopShipOperation() {
       if (!isMyShipOperating) return;
+
+      if (isDrivingStarted) {
+        await stopAndSaveTracking(false);
+      }
 
       if (isFirebaseReady && currentShipName) {
         try {
@@ -2586,7 +2669,8 @@
         btn.classList.add('active');
         btn.innerText = "📷 촬영·측량 모드 ON";
         guide.innerText = "[상태] 촬영·측량 전용 모드 작동 중 (자동종료 금지)";
-        showNotification("📷 촬영·측량 전용 모드가 활성화되었습니다.\n선박이 장시간 정지하거나 저속 이동하더라도 자동 종료되지 않습니다.");
+        showNotification("📷 촬영·측량 전용 모드가 활성화되었습니다.
+선박이 장시간 정지하거나 저속 이동하더라도 자동 종료되지 않습니다.");
       } else {
         btn.classList.remove('active');
         btn.innerText = "📷 촬영·측량 모드 OFF";
@@ -2603,7 +2687,6 @@
     });
     map.addControl(drawControl);
 
-    // 구역 및 목적지 로컬 스토리지 저장/불러오기 로직
     function saveUserMapDrawings() {
       try {
         const geojson = drawnItems.toGeoJSON();
@@ -2651,7 +2734,7 @@
           if (layer.setStyle) layer.setStyle({ color: color, fillColor: color, fillOpacity: 0.35, weight: 2 });
           layer.bindPopup(`<b>[위험 수역 경고 구역]</b><br>진입 시 경고 알람 발생`);
         }
-        feature = layer.toGeoJSON ? layer.toGeoJSON() : null;
+        let feature = layer.toGeoJSON ? layer.toGeoJSON() : null;
         if (feature) {
           feature.properties = feature.properties || {};
           feature.properties.zoneMeta = layer.zoneMeta;
@@ -2663,7 +2746,9 @@
       if (!showConfirmAlerts) {
         applyZoneAction(false);
       } else {
-        const isSafeZone = confirm("이 영역을 지정 선착장(정박 안전 구역 - Safe Zone)으로 설정하시겠습니까?\n[확인]: 선착장(알람 차단 Mute)\n[취소]: 일반 경고 구역");
+        const isSafeZone = confirm("이 영역을 지정 선착장(정박 안전 구역 - Safe Zone)으로 설정하시겠습니까?
+[확인]: 선착장(알람 차단 Mute)
+[취소]: 일반 경고 구역");
         applyZoneAction(isSafeZone);
       }
     });
@@ -2797,8 +2882,11 @@
       if ((speedMps === null || speedMps === undefined || speedMps === 0) && lastLat !== null && lastGpsTime !== null) {
         const distMeters = getDistanceInMeters(lastLat, lastLng, lat, lng);
         const timeDiffSec = (currentTime - lastGpsTime) / 1000;
-        if (timeDiffSec > 0.2 && timeDiffSec < 30) {
+        // 정박 중 미세 GPS 흔들림(3m 이하 오차)을 이동 속도로 오인하지 않도록 필터링
+        if (timeDiffSec > 0.2 && timeDiffSec < 30 && distMeters > 3.0) {
           speedMps = distMeters / timeDiffSec;
+        } else {
+          speedMps = 0;
         }
       }
 
@@ -2820,11 +2908,15 @@
         rawKts = speedMps * MPS_TO_KTS;
       }
 
-      currentSpeedKts = (currentSpeedKts * 0.6) + (rawKts * 0.4);
-      if (currentSpeedKts < 0.05) currentSpeedKts = 0;
+      // 저속/정지 감쇠 보정 (속도가 0일 때 잔여 속도 값이 길게 남지 않도록 빠르게 0으로 수렴)
+      if (rawKts < 0.1) {
+        currentSpeedKts = currentSpeedKts * 0.3;
+      } else {
+        currentSpeedKts = (currentSpeedKts * 0.6) + (rawKts * 0.4);
+      }
+      if (currentSpeedKts < 0.1) currentSpeedKts = 0;
       currentSpeedKmh = currentSpeedKts * 1.852;
 
-      // 저속(0.5 Kts 미만) 정박 시 방위각 튐 현상 방지
       if (currentSpeedKts >= 0.5) {
         if (typeof heading === 'number' && !isNaN(heading)) {
           currentHeading = heading;
@@ -2872,7 +2964,7 @@
       if (isFirstGps) {
         map.setView([currentLat, currentLng], 16);
         isFirstGps = false;
-        loadUserMapDrawings(); // 지도 로드 후 저장된 구역 복원
+        loadUserMapDrawings();
       }
 
       if (mapMode === 0) {
@@ -2933,6 +3025,7 @@
         lng: currentLng,
         speedKts: currentSpeedKts,
         speedKmh: currentSpeedKmh,
+        tripStatus: isDrivingStarted ? '운항 중' : '출항 대기 중',
         updatedAt: Date.now()
       });
     }
@@ -2962,7 +3055,7 @@
 
           const isMe = (name === currentShipName);
           const badgeClass = isMe ? "ship-badge my-ship" : "ship-badge";
-          badgesHtml += `<span class="${badgeClass}">🚢 ${name} (${shipInfo.tripStatus || '운항 중'})</span>`;
+          badgesHtml += `<span class="${badgeClass}">🚢 ${name} (${shipInfo.tripStatus || '출항 대기 중'})</span>`;
 
           if (!isMe) {
             const pos = [shipInfo.lat || 35.1885, shipInfo.lng || 128.0832];
@@ -2978,7 +3071,7 @@
               otherShipMarkers[name].setLatLng(pos);
               otherShipMarkers[name].setIcon(otherIcon);
             } else {
-              const marker = L.marker(pos, { icon: otherIcon }).addTo(map).bindPopup(`<b>다른 선박: ${name}</b><br>상태: ${shipInfo.tripStatus || '운항 중'}`);
+              const marker = L.marker(pos, { icon: otherIcon }).addTo(map).bindPopup(`<b>다른 선박: ${name}</b><br>상태: ${shipInfo.tripStatus || '출항 대기 중'}`);
               otherShipMarkers[name] = marker;
             }
           }
@@ -3039,7 +3132,6 @@
 
       const guide = document.getElementById('status-guide-text');
       
-      // 보완: 선착장(Safe Zone) 안쪽일 때는 경고 알람 완벽 차단(Mute)
       if (inSafe) {
         if (guide && !guide.classList.contains('offline-alert')) {
           guide.className = "guide-text safe-alert";
@@ -3210,9 +3302,11 @@
         showNotification("내보낼 운항 기록이 없습니다.");
         return;
       }
-      let csv = '\uFEFF고유ID,선박명,운항일자,출항시각,입항시각,소요시간,거리(KM),평균속도(Kts),최고속도(Kts)\n';
+      let csv = '﻿고유ID,선박명,운항일자,출항시각,입항시각,소요시간,거리(KM),평균속도(Kts),최고속도(Kts)
+';
       tripLogs.forEach(l => {
-        csv += `${l.id},${l.shipName},${l.date},${l.startTime},${l.endTime},${l.duration},${l.distanceKm},${l.avgSpeedKts},${l.maxSpeedKts}\n`;
+        csv += `${l.id},${l.shipName},${l.date},${l.startTime},${l.endTime},${l.duration},${l.distanceKm},${l.avgSpeedKts},${l.maxSpeedKts}
+`;
       });
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
