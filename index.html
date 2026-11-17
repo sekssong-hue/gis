@@ -689,13 +689,13 @@
       animation: blink 1s infinite;
     }
 
-    .data-panel { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+    .data-panel { display: flex; flex-direction: column; gap: 8px; width: 100%; }
     .status-display-box {
       width: 100%;
       background: rgba(0, 242, 254, 0.06);
       border: 1px solid var(--accent-color);
       border-radius: 10px;
-      padding: 10px 12px;
+      padding: 8px 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -722,13 +722,193 @@
       border-radius: 6px;
     }
 
+    /* =============================================================
+       [신규 CSS] 내비게이션 목적지 검색창 및 길안내 HUD 스타일
+       ============================================================= */
+    .navi-search-wrapper {
+      position: relative;
+      width: 100%;
+      flex-shrink: 0;
+      z-index: 1500;
+    }
+    .navi-search-bar {
+      display: flex;
+      gap: 6px;
+      width: 100%;
+      align-items: center;
+    }
+    .navi-search-input {
+      flex: 1;
+      background: #0d1117;
+      border: 1.5px solid var(--accent-color);
+      color: #ffffff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      outline: none;
+      min-height: 40px;
+      transition: box-shadow 0.2s;
+    }
+    .navi-search-input::placeholder {
+      color: #8b949e;
+      font-weight: 400;
+    }
+    .navi-search-input:focus {
+      box-shadow: 0 0 10px rgba(0, 242, 254, 0.4);
+    }
+    .btn-navi-search {
+      background: var(--accent-color);
+      color: #0d1117;
+      border: none;
+      border-radius: 8px;
+      padding: 0 14px;
+      font-weight: 900;
+      font-size: 0.88rem;
+      cursor: pointer;
+      min-height: 40px;
+      white-space: nowrap;
+      transition: opacity 0.2s;
+    }
+    .btn-navi-search:hover { opacity: 0.85; }
+    .btn-navi-quick {
+      background: #21262d;
+      color: #79c0ff;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0 10px;
+      font-weight: bold;
+      font-size: 0.82rem;
+      cursor: pointer;
+      min-height: 40px;
+      white-space: nowrap;
+    }
+    .btn-navi-quick:hover {
+      border-color: var(--accent-color);
+      color: #ffffff;
+    }
+
+    /* 검색 결과 드롭다운 */
+    .navi-search-results {
+      display: none;
+      position: absolute;
+      top: 46px;
+      left: 0;
+      right: 0;
+      background: rgba(13, 17, 23, 0.98);
+      border: 1.5px solid var(--accent-color);
+      border-radius: 10px;
+      max-height: 260px;
+      overflow-y: auto;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.85);
+      z-index: 2000;
+    }
+    .navi-search-results.show {
+      display: block;
+    }
+    .navi-result-item {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-color);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      transition: background 0.15s;
+    }
+    .navi-result-item:last-child { border-bottom: none; }
+    .navi-result-item:hover {
+      background: rgba(0, 242, 254, 0.15);
+    }
+    .navi-res-title {
+      font-size: 0.92rem;
+      font-weight: bold;
+      color: #ffffff;
+    }
+    .navi-res-sub {
+      font-size: 0.78rem;
+      color: #8b949e;
+      margin-top: 2px;
+    }
+    .navi-res-dist {
+      font-size: 0.85rem;
+      font-weight: 900;
+      color: var(--accent-color);
+      font-family: 'Consolas', monospace;
+      white-space: nowrap;
+    }
+
+    /* 자동차 내비게이션 스타일 길안내 HUD 배너 */
+    .navi-hud-banner {
+      display: none;
+      width: 100%;
+      background: linear-gradient(135deg, rgba(0, 43, 54, 0.95), rgba(13, 17, 23, 0.98));
+      border: 2px solid var(--accent-color);
+      border-radius: 10px;
+      padding: 8px 12px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-shrink: 0;
+      box-shadow: 0 4px 15px rgba(0, 242, 254, 0.25);
+    }
+    .navi-hud-banner.active {
+      display: flex;
+    }
+    .navi-hud-direction {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .navi-arrow-box {
+      width: 42px;
+      height: 42px;
+      background: rgba(0, 242, 254, 0.15);
+      border: 1.5px solid var(--accent-color);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: var(--accent-color);
+      flex-shrink: 0;
+    }
+    .navi-hud-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .navi-hud-dest {
+      font-size: 0.95rem;
+      font-weight: 900;
+      color: #ffffff;
+    }
+    .navi-hud-metrics {
+      font-size: 0.82rem;
+      font-weight: bold;
+      color: var(--accent-color);
+      font-family: 'Consolas', monospace;
+      margin-top: 2px;
+    }
+    .btn-navi-cancel {
+      background: var(--accent-red);
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      cursor: pointer;
+      min-height: 36px;
+      white-space: nowrap;
+    }
+
     .route-control-bar {
       width: 100%;
       display: flex;
       justify-content: space-between;
       align-items: center;
       background: rgba(255, 255, 255, 0.02);
-      padding: 8px 10px;
+      padding: 6px 10px;
       border-radius: 10px;
       border: 1px solid var(--border-color);
       flex-wrap: wrap;
@@ -744,7 +924,7 @@
       font-size: 0.8rem;
       font-weight: bold;
       cursor: pointer;
-      min-height: 38px;
+      min-height: 36px;
       transition: all 0.2s;
     }
     .btn-reset:hover { background: #484f58; }
@@ -805,8 +985,8 @@
 
     .grid-info {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 8px;
       width: 100%;
       flex-shrink: 0;
     }
@@ -814,13 +994,13 @@
       background: rgba(255, 255, 255, 0.04);
       border: 1.5px solid var(--border-color);
       border-radius: 10px;
-      padding: 10px 12px;
+      padding: 8px 10px;
       display: flex;
       flex-direction: column;
       justify-content: center;
     }
-    .info-label { font-size: 0.85rem; color: var(--text-sub); margin-bottom: 4px; font-weight: 800; }
-    .info-value { font-size: 1.15rem; font-weight: 900; color: #ffffff; font-family: monospace; letter-spacing: -0.5px; }
+    .info-label { font-size: 0.8rem; color: var(--text-sub); margin-bottom: 2px; font-weight: 800; }
+    .info-value { font-size: 1.05rem; font-weight: 900; color: #ffffff; font-family: monospace; letter-spacing: -0.5px; }
     .info-value.highlight { color: var(--accent-color); }
     .info-value.track { color: #ff7b72; }
 
@@ -828,7 +1008,7 @@
       position: relative;
       width: 100%;
       flex: 1;
-      min-height: 360px;
+      min-height: 340px;
       border-radius: 12px;
       border: 2px solid var(--border-color);
       cursor: crosshair;
@@ -1061,7 +1241,6 @@
 
       <!-- 탭 1: 계측 제어 -->
       <div id="tab-control" class="tab-content active">
-        <!-- 아날로그 속도계 및 4방향 확장 카드 배치 레이아웃 -->
         <div class="dashboard-center-layout">
           <div class="gauge-size-toolbar">
             <span class="gauge-size-toolbar-title">⏱️ 계기판 크기</span>
@@ -1074,31 +1253,26 @@
           </div>
 
           <div class="gauge-surround-grid">
-            <!-- 왼쪽 위 (일출/일몰) -->
             <div class="gauge-surround-card">
               <div class="card-title">🌅 일출 / 일몰</div>
               <div class="card-value" id="sun-times" style="font-size: 0.95rem;">06:52 / 17:44</div>
             </div>
 
-            <!-- 중앙: 아날로그 속도계 -->
             <div class="speedometer-box-center" id="speedometer-box">
               <canvas id="speedometer" width="400" height="400"></canvas>
             </div>
 
-            <!-- 오른쪽 위 (달 모양) -->
             <div class="gauge-surround-card">
               <div class="card-title" id="moon-phase-title">🌙 달 모양 (상현)</div>
               <div class="card-value" id="moon-phase-val" style="font-size: 0.95rem;">🌓 54%</div>
             </div>
 
-            <!-- 왼쪽 아래 (당일 운항/누적 + 초기화 버튼) -->
             <div class="gauge-surround-card">
               <button class="btn-card-reset" onclick="resetTodayLogs()" title="당일 기록 초기화">초기화</button>
               <div class="card-title">📊 당일 운항/누적</div>
               <div class="card-value" id="today-stats" style="font-size: 0.8rem; line-height: 1.3;">2026-00-00<br>0회 | 0초<br>0.00 km</div>
             </div>
 
-            <!-- 오른쪽 아래 (직전 운항 결과 + 초기화 버튼) -->
             <div class="gauge-surround-card">
               <button class="btn-card-reset" onclick="resetLastTripResult()" title="직전 결과 초기화">초기화</button>
               <div class="card-title">🏁 직전 운항 결과</div>
@@ -1168,6 +1342,32 @@
     <div class="panel data-panel" id="right-panel">
       <div class="status-display-box">
         <div class="guide-text" id="status-guide-text">[상태] 물빛나루쉼터·망진나루 수역 연동 대기 중...</div>
+      </div>
+
+      <!-- =============================================================
+           [신규 UI] 목적지 검색창 (좌표 / 주소 / 명칭 통합 내비게이션)
+           ============================================================= -->
+      <div class="navi-search-wrapper" id="navi-search-wrapper">
+        <div class="navi-search-bar">
+          <input type="text" id="navi-search-input" class="navi-search-input"
+                 placeholder="목적지 명칭, 주소 또는 좌표(예: 35.1895, 128.0812) 검색..."
+                 onkeydown="if(event.key==='Enter') executeDestinationSearch()">
+          <button type="button" class="btn-navi-quick" onclick="showQuickLandmarks()" title="남강 주요 거점 목록">📍 주요거점</button>
+          <button type="button" class="btn-navi-search" onclick="executeDestinationSearch()">🔍 검색</button>
+        </div>
+        <div id="navi-search-results" class="navi-search-results"></div>
+      </div>
+
+      <!-- 자동차 내비게이션 스타일 실시간 길안내 HUD -->
+      <div id="navi-hud-banner" class="navi-hud-banner">
+        <div class="navi-hud-direction">
+          <div class="navi-arrow-box" id="navi-direction-arrow">🧭</div>
+          <div class="navi-hud-info">
+            <div class="navi-hud-dest" id="navi-hud-dest-name">목적지 안내 중</div>
+            <div class="navi-hud-metrics" id="navi-hud-metrics">방위 000° (북) | 잔여 0.00 km | 예상 --분</div>
+          </div>
+        </div>
+        <button type="button" class="btn-navi-cancel" onclick="cancelNavigation()">안내 종료</button>
       </div>
 
       <div class="route-control-bar" style="flex-wrap: nowrap; overflow-x: auto; gap: 8px; justify-content: flex-start;">
@@ -1308,14 +1508,10 @@
       return `${year}-${month}-${day}`;
     }
 
-    /* =============================================================
-       [UI 추가 정보 계산 기능] 일출·일몰, 달 모양, 당일 통계, 직전 결과
-       ============================================================= */
     function updateSurroundWidgets() {
       const now = new Date();
       const todayStr = getKoreanDateString(now);
 
-      // 1. 일출/일몰 계산 (진주 위도 기준 근사)
       const startOfYear = new Date(now.getFullYear(), 0, 1);
       const dayOfYear = Math.floor((now - startOfYear) / 86400000);
       const declination = 23.45 * Math.sin(((2 * Math.PI) / 365) * (dayOfYear - 81));
@@ -1339,7 +1535,6 @@
         sunEl.innerText = `${formatHoursToTime(sunriseHour)} / ${formatHoursToTime(sunsetHour)}`;
       }
 
-      // 2. 달 모양 (월상) 계산
       const knownNewMoon = new Date('2026-01-19T00:00:00Z');
       const diffDays = (now - knownNewMoon) / (1000 * 60 * 60 * 24);
       const moonAge = diffDays % 29.530588853;
@@ -1360,7 +1555,6 @@
       if (moonTitleEl) moonTitleEl.innerText = `🌙 ${moonName}`;
       if (moonValEl) moonValEl.innerText = `${moonIcon} ${illumination.toFixed(0)}%`;
 
-      // 3. 당일 운항 횟수, 총 운항 시간(초 단위), 총 운항 거리 계산
       const todayLogs = tripLogs.filter(l => l.date === todayStr);
       const todayCount = todayLogs.length;
       let totalSec = 0;
@@ -1385,7 +1579,6 @@
         statsEl.innerHTML = `${todayStr}<br>${todayCount}회 | ${formatDurationText(totalSec)}<br>${totalKm.toFixed(2)} km`;
       }
 
-      // 4. 직전 운항 결과 (소요시간, 운항거리 표시)
       const lastTripEl = document.getElementById('last-trip-stats');
       if (tripLogs.length > 0) {
         const last = tripLogs[0]; 
@@ -1397,7 +1590,6 @@
       }
     }
 
-    // 카드별 개별 초기화 함수 구현
     function resetTodayLogs() {
       const todayStr = getKoreanDateString();
       const performReset = () => {
@@ -1439,9 +1631,6 @@
       }
     }
 
-    /* =============================================================
-       [UI 레이아웃 제어] 계기판 크기 연동형 4방향 글자 크기 조절
-       ============================================================= */
     function setSpeedometerSize(sizeVal) {
       const clamped = Math.min(380, Math.max(140, parseInt(sizeVal, 10) || 260));
       const box = document.getElementById('speedometer-box');
@@ -2064,7 +2253,6 @@
 
     function updateOnlineShipBadges() {}
 
-    // 출항 시작 버튼 클릭 시 취소 가능한 확인창 연결
     function confirmStartTracking() {
       if (!shipSelect.value) {
         showNotification("선박을 먼저 선택해주세요.");
@@ -2124,7 +2312,6 @@
       requestWakeLock();
     }
 
-    // 도착 종료 및 저장 버튼 클릭 시 취소 가능한 확인창 연결
     function confirmStopAndSaveTracking() {
       const runStop = () => {
         stopAndSaveTracking(false);
@@ -2139,7 +2326,6 @@
       }
     }
 
-    // 운항 등록 버튼 클릭 시 취소 가능한 확인창 연결
     function confirmStartShipOperation() {
       if (!shipSelect.value) {
         showNotification("선박을 먼저 선택하세요.");
@@ -2161,7 +2347,6 @@
       }
     }
 
-    // 운항 해제 버튼 클릭 시 취소 가능한 확인창 연결
     function confirmStopShipOperation() {
       if (!isMyShipOperating) return;
 
@@ -2549,6 +2734,12 @@
       return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
     }
 
+    function getCompassDirection(deg) {
+      const dirs = ['북(N)', '북동(NE)', '동(E)', '남동(SE)', '남(S)', '남서(SW)', '서(W)', '북서(NW)'];
+      const idx = Math.round(deg / 45) % 8;
+      return dirs[idx];
+    }
+
     function isPointInPolygon(point, vs) {
       if (!vs || !Array.isArray(vs) || vs.length < 3) return false;
       const x = point[0], y = point[1];
@@ -2573,14 +2764,14 @@
 
     let lastGpsTime = null, lastLat = null, lastLng = null;
 
-    const baseMapLayer = L.tileLayer('https://xdworld.vworld.kr/2d/Base/service/{z}/{x}/{y}.png', { maxZoom: 18, minZoom: 13 });
-    const satelliteLayer = L.tileLayer('https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg', { maxZoom: 18, minZoom: 13 });
-    const hybridLayer = L.tileLayer('https://xdworld.vworld.kr/2d/Hybrid/service/{z}/{x}/{y}.png', { maxZoom: 18, minZoom: 13 });
+    const baseMapLayer = L.tileLayer('https://xdworld.vworld.kr/2d/Base/service/{z}/{x}/{y}.png', { maxZoom: 18, minZoom: 10 });
+    const satelliteLayer = L.tileLayer('https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg', { maxZoom: 18, minZoom: 10 });
+    const hybridLayer = L.tileLayer('https://xdworld.vworld.kr/2d/Hybrid/service/{z}/{x}/{y}.png', { maxZoom: 18, minZoom: 10 });
 
     const map = L.map('map', {
       center: [currentLat, currentLng],
       zoom: 16,
-      minZoom: 13,
+      minZoom: 10,
       maxZoom: 18,
       layers: [baseMapLayer],
       rotate: true,
@@ -2612,6 +2803,257 @@
     }).addTo(map).bindPopup("<b>현재 내 위치 (물빛나루쉼터·망진나루 수역)</b>");
 
     trackPolyline = L.polyline([], { color: '#ff4d4d', weight: 5, opacity: 0.85 }).addTo(map);
+
+    /* =============================================================
+       [신규 기능] 내비게이션 목적지 검색 및 실시간 길안내 시스템
+       ============================================================= */
+    // 남강 수역 및 진주시 주요 거점 프리셋 (초고속 즉시 매칭)
+    const LOCAL_LANDMARKS = [
+      { name: "물빛나루쉼터 (선착장)", sub: "경남 진주시 망경동 196-17 일원", lat: 35.18850, lng: 128.08320 },
+      { name: "망진나루 선착장", sub: "경남 진주시 망경동 남강 수역", lat: 35.18690, lng: 128.08190 },
+      { name: "촉석루 · 진주성 남강변", sub: "경남 진주시 남강로 626", lat: 35.19040, lng: 128.08150 },
+      { name: "진주교 하부 수역", sub: "경남 진주시 강남동·본성동 연결교", lat: 35.19010, lng: 128.08580 },
+      { name: "천수교 하부 수역", sub: "경남 진주시 평거동·망경동 연결교", lat: 35.18340, lng: 128.07590 },
+      { name: "진양교 하부 수역", sub: "경남 진주시 칠암동·상대동 연결교", lat: 35.18460, lng: 128.09620 },
+      { name: "경남문화예술회관 앞 강변", sub: "경남 진주시 강남로 215", lat: 35.18590, lng: 128.09210 },
+      { name: "음악분수대 (남강둔치)", sub: "경남 진주시 망경동 남강 둔치", lat: 35.18620, lng: 128.08750 },
+      { name: "진주남강유등전시관", sub: "경남 진주시 망경로 197", lat: 35.18480, lng: 128.08110 }
+    ];
+
+    let activeNaviDest = null;       // { name, lat, lng }
+    let activeNaviMarker = null;     // 목적지 핀 마커
+    let activeNaviGuideLine = null;  // 내 선박 <-> 목적지 실시간 직선 유도선
+    let naviArrivedAlerted = false;  // 도착 알림 중복 방지
+
+    // 좌표 문자열 파싱 (예: "35.1885, 128.0832" 또는 "35.1885 128.0832")
+    function parseCoordinateQuery(query) {
+      const cleaned = query.trim().replace(/[()]/g, '');
+      const match = cleaned.match(/^(-?\d+(?:\.\d+)?)\s*[,/\s]+\s*(-?\d+(?:\.\d+)?)$/);
+      if (!match) return null;
+
+      let v1 = parseFloat(match[1]);
+      let v2 = parseFloat(match[2]);
+
+      // 한국 기준 위도(33~43), 경도(124~132) 자동 판별 및 순서 보정
+      if (v1 >= 30 && v1 <= 45 && v2 >= 120 && v2 <= 135) {
+        return { lat: v1, lng: v2 };
+      } else if (v2 >= 30 && v2 <= 45 && v1 >= 120 && v1 <= 135) {
+        return { lat: v2, lng: v1 };
+      } else if (Math.abs(v1) <= 90 && Math.abs(v2) <= 180) {
+        return { lat: v1, lng: v2 };
+      }
+      return null;
+    }
+
+    // 주요 거점 리스트 바로 표시
+    function showQuickLandmarks() {
+      const resultsBox = document.getElementById('navi-search-results');
+      renderSearchResults(LOCAL_LANDMARKS, "남강 주요 거점");
+      resultsBox.classList.add('show');
+    }
+
+    // 통합 목적지 검색 실행
+    async function executeDestinationSearch() {
+      const inputEl = document.getElementById('navi-search-input');
+      const resultsBox = document.getElementById('navi-search-results');
+      const query = inputEl.value.trim();
+
+      if (!query) {
+        showQuickLandmarks();
+        return;
+      }
+
+      // 1. 좌표 입력인지 확인
+      const coord = parseCoordinateQuery(query);
+      if (coord) {
+        const coordItem = [{
+          name: `직접 입력 좌표 (${coord.lat.toFixed(5)}, ${coord.lng.toFixed(5)})`,
+          sub: "GPS 위도/경도 좌표로 바로 길안내 시작",
+          lat: coord.lat,
+          lng: coord.lng
+        }];
+        renderSearchResults(coordItem);
+        resultsBox.classList.add('show');
+        return;
+      }
+
+      // 2. 로컬 프리셋 필터링
+      const localMatches = LOCAL_LANDMARKS.filter(item =>
+        item.name.toLowerCase().includes(query.toLowerCase()) ||
+        item.sub.toLowerCase().includes(query.toLowerCase())
+      );
+
+      resultsBox.innerHTML = `<div style="padding:12px; text-align:center; color:var(--accent-color); font-size:0.88rem;">🔍 '${query}' 검색 중...</div>`;
+      resultsBox.classList.add('show');
+
+      // 3. 온라인 지명/주소 검색 (Nominatim OpenStreetMap API)
+      let webMatches = [];
+      if (navigator.onLine) {
+        try {
+          const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=kr&limit=8&accept-language=ko`;
+          const res = await fetch(url);
+          if (res.ok) {
+            const data = await res.json();
+            webMatches = data.map(d => {
+              const title = d.name || d.display_name.split(',')[0];
+              return {
+                name: title,
+                sub: d.display_name,
+                lat: parseFloat(d.lat),
+                lng: parseFloat(d.lon)
+              };
+            });
+          }
+        } catch (e) {
+          console.warn("지명 API 검색 오류:", e);
+        }
+      }
+
+      const combined = [...localMatches, ...webMatches];
+      if (combined.length === 0) {
+        resultsBox.innerHTML = `<div style="padding:14px; text-align:center; color:#ff7b72; font-size:0.88rem;">검색 결과가 없습니다. 정확한 명칭이나 좌표(예: 35.1885, 128.0832)를 입력하세요.</div>`;
+      } else {
+        renderSearchResults(combined);
+      }
+    }
+
+    function renderSearchResults(items) {
+      const resultsBox = document.getElementById('navi-search-results');
+      let html = '';
+      items.forEach((item, idx) => {
+        const distKm = getDistanceInKm(currentLat, currentLng, item.lat, item.lng);
+        const safeName = item.name.replace(/'/g, "\\'");
+        html += `
+          <div class="navi-result-item" onclick="startNavigationTo(${item.lat}, ${item.lng}, '${safeName}')">
+            <div style="overflow:hidden;">
+              <div class="navi-res-title">📍 ${item.name}</div>
+              <div class="navi-res-sub" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.sub}</div>
+            </div>
+            <div class="navi-res-dist">${distKm.toFixed(2)} km</div>
+          </div>
+        `;
+      });
+      resultsBox.innerHTML = html;
+    }
+
+    // 검색 결과 선택 시 자동차 내비게이션처럼 길안내 시작
+    function startNavigationTo(lat, lng, destName) {
+      document.getElementById('navi-search-results').classList.remove('show');
+      document.getElementById('navi-search-input').value = destName;
+
+      activeNaviDest = { name: destName, lat: lat, lng: lng };
+      naviArrivedAlerted = false;
+
+      // 기존 수동 웨이포인트 초기화 후 검색 목적지를 최종 목적지로 동기화
+      waypoints = [[lat, lng]];
+      waypointMarkers.forEach(m => map.removeLayer(m));
+      waypointMarkers = [];
+      if (routePolyline) { map.removeLayer(routePolyline); routePolyline = null; }
+
+      if (activeNaviMarker) map.removeLayer(activeNaviMarker);
+      activeNaviMarker = L.marker([lat, lng], {
+        icon: L.divIcon({
+          className: '',
+          html: `<div style="display:flex; flex-direction:column; align-items:center; white-space:nowrap;">
+                  <div style="background:#00f2fe; color:#0d1117; font-weight:900; padding:4px 10px; border-radius:8px; font-size:13px; border:2px solid #fff; box-shadow:0 0 12px rgba(0,242,254,0.9);">🏁 ${destName}</div>
+                  <div style="font-size:24px; margin-top:-2px;">📍</div>
+                 </div>`,
+          iconSize: [160, 60],
+          iconAnchor: [80, 52]
+        }),
+        zIndexOffset: 1200
+      }).addTo(map).bindPopup(`<b>목적지: ${destName}</b><br>위도: ${lat.toFixed(5)}<br>경도: ${lng.toFixed(5)}`);
+
+      // 내 위치와 목적지가 한눈에 보이도록 지도 뷰 자동 조정 (이후 중심 추적 유지)
+      const bounds = L.latLngBounds([[currentLat, currentLng], [lat, lng]]);
+      map.fitBounds(bounds, { padding: [60, 60], maxZoom: 16 });
+
+      document.getElementById('navi-hud-banner').classList.add('active');
+      document.getElementById('navi-hud-dest-name').innerText = `🏁 목적지: ${destName}`;
+
+      updateNavigationGuidance();
+      updateRemainingDistance();
+    }
+
+    // 선박 이동 시마다 내비게이션誘導선·방위각·잔여거리·ETA 실시간 갱신
+    function updateNavigationGuidance() {
+      if (!activeNaviDest) return;
+
+      const lat1 = currentLat, lng1 = currentLng;
+      const lat2 = activeNaviDest.lat, lng2 = activeNaviDest.lng;
+
+      // 실시간 직선 유도선 그리기
+      if (activeNaviGuideLine) map.removeLayer(activeNaviGuideLine);
+      activeNaviGuideLine = L.polyline([[lat1, lng1], [lat2, lng2]], {
+        color: '#00f2fe',
+        weight: 5,
+        opacity: 0.9,
+        dashArray: '10, 8'
+      }).addTo(map);
+
+      const distKm = getDistanceInKm(lat1, lng1, lat2, lng2);
+      const distNm = distKm * KM_TO_NM;
+      const bearing = calculateBearing(lat1, lng1, lat2, lng2);
+      const compass = getCompassDirection(bearing);
+
+      // 화살표 회전 (내 진행 방향 대비 상대 방위 또는 진북 기준 방위)
+      const relativeAngle = (mapMode === 0 && currentSpeedKts >= 0.5)
+        ? (bearing - currentHeading + 360) % 360
+        : bearing;
+      const arrowEl = document.getElementById('navi-direction-arrow');
+      if (arrowEl) {
+        arrowEl.innerHTML = `<span style="display:inline-block; transform:rotate(${relativeAngle}deg);">⬆️</span>`;
+      }
+
+      // 예상 도착 소요시간(ETA) 계산
+      let etaText = "정지 중";
+      if (currentSpeedKmh >= 0.5) {
+        const hours = distKm / currentSpeedKmh;
+        const mins = Math.max(1, Math.round(hours * 60));
+        if (mins >= 60) {
+          etaText = `약 ${Math.floor(mins / 60)}시간 ${mins % 60}분`;
+        } else {
+          etaText = `약 ${mins}분`;
+        }
+      }
+
+      const metricsEl = document.getElementById('navi-hud-metrics');
+      if (metricsEl) {
+        metricsEl.innerText = `방위 ${Math.round(bearing)}° ${compass} | 잔여 ${distKm.toFixed(2)}km (${distNm.toFixed(2)}NM) | ${etaText}`;
+      }
+
+      // 목적지 반경 40m 이내 도착 처리
+      if (distKm <= 0.04 && !naviArrivedAlerted) {
+        naviArrivedAlerted = true;
+        playAlertSound('safe');
+        const guide = document.getElementById('status-guide-text');
+        if (guide) {
+          guide.className = "guide-text safe-alert";
+          guide.innerText = `[🏁 도착 완료] 목적지 '${activeNaviDest.name}' 인근에 도착했습니다!`;
+        }
+      }
+    }
+
+    // 길안내 종료
+    function cancelNavigation() {
+      activeNaviDest = null;
+      naviArrivedAlerted = false;
+      if (activeNaviMarker) { map.removeLayer(activeNaviMarker); activeNaviMarker = null; }
+      if (activeNaviGuideLine) { map.removeLayer(activeNaviGuideLine); activeNaviGuideLine = null; }
+      document.getElementById('navi-hud-banner').classList.remove('active');
+      document.getElementById('navi-search-input').value = "";
+      waypoints = [];
+      document.getElementById('dist-remaining').innerText = "-- km";
+    }
+
+    // 검색창 외부 클릭 시 드롭다운 닫기
+    document.addEventListener('click', function(e) {
+      const wrapper = document.getElementById('navi-search-wrapper');
+      const resultsBox = document.getElementById('navi-search-results');
+      if (wrapper && resultsBox && !wrapper.contains(e.target)) {
+        resultsBox.classList.remove('show');
+      }
+    });
 
     map.on('dragstart', function() { if (mapMode !== 2) setMapMode(2); });
 
@@ -2774,6 +3216,8 @@
         currentLat = actualGpsLat;
         currentLng = actualGpsLng;
         shipMarker.setLatLng([currentLat, currentLng]);
+        updateNavigationGuidance();
+        updateRemainingDistance();
         showNotification("GPS 원본 위치로 복원되었습니다.");
       };
 
@@ -2790,6 +3234,8 @@
       const pos = e.target.getLatLng();
       currentLat = pos.lat;
       currentLng = pos.lng;
+      updateNavigationGuidance();
+      updateRemainingDistance();
     });
 
     function resetTrack() {
@@ -2802,6 +3248,7 @@
 
     function resetRoute() {
       const executeRouteReset = () => {
+        cancelNavigation();
         waypoints = [];
         waypointMarkers.forEach(m => map.removeLayer(m));
         waypointMarkers = [];
@@ -2813,7 +3260,7 @@
       if (!showConfirmAlerts) {
         executeRouteReset();
       } else {
-        if (confirm("설정된 목적지 항로를 초기화하시겠습니까?")) {
+        if (confirm("설정된 목적지 항로 및 내비게이션 안내를 초기화하시겠습니까?")) {
           executeRouteReset();
         }
       }
@@ -2946,6 +3393,7 @@
         setMapBearingSafe(0);
       }
 
+      updateNavigationGuidance();
       updateRemainingDistance();
       checkGeofenceAndCollisions();
       broadcastMyLocation();
