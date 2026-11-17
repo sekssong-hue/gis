@@ -571,7 +571,7 @@
     .trip-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
     .input-field { display: flex; flex-direction: column; gap: 4px; }
     .input-field label { font-size: 0.9rem; font-weight: bold; color: var(--accent-color); }
-    
+
     .input-field input {
       width: 100%;
       background: #0d1117;
@@ -1030,7 +1030,7 @@
         <select id="shipSelect" onchange="handleShipSelectChange()">
           <!-- 스크립트에서 동적 로드 -->
         </select>
-        
+
         <button class="btn-ship-manage add" onclick="addNewShip()" title="새 선박 추가">+ 추가</button>
         <button class="btn-ship-manage edit" onclick="renameCurrentShip()" title="선박 이름 변경">✏️ 수정</button>
         <button class="btn-ship-manage delete" onclick="deleteCurrentShip()" title="선박 삭제">🗑️ 삭제</button>
@@ -1300,12 +1300,20 @@
 
     let showConfirmAlerts = true;
 
+    // KST(한국 시간) 기준 YYYY-MM-DD 날짜 포맷터
+    function getKoreanDateString(dateObj = new Date()) {
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
     /* =============================================================
        [UI 추가 정보 계산 기능] 일출·일몰, 달 모양, 당일 통계, 직전 결과
        ============================================================= */
     function updateSurroundWidgets() {
       const now = new Date();
-      const todayStr = now.toISOString().split('T')[0];
+      const todayStr = getKoreanDateString(now);
 
       // 1. 일출/일몰 계산 (진주 위도 기준 근사)
       const startOfYear = new Date(now.getFullYear(), 0, 1);
@@ -1316,7 +1324,7 @@
       const hourAngle = Math.acos(-Math.tan(latRad) * Math.tan(decRad));
       const solarNoon = 12.5; 
       const halfDayHours = (hourAngle * 180 / Math.PI) / 15;
-      
+
       const sunriseHour = solarNoon - halfDayHours;
       const sunsetHour = solarNoon + halfDayHours;
 
@@ -1391,7 +1399,7 @@
 
     // 카드별 개별 초기화 함수 구현
     function resetTodayLogs() {
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = getKoreanDateString();
       const performReset = () => {
         tripLogs = tripLogs.filter(l => l.date !== todayStr);
         saveLogsToLocalStorage();
@@ -1412,7 +1420,7 @@
     function resetLastTripResult() {
       const performReset = () => {
         if (tripLogs.length > 0) {
-          tripLogs.shift(); // 최신 직전 기록 1개 제거
+          tripLogs.shift();
           saveLogsToLocalStorage();
           updateSurroundWidgets();
           renderLogList();
@@ -1719,6 +1727,11 @@
         if (guide) {
           guide.className = "guide-text offline-alert";
           guide.innerText = "[⚠️ 오프라인] 인터넷 연결이 끊어졌습니다. 로컬 기록 기능은 유지됩니다.";
+        }
+      } else {
+        if (guide && guide.classList.contains('offline-alert')) {
+          guide.className = "guide-text";
+          guide.innerText = "[상태] 물빛나루쉼터·망진나루 수역 실시간 연동 완료 - 안전 운항하세요.";
         }
       }
     }
@@ -2124,7 +2137,7 @@
       const newLog = {
         id: Date.now(),
         shipName: currentShipName,
-        date: tripStartTime.toISOString().split('T')[0],
+        date: getKoreanDateString(tripStartTime),
         startTime: document.getElementById('start-time-input').value,
         endTime: endTimeStr,
         durationSec: durationSec,
@@ -2147,7 +2160,7 @@
       if (!tripStartTime) {
         tripStartTime = new Date(Date.now() - 60000);
       }
-      
+
       const startTimeInput = document.getElementById('start-time-input');
       if (!startTimeInput.value) {
         startTimeInput.value = formatHHMMSS(tripStartTime);
@@ -2172,7 +2185,6 @@
       btnStart.disabled = !isMyShipOperating;
       locationBadge.style.display = 'none';
 
-      // 입항 완료 시 서버 상태 즉시 '출항 대기 중'으로 업데이트하여 고착 현상 해결
       if (isFirebaseReady && currentShipName) {
         const endTimeStr = document.getElementById('end-time-input').value;
         firebase.database().ref('ships/' + currentShipName).update({
@@ -2413,7 +2425,7 @@
         }
       } catch (err) {}
     }
-    
+
     function releaseWakeLock() {
       if (wakeLock !== null) {
         wakeLock.release().then(() => { wakeLock = null; }).catch(() => {});
@@ -2551,7 +2563,7 @@
         btn.innerText = "중심 추적(회전)";
         guide.innerText = "[상태] 중심 추적 모드 (진행 방향 회전)";
         map.panTo([currentLat, currentLng]);
-        setMapBearingSafe(-currentHeading);
+        if (currentSpeedKts >= 0.5) setMapBearingSafe(-currentHeading);
       } else if (mapMode === 1) {
         btn.classList.add('active-tracking-norotate');
         btn.innerText = "중심 추적(정북)";
@@ -2591,9 +2603,42 @@
     });
     map.addControl(drawControl);
 
+    // 구역 및 목적지 로컬 스토리지 저장/불러오기 로직
+    function saveUserMapDrawings() {
+      try {
+        const geojson = drawnItems.toGeoJSON();
+        localStorage.setItem('ship_drawn_zones', JSON.stringify(geojson));
+      } catch (e) {}
+    }
+
+    function loadUserMapDrawings() {
+      try {
+        const saved = localStorage.getItem('ship_drawn_zones');
+        if (saved) {
+          const geojson = JSON.parse(saved);
+          L.geoJSON(geojson, {
+            onEachFeature: function (feature, layer) {
+              if (feature.properties && feature.properties.zoneMeta) {
+                layer.zoneMeta = feature.properties.zoneMeta;
+                const meta = layer.zoneMeta;
+                if (meta.type === 'safe') {
+                  if (layer.setStyle) layer.setStyle({ color: meta.color, fillColor: meta.color, fillOpacity: 0.35, weight: 2 });
+                  layer.bindPopup(`<b>[지정 선착장 (Safe Zone)]</b><br>정박 시 알람 자동 차단`);
+                } else {
+                  if (layer.setStyle) layer.setStyle({ color: meta.color, fillColor: meta.color, fillOpacity: 0.35, weight: 2 });
+                  layer.bindPopup(`<b>[위험 수역 경고 구역]</b><br>진입 시 경고 알람 발생`);
+                }
+              }
+              drawnItems.addLayer(layer);
+            }
+          });
+        }
+      } catch (e) {}
+    }
+
     map.on(L.Draw.Event.CREATED, function (e) {
       const layer = e.layer;
-      
+
       const applyZoneAction = (isSafeZone) => {
         if (isSafeZone) {
           const safeColor = '#2ea043';
@@ -2606,7 +2651,13 @@
           if (layer.setStyle) layer.setStyle({ color: color, fillColor: color, fillOpacity: 0.35, weight: 2 });
           layer.bindPopup(`<b>[위험 수역 경고 구역]</b><br>진입 시 경고 알람 발생`);
         }
+        feature = layer.toGeoJSON ? layer.toGeoJSON() : null;
+        if (feature) {
+          feature.properties = feature.properties || {};
+          feature.properties.zoneMeta = layer.zoneMeta;
+        }
         drawnItems.addLayer(layer);
+        saveUserMapDrawings();
       };
 
       if (!showConfirmAlerts) {
@@ -2617,9 +2668,14 @@
       }
     });
 
+    map.on('draw:edited draw:deleted', function () {
+      saveUserMapDrawings();
+    });
+
     function resetZones() {
       const executeReset = () => {
         drawnItems.clearLayers();
+        localStorage.removeItem('ship_drawn_zones');
       };
       if (!showConfirmAlerts) {
         executeReset();
@@ -2704,7 +2760,7 @@
         const lat = e.latlng.lat;
         const lng = e.latlng.lng;
         waypoints.push([lat, lng]);
-        
+
         const m = L.marker([lat, lng], {
           icon: L.divIcon({ className: '', html: '<div style="background:#00f2fe; color:#000; font-weight:bold; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:12px; border:1px solid #fff;">📍</div>', iconSize: [20, 20], iconAnchor: [10, 10] })
         }).addTo(map).bindPopup(`목적지 ${waypoints.length}`);
@@ -2768,10 +2824,13 @@
       if (currentSpeedKts < 0.05) currentSpeedKts = 0;
       currentSpeedKmh = currentSpeedKts * 1.852;
 
-      if (typeof heading === 'number' && !isNaN(heading)) {
-        currentHeading = heading;
-      } else if (lastLat !== null && lastLng !== null) {
-        currentHeading = calculateBearing(lastLat, lastLng, currentLat, currentLng);
+      // 저속(0.5 Kts 미만) 정박 시 방위각 튐 현상 방지
+      if (currentSpeedKts >= 0.5) {
+        if (typeof heading === 'number' && !isNaN(heading)) {
+          currentHeading = heading;
+        } else if (lastLat !== null && lastLng !== null) {
+          currentHeading = calculateBearing(lastLat, lastLng, currentLat, currentLng);
+        }
       }
 
       const speedDisplay = document.getElementById('dual-speed-display');
@@ -2813,11 +2872,12 @@
       if (isFirstGps) {
         map.setView([currentLat, currentLng], 16);
         isFirstGps = false;
+        loadUserMapDrawings(); // 지도 로드 후 저장된 구역 복원
       }
 
       if (mapMode === 0) {
         map.panTo([currentLat, currentLng], { animate: true });
-        setMapBearingSafe(-currentHeading);
+        if (currentSpeedKts >= 0.5) setMapBearingSafe(-currentHeading);
       } else if (mapMode === 1) {
         map.panTo([currentLat, currentLng], { animate: true });
         setMapBearingSafe(0);
@@ -2832,7 +2892,7 @@
       console.warn("GPS 수신 오류:", err.message);
       const guide = document.getElementById('status-guide-text');
       const coords = document.getElementById('gps-coords');
-      
+
       let errMsg = "GPS 신호를 찾을 수 없습니다.";
       if (err.code === 1) errMsg = "GPS 위치 권한이 거부되었습니다.";
       else if (err.code === 2) errMsg = "위치 정보를 이용할 수 없습니다.";
@@ -2880,7 +2940,9 @@
     function listenToOtherShips() {
       if (!isFirebaseReady) return;
       const ref = firebase.database().ref('ships');
-      ref.on('value', (snapshot) => {
+      if (shipsRefListener) ref.off('value', shipsRefListener);
+
+      shipsRefListener = ref.on('value', (snapshot) => {
         const data = snapshot.val() || {};
         const onlineBadges = document.getElementById('online-ship-badges');
         let badgesHtml = '';
@@ -2959,27 +3021,39 @@
       });
 
       let closeToOther = false;
+      let nearestShipName = "";
+      let nearestDistM = 99999;
+
       Object.keys(otherShipMarkers).forEach(name => {
         const marker = otherShipMarkers[name];
         const mPos = marker.getLatLng();
         const dist = getDistanceInMeters(currentLat, currentLng, mPos.lat, mPos.lng);
         if (dist <= PROXIMITY_WARN_DISTANCE_M) {
           closeToOther = true;
+          if (dist < nearestDistM) {
+            nearestDistM = dist;
+            nearestShipName = name;
+          }
         }
       });
 
       const guide = document.getElementById('status-guide-text');
-      if (inDanger || closeToOther) {
-        if (guide && !guide.classList.contains('offline-alert')) {
-          guide.className = "guide-text warning-alert";
-          guide.innerText = `[⚠️ 경고] ${inDanger ? '위험 수역 진입!' : ''} ${closeToOther ? '인근 선박 근접 경고!' : ''}`;
-        }
-        playAlertSound('danger');
-      } else if (inSafe) {
+      
+      // 보완: 선착장(Safe Zone) 안쪽일 때는 경고 알람 완벽 차단(Mute)
+      if (inSafe) {
         if (guide && !guide.classList.contains('offline-alert')) {
           guide.className = "guide-text safe-alert";
           guide.innerText = `[안전] 지정 선착장(Safe Zone) 정박 중 - 알람 자동 차단됨`;
         }
+      } else if (inDanger || closeToOther) {
+        if (guide && !guide.classList.contains('offline-alert')) {
+          guide.className = "guide-text warning-alert";
+          let warnText = "[⚠️ 경고]";
+          if (inDanger) warnText += " 위험 수역 진입!";
+          if (closeToOther) warnText += ` '${nearestShipName}' 근접 (${Math.round(nearestDistM)}m)!`;
+          guide.innerText = warnText;
+        }
+        playAlertSound('danger');
       } else {
         if (guide && guide.classList.contains('warning-alert')) {
           guide.className = "guide-text";
@@ -3144,7 +3218,7 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `남강선박_운항기록_${new Date().toISOString().split('T')[0]}.csv`;
+      a.download = `남강선박_운항기록_${getKoreanDateString()}.csv`;
       a.click();
       URL.revokeObjectURL(url);
     }
@@ -3157,7 +3231,7 @@
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tripLogs, null, 2));
       const a = document.createElement('a');
       a.href = dataStr;
-      a.download = `남강선박_백업_${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `남강선박_백업_${getKoreanDateString()}.json`;
       a.click();
     }
 
