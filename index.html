@@ -579,7 +579,7 @@
       color: #ffffff;
       padding: 8px 4px;
       border-radius: 8px;
-      font-size: 1.4rem; 
+      font-size: 1.4rem;
       font-weight: 900;
       text-align: center;
       font-family: 'Consolas', 'Courier New', monospace;
@@ -723,7 +723,7 @@
     }
 
     /* =============================================================
-       [신규 CSS] 내비게이션 목적지 검색창 및 길안내 HUD 스타일
+       내비게이션 목적지 검색창 · 저장된 목적지 목록 · 길안내 HUD 스타일
        ============================================================= */
     .navi-search-wrapper {
       position: relative;
@@ -771,9 +771,9 @@
       transition: opacity 0.2s;
     }
     .btn-navi-search:hover { opacity: 0.85; }
-    .btn-navi-quick {
+    .btn-navi-saved {
       background: #21262d;
-      color: #79c0ff;
+      color: #f2cc60;
       border: 1px solid var(--border-color);
       border-radius: 8px;
       padding: 0 10px;
@@ -782,13 +782,14 @@
       cursor: pointer;
       min-height: 40px;
       white-space: nowrap;
+      transition: all 0.2s;
     }
-    .btn-navi-quick:hover {
-      border-color: var(--accent-color);
+    .btn-navi-saved:hover {
+      border-color: #f2cc60;
       color: #ffffff;
     }
 
-    /* 검색 결과 드롭다운 */
+    /* 검색 결과 및 저장된 목적지 드롭다운 */
     .navi-search-results {
       display: none;
       position: absolute;
@@ -798,13 +799,24 @@
       background: rgba(13, 17, 23, 0.98);
       border: 1.5px solid var(--accent-color);
       border-radius: 10px;
-      max-height: 260px;
+      max-height: 300px;
       overflow-y: auto;
       box-shadow: 0 12px 28px rgba(0, 0, 0, 0.85);
       z-index: 2000;
     }
     .navi-search-results.show {
       display: block;
+    }
+    .navi-dropdown-header {
+      padding: 8px 14px;
+      background: rgba(0, 242, 254, 0.1);
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.8rem;
+      font-weight: bold;
+      color: var(--accent-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     .navi-result-item {
       padding: 10px 14px;
@@ -820,6 +832,10 @@
     .navi-result-item:hover {
       background: rgba(0, 242, 254, 0.15);
     }
+    .navi-res-info {
+      flex: 1;
+      overflow: hidden;
+    }
     .navi-res-title {
       font-size: 0.92rem;
       font-weight: bold;
@@ -829,6 +845,15 @@
       font-size: 0.78rem;
       color: #8b949e;
       margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .navi-res-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
     }
     .navi-res-dist {
       font-size: 0.85rem;
@@ -836,6 +861,34 @@
       color: var(--accent-color);
       font-family: 'Consolas', monospace;
       white-space: nowrap;
+    }
+    .btn-navi-save-item {
+      background: #238636;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      padding: 5px 8px;
+      font-size: 0.78rem;
+      font-weight: bold;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-navi-save-item:hover {
+      opacity: 0.85;
+    }
+    .btn-navi-del-item {
+      background: #da3633;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      padding: 5px 8px;
+      font-size: 0.78rem;
+      font-weight: bold;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-navi-del-item:hover {
+      opacity: 0.85;
     }
 
     /* 자동차 내비게이션 스타일 길안내 HUD 배너 */
@@ -859,6 +912,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      overflow: hidden;
     }
     .navi-arrow-box {
       width: 42px;
@@ -876,11 +930,15 @@
     .navi-hud-info {
       display: flex;
       flex-direction: column;
+      overflow: hidden;
     }
     .navi-hud-dest {
       font-size: 0.95rem;
       font-weight: 900;
       color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .navi-hud-metrics {
       font-size: 0.82rem;
@@ -888,6 +946,23 @@
       color: var(--accent-color);
       font-family: 'Consolas', monospace;
       margin-top: 2px;
+    }
+    .navi-hud-btns {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .btn-navi-hud-save {
+      background: #f2cc60;
+      color: #0d1117;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.8rem;
+      font-weight: 900;
+      cursor: pointer;
+      min-height: 36px;
+      white-space: nowrap;
     }
     .btn-navi-cancel {
       background: var(--accent-red);
@@ -951,7 +1026,7 @@
       width: 40px;
       height: 22px;
     }
-    .switch input { 
+    .switch input {
       opacity: 0;
       width: 0;
       height: 0;
@@ -1171,7 +1246,7 @@
         min-height: 100vh;
         overflow: auto;
       }
-      .dashboard-container { 
+      .dashboard-container {
         flex-direction: column;
         overflow: visible;
         gap: 12px;
@@ -1200,7 +1275,7 @@
   <!-- 헤더 -->
   <header>
     <h1>남강 GPS 선박 운항 관제 시스템</h1>
-  </header> 
+  </header>
 
   <!-- 선박 선택 바 -->
   <div class="ship-select-bar">
@@ -1255,7 +1330,7 @@
           <div class="gauge-surround-grid">
             <div class="gauge-surround-card">
               <div class="card-title">🌅 일출 / 일몰</div>
-              <div class="card-value" id="sun-times" style="font-size: 0.95rem;">06:52 / 17:44</div>
+              <div class="card-value" id="sun-times" style="font-size: 0.95rem;">--:-- / --:--</div>
             </div>
 
             <div class="speedometer-box-center" id="speedometer-box">
@@ -1263,8 +1338,8 @@
             </div>
 
             <div class="gauge-surround-card">
-              <div class="card-title" id="moon-phase-title">🌙 달 모양 (상현)</div>
-              <div class="card-value" id="moon-phase-val" style="font-size: 0.95rem;">🌓 54%</div>
+              <div class="card-title" id="moon-phase-title">🌙 달 모양</div>
+              <div class="card-value" id="moon-phase-val" style="font-size: 0.95rem;">🌓 --%</div>
             </div>
 
             <div class="gauge-surround-card">
@@ -1345,14 +1420,14 @@
       </div>
 
       <!-- =============================================================
-           [신규 UI] 목적지 검색창 (좌표 / 주소 / 명칭 통합 내비게이션)
+           목적지 검색창 및 저장된 목적지 목록 (주요거점 프리셋 제거됨)
            ============================================================= -->
       <div class="navi-search-wrapper" id="navi-search-wrapper">
         <div class="navi-search-bar">
           <input type="text" id="navi-search-input" class="navi-search-input"
                  placeholder="목적지 명칭, 주소 또는 좌표(예: 35.1895, 128.0812) 검색..."
                  onkeydown="if(event.key==='Enter') executeDestinationSearch()">
-          <button type="button" class="btn-navi-quick" onclick="showQuickLandmarks()" title="남강 주요 거점 목록">📍 주요거점</button>
+          <button type="button" class="btn-navi-saved" onclick="showSavedDestinations()" title="저장한 목적지 목록 보기">⭐ 저장목록 (<span id="saved-dest-count">0</span>)</button>
           <button type="button" class="btn-navi-search" onclick="executeDestinationSearch()">🔍 검색</button>
         </div>
         <div id="navi-search-results" class="navi-search-results"></div>
@@ -1367,7 +1442,10 @@
             <div class="navi-hud-metrics" id="navi-hud-metrics">방위 000° (북) | 잔여 0.00 km | 예상 --분</div>
           </div>
         </div>
-        <button type="button" class="btn-navi-cancel" onclick="cancelNavigation()">안내 종료</button>
+        <div class="navi-hud-btns">
+          <button type="button" class="btn-navi-hud-save" onclick="saveActiveDestination()" title="현재 목적지 목록에 저장">⭐ 저장</button>
+          <button type="button" class="btn-navi-cancel" onclick="cancelNavigation()">안내 종료</button>
+        </div>
       </div>
 
       <div class="route-control-bar" style="flex-wrap: nowrap; overflow-x: auto; gap: 8px; justify-content: flex-start;">
@@ -1491,11 +1569,11 @@
 
   <!-- 통합 스크립트 로직 -->
   <script>
-    let currentLat = 35.1885, currentLng = 128.0832; 
+    let currentLat = 35.1885, currentLng = 128.0832;
     let actualGpsLat = currentLat, actualGpsLng = currentLng;
-    let currentHeading = 0; 
+    let currentHeading = 0;
     let mapMode = 0;
-    let isSurveyMode = false; 
+    let isSurveyMode = false;
     let isCalibratedMode = false, isFirstGps = true;
 
     let showConfirmAlerts = true;
@@ -1508,53 +1586,109 @@
       return `${year}-${month}-${day}`;
     }
 
+    // 현재 시각 및 위치 기반 일출/일몰 + 달 모양 계산
     function updateSurroundWidgets() {
       const now = new Date();
       const todayStr = getKoreanDateString(now);
 
+      // 1. 현재 위치(위도·경도) 및 시간대 기준 일출/일몰 계산
+      const lat = (typeof currentLat === 'number' && !isNaN(currentLat)) ? currentLat : 35.1885;
+      const lng = (typeof currentLng === 'number' && !isNaN(currentLng)) ? currentLng : 128.0832;
+      const tzOffsetHours = -now.getTimezoneOffset() / 60; // 한국(KST) = +9
+
       const startOfYear = new Date(now.getFullYear(), 0, 1);
-      const dayOfYear = Math.floor((now - startOfYear) / 86400000);
-      const declination = 23.45 * Math.sin(((2 * Math.PI) / 365) * (dayOfYear - 81));
-      const latRad = currentLat * (Math.PI / 180);
-      const decRad = declination * (Math.PI / 180);
-      const hourAngle = Math.acos(-Math.tan(latRad) * Math.tan(decRad));
-      const solarNoon = 12.5; 
-      const halfDayHours = (hourAngle * 180 / Math.PI) / 15;
+      const dayOfYear = Math.floor((now - startOfYear) / 86400000) + 1;
 
-      const sunriseHour = solarNoon - halfDayHours;
-      const sunsetHour = solarNoon + halfDayHours;
+      const gamma = ((2 * Math.PI) / 365) * (dayOfYear - 1);
+      const eqTimeMin = 229.18 * (
+        0.000075 +
+        0.001868 * Math.cos(gamma) -
+        0.032077 * Math.sin(gamma) -
+        0.014615 * Math.cos(2 * gamma) -
+        0.040849 * Math.sin(2 * gamma)
+      );
 
-      const formatHoursToTime = (h) => {
-        const hr = Math.floor(h);
-        const mn = Math.floor((h - hr) * 60);
-        return `${String(hr).padStart(2, '0')}:${String(mn).padStart(2, '0')}`;
-      };
+      const declRad =
+        0.006918 -
+        0.399912 * Math.cos(gamma) +
+        0.070257 * Math.sin(gamma) -
+        0.006758 * Math.cos(2 * gamma) +
+        0.000907 * Math.sin(2 * gamma) -
+        0.002697 * Math.cos(3 * gamma) +
+        0.00148 * Math.sin(3 * gamma);
+
+      const zenithRad = 90.833 * (Math.PI / 180);
+      const latRad = lat * (Math.PI / 180);
+      const cosHa = (Math.cos(zenithRad) / (Math.cos(latRad) * Math.cos(declRad))) -
+                    Math.tan(latRad) * Math.tan(declRad);
 
       const sunEl = document.getElementById('sun-times');
       if (sunEl) {
-        sunEl.innerText = `${formatHoursToTime(sunriseHour)} / ${formatHoursToTime(sunsetHour)}`;
+        if (cosHa >= 1) {
+          sunEl.innerText = "일출 없음 / 일몰 없음";
+        } else if (cosHa <= -1) {
+          sunEl.innerText = "24시간 일조";
+        } else {
+          const haDeg = Math.acos(cosHa) * (180 / Math.PI);
+          const solarNoonMin = 720 - 4 * lng - eqTimeMin + tzOffsetHours * 60;
+          const haMin = haDeg * 4;
+
+          const sunriseMin = solarNoonMin - haMin;
+          const sunsetMin = solarNoonMin + haMin;
+
+          const formatMinutesToTime = (totalMin) => {
+            const wrapped = ((Math.round(totalMin) % 1440) + 1440) % 1440;
+            const hr = Math.floor(wrapped / 60);
+            const mn = wrapped % 60;
+            return `${String(hr).padStart(2, '0')}:${String(mn).padStart(2, '0')}`;
+          };
+
+          sunEl.innerText = `${formatMinutesToTime(sunriseMin)} / ${formatMinutesToTime(sunsetMin)}`;
+        }
       }
 
-      const knownNewMoon = new Date('2026-01-19T00:00:00Z');
-      const diffDays = (now - knownNewMoon) / (1000 * 60 * 60 * 24);
-      const moonAge = diffDays % 29.530588853;
-      const illumination = (1 - Math.cos((moonAge / 29.53) * 2 * Math.PI)) / 2 * 100;
+      // 2. 현재 시각 기준 달 모양(월령·조도·위상 명칭) 계산
+      const synodicMonth = 29.530588853;
+      const refNewMoonUtcMs = Date.UTC(2000, 0, 6, 18, 14, 0); // 기준 삭(2000-01-06 18:14 UTC)
+      const daysSinceNewMoon = (now.getTime() - refNewMoonUtcMs) / 86400000;
+      const moonAge = ((daysSinceNewMoon % synodicMonth) + synodicMonth) % synodicMonth;
+      const phaseFraction = moonAge / synodicMonth; // 0.0(삭) ~ 0.5(망) ~ 1.0(다음 삭)
+      const illumination = ((1 - Math.cos(phaseFraction * 2 * Math.PI)) / 2) * 100;
 
       let moonName = "초승달";
       let moonIcon = "🌒";
-      if (moonAge < 1.8) { moonName = "삭(음력 1일)"; moonIcon = "🌑"; }
-      else if (moonAge < 7.4) { moonName = "상현달"; moonIcon = "🌓"; }
-      else if (moonAge < 9.2) { moonName = "상현망간"; moonIcon = "🌔"; }
-      else if (moonAge < 16.6) { moonName = "보름달(망)"; moonIcon = "🌕"; }
-      else if (moonAge < 22.1) { moonName = "하현망간"; moonIcon = "🌖"; }
-      else if (moonAge < 23.9) { moonName = "하현달"; moonIcon = "🌗"; }
-      else { moonName = "그믐달"; moonIcon = "🌘"; }
+      if (moonAge < 1.0 || moonAge >= synodicMonth - 1.0) {
+        moonName = "삭(합삭)";
+        moonIcon = "🌑";
+      } else if (moonAge < 6.38) {
+        moonName = "초승달";
+        moonIcon = "🌒";
+      } else if (moonAge < 8.38) {
+        moonName = "상현달";
+        moonIcon = "🌓";
+      } else if (moonAge < 13.77) {
+        moonName = "상현망간";
+        moonIcon = "🌔";
+      } else if (moonAge < 15.77) {
+        moonName = "보름달(망)";
+        moonIcon = "🌕";
+      } else if (moonAge < 21.15) {
+        moonName = "하현망간";
+        moonIcon = "🌖";
+      } else if (moonAge < 23.15) {
+        moonName = "하현달";
+        moonIcon = "🌗";
+      } else {
+        moonName = "그믐달";
+        moonIcon = "🌘";
+      }
 
       const moonTitleEl = document.getElementById('moon-phase-title');
       const moonValEl = document.getElementById('moon-phase-val');
       if (moonTitleEl) moonTitleEl.innerText = `🌙 ${moonName}`;
-      if (moonValEl) moonValEl.innerText = `${moonIcon} ${illumination.toFixed(0)}%`;
+      if (moonValEl) moonValEl.innerText = `${moonIcon} ${illumination.toFixed(0)}% (${moonAge.toFixed(1)}일)`;
 
+      // 3. 당일 운항/누적 및 직전 운항 결과 갱신
       const todayLogs = tripLogs.filter(l => l.date === todayStr);
       const todayCount = todayLogs.length;
       let totalSec = 0;
@@ -1581,7 +1715,7 @@
 
       const lastTripEl = document.getElementById('last-trip-stats');
       if (tripLogs.length > 0) {
-        const last = tripLogs[0]; 
+        const last = tripLogs[0];
         if (lastTripEl) {
           lastTripEl.innerHTML = `소요: ${last.duration}<br>거리: <span style="color:var(--accent-color);">${last.distanceKm} km</span>`;
         }
@@ -1641,7 +1775,7 @@
       if (slider) slider.value = clamped;
       if (label) label.innerText = clamped + 'px';
 
-      const ratio = clamped / 260; 
+      const ratio = clamped / 260;
       const cardTitleSize = Math.max(0.72, Math.min(0.95, 0.82 * ratio));
       const cardValueSize = Math.max(0.70, Math.min(0.95, 0.80 * ratio));
 
@@ -1763,7 +1897,7 @@
     }
 
     const DEFAULT_SHIPS = [
-      "김시민 1호", "김시민 2호", "남강 3호", "남강 4호", 
+      "김시민 1호", "김시민 2호", "남강 3호", "남강 4호",
       "남강 5호", "남강 6호", "인명구조선", "안전관리선", "기타작업선"
     ];
 
@@ -1897,10 +2031,11 @@
       initLayoutPreferences();
       initPanelResizer();
       loadShipsList();
+      loadSavedDestinations();
       drawSpeedometer(0, 0);
       updateClock();
       updateSurroundWidgets();
-      startGpsTracking(); 
+      startGpsTracking();
       setupNetworkStatusListeners();
     });
 
@@ -2293,7 +2428,7 @@
       tripStartTime = new Date();
       const startTimeStr = formatHHMMSS(tripStartTime);
       document.getElementById('start-time-input').value = startTimeStr;
-      document.getElementById('end-time-input').value = ""; 
+      document.getElementById('end-time-input').value = "";
 
       document.getElementById('active-timer-box').classList.add('show');
       btnStart.disabled = true;
@@ -2404,7 +2539,7 @@
 
       tripLogs.unshift(newLog);
       saveLogsToLocalStorage();
-      updateSurroundWidgets(); 
+      updateSurroundWidgets();
 
       document.getElementById('active-timer-box').classList.remove('show');
       releaseWakeLock();
@@ -2430,7 +2565,7 @@
         autoStopTimer = null;
       }
 
-      stopAndSaveTrip(); 
+      stopAndSaveTrip();
 
       hasSaved = true;
       isDrivingStarted = false;
@@ -2669,9 +2804,9 @@
 
     let wakeLock = null;
     async function requestWakeLock() {
-      try { 
+      try {
         if ('wakeLock' in navigator) {
-          wakeLock = await navigator.wakeLock.request('screen'); 
+          wakeLock = await navigator.wakeLock.request('screen');
         }
       } catch (err) {}
     }
@@ -2707,7 +2842,7 @@
     setInterval(updateClock, 1000);
 
     const MPS_TO_KTS = 1.943844;
-    const KM_TO_NM = 0.539957; 
+    const KM_TO_NM = 0.539957;
 
     function getDistanceInKm(lat1, lon1, lat2, lon2) {
       if (!lat1 || !lon1 || !lat2 || !lon2) return 0;
@@ -2805,27 +2940,142 @@
     trackPolyline = L.polyline([], { color: '#ff4d4d', weight: 5, opacity: 0.85 }).addTo(map);
 
     /* =============================================================
-       [신규 기능] 내비게이션 목적지 검색 및 실시간 길안내 시스템
+       내비게이션 목적지 검색 및 사용자 저장 목록 관리 시스템
        ============================================================= */
-    // 남강 수역 및 진주시 주요 거점 프리셋 (초고속 즉시 매칭)
-    const LOCAL_LANDMARKS = [
-      { name: "물빛나루쉼터 (선착장)", sub: "경남 진주시 망경동 196-17 일원", lat: 35.18850, lng: 128.08320 },
-      { name: "망진나루 선착장", sub: "경남 진주시 망경동 남강 수역", lat: 35.18690, lng: 128.08190 },
-      { name: "촉석루 · 진주성 남강변", sub: "경남 진주시 남강로 626", lat: 35.19040, lng: 128.08150 },
-      { name: "진주교 하부 수역", sub: "경남 진주시 강남동·본성동 연결교", lat: 35.19010, lng: 128.08580 },
-      { name: "천수교 하부 수역", sub: "경남 진주시 평거동·망경동 연결교", lat: 35.18340, lng: 128.07590 },
-      { name: "진양교 하부 수역", sub: "경남 진주시 칠암동·상대동 연결교", lat: 35.18460, lng: 128.09620 },
-      { name: "경남문화예술회관 앞 강변", sub: "경남 진주시 강남로 215", lat: 35.18590, lng: 128.09210 },
-      { name: "음악분수대 (남강둔치)", sub: "경남 진주시 망경동 남강 둔치", lat: 35.18620, lng: 128.08750 },
-      { name: "진주남강유등전시관", sub: "경남 진주시 망경로 197", lat: 35.18480, lng: 128.08110 }
-    ];
+    const SAVED_DEST_STORAGE_KEY = 'ship_saved_destinations_v1';
+    let savedDestinations = [];
+    let lastSearchResults = [];
 
-    let activeNaviDest = null;       // { name, lat, lng }
-    let activeNaviMarker = null;     // 목적지 핀 마커
-    let activeNaviGuideLine = null;  // 내 선박 <-> 목적지 실시간 직선 유도선
-    let naviArrivedAlerted = false;  // 도착 알림 중복 방지
+    let activeNaviDest = null;
+    let activeNaviMarker = null;
+    let activeNaviGuideLine = null;
+    let naviArrivedAlerted = false;
 
-    // 좌표 문자열 파싱 (예: "35.1885, 128.0832" 또는 "35.1885 128.0832")
+    function loadSavedDestinations() {
+      try {
+        const raw = localStorage.getItem(SAVED_DEST_STORAGE_KEY);
+        savedDestinations = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(savedDestinations)) savedDestinations = [];
+      } catch (e) {
+        savedDestinations = [];
+      }
+      updateSavedDestCount();
+    }
+
+    function persistSavedDestinations() {
+      try {
+        localStorage.setItem(SAVED_DEST_STORAGE_KEY, JSON.stringify(savedDestinations));
+      } catch (e) {
+        console.error("목적지 저장 실패:", e);
+      }
+      updateSavedDestCount();
+    }
+
+    function updateSavedDestCount() {
+      const badge = document.getElementById('saved-dest-count');
+      if (badge) badge.innerText = savedDestinations.length;
+    }
+
+    function saveDestinationItem(name, sub, lat, lng, e) {
+      if (e) e.stopPropagation();
+      const exists = savedDestinations.some(
+        d => d.name === name && Math.abs(d.lat - lat) < 0.00001 && Math.abs(d.lng - lng) < 0.00001
+      );
+      if (exists) {
+        showNotification(`'${name}'은(는) 이미 저장된 목적지 목록에 있습니다.`);
+        return;
+      }
+
+      const customLabel = prompt("목록에 저장할 목적지 이름을 확인하거나 수정하세요:", name);
+      if (customLabel === null) return;
+      const finalName = customLabel.trim() || name;
+
+      savedDestinations.unshift({
+        id: Date.now(),
+        name: finalName,
+        sub: sub || `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
+        lat: Number(lat),
+        lng: Number(lng)
+      });
+      persistSavedDestinations();
+      showNotification(`'${finalName}'이(가) 저장된 목적지 목록에 추가되었습니다.`);
+    }
+
+    function saveActiveDestination() {
+      if (!activeNaviDest) return;
+      saveDestinationItem(
+        activeNaviDest.name,
+        `위도 ${activeNaviDest.lat.toFixed(5)}, 경도 ${activeNaviDest.lng.toFixed(5)}`,
+        activeNaviDest.lat,
+        activeNaviDest.lng
+      );
+    }
+
+    function deleteSavedDestination(id, e) {
+      if (e) e.stopPropagation();
+      const target = savedDestinations.find(d => d.id === id);
+      if (!target) return;
+
+      const doRemove = () => {
+        savedDestinations = savedDestinations.filter(d => d.id !== id);
+        persistSavedDestinations();
+        showSavedDestinations();
+      };
+
+      if (!showConfirmAlerts) {
+        doRemove();
+      } else {
+        if (confirm(`저장된 목적지 [${target.name}]을(를) 목록에서 삭제하시겠습니까?`)) {
+          doRemove();
+        }
+      }
+    }
+
+    function showSavedDestinations() {
+      const resultsBox = document.getElementById('navi-search-results');
+      if (!resultsBox) return;
+
+      if (savedDestinations.length === 0) {
+        resultsBox.innerHTML = `
+          <div class="navi-dropdown-header">
+            <span>⭐ 저장된 목적지 목록 (0개)</span>
+          </div>
+          <div style="padding:16px; text-align:center; color:#8b949e; font-size:0.86rem;">
+            저장된 목적지가 없습니다.<br>목적지를 검색한 뒤 <b>[+ 저장]</b> 버튼을 눌러 추가하세요.
+          </div>
+        `;
+        resultsBox.classList.add('show');
+        return;
+      }
+
+      let html = `
+        <div class="navi-dropdown-header">
+          <span>⭐ 저장된 목적지 목록 (${savedDestinations.length}개)</span>
+          <span style="font-size:0.75rem; color:#8b949e;">클릭 시 길안내 시작</span>
+        </div>
+      `;
+
+      savedDestinations.forEach((item) => {
+        const distKm = getDistanceInKm(currentLat, currentLng, item.lat, item.lng);
+        const safeName = item.name.replace(/'/g, "\\'");
+        html += `
+          <div class="navi-result-item" onclick="startNavigationTo(${item.lat}, ${item.lng}, '${safeName}')">
+            <div class="navi-res-info">
+              <div class="navi-res-title">⭐ ${item.name}</div>
+              <div class="navi-res-sub">${item.sub} (${item.lat.toFixed(5)}, ${item.lng.toFixed(5)})</div>
+            </div>
+            <div class="navi-res-actions">
+              <span class="navi-res-dist">${distKm.toFixed(2)} km</span>
+              <button type="button" class="btn-navi-del-item" onclick="deleteSavedDestination(${item.id}, event)">삭제</button>
+            </div>
+          </div>
+        `;
+      });
+
+      resultsBox.innerHTML = html;
+      resultsBox.classList.add('show');
+    }
+
     function parseCoordinateQuery(query) {
       const cleaned = query.trim().replace(/[()]/g, '');
       const match = cleaned.match(/^(-?\d+(?:\.\d+)?)\s*[,/\s]+\s*(-?\d+(?:\.\d+)?)$/);
@@ -2834,7 +3084,6 @@
       let v1 = parseFloat(match[1]);
       let v2 = parseFloat(match[2]);
 
-      // 한국 기준 위도(33~43), 경도(124~132) 자동 판별 및 순서 보정
       if (v1 >= 30 && v1 <= 45 && v2 >= 120 && v2 <= 135) {
         return { lat: v1, lng: v2 };
       } else if (v2 >= 30 && v2 <= 45 && v1 >= 120 && v1 <= 135) {
@@ -2845,43 +3094,43 @@
       return null;
     }
 
-    // 주요 거점 리스트 바로 표시
-    function showQuickLandmarks() {
-      const resultsBox = document.getElementById('navi-search-results');
-      renderSearchResults(LOCAL_LANDMARKS, "남강 주요 거점");
-      resultsBox.classList.add('show');
-    }
-
-    // 통합 목적지 검색 실행
     async function executeDestinationSearch() {
       const inputEl = document.getElementById('navi-search-input');
       const resultsBox = document.getElementById('navi-search-results');
       const query = inputEl.value.trim();
 
       if (!query) {
-        showQuickLandmarks();
+        showSavedDestinations();
         return;
       }
 
-      // 1. 좌표 입력인지 확인
+      // 1. 좌표 직접 입력 판별
       const coord = parseCoordinateQuery(query);
       if (coord) {
-        const coordItem = [{
-          name: `직접 입력 좌표 (${coord.lat.toFixed(5)}, ${coord.lng.toFixed(5)})`,
-          sub: "GPS 위도/경도 좌표로 바로 길안내 시작",
+        lastSearchResults = [{
+          name: `좌표 지점 (${coord.lat.toFixed(5)}, ${coord.lng.toFixed(5)})`,
+          sub: "GPS 위도/경도 좌표 직접 입력",
           lat: coord.lat,
           lng: coord.lng
         }];
-        renderSearchResults(coordItem);
+        renderSearchResults(lastSearchResults);
         resultsBox.classList.add('show');
         return;
       }
 
-      // 2. 로컬 프리셋 필터링
-      const localMatches = LOCAL_LANDMARKS.filter(item =>
-        item.name.toLowerCase().includes(query.toLowerCase()) ||
-        item.sub.toLowerCase().includes(query.toLowerCase())
-      );
+      // 2. 저장된 목적지 중 일치 항목 먼저 필터링
+      const savedMatches = savedDestinations
+        .filter(item =>
+          item.name.toLowerCase().includes(query.toLowerCase()) ||
+          (item.sub && item.sub.toLowerCase().includes(query.toLowerCase()))
+        )
+        .map(item => ({
+          name: item.name,
+          sub: `[저장됨] ${item.sub}`,
+          lat: item.lat,
+          lng: item.lng,
+          isAlreadySaved: true
+        }));
 
       resultsBox.innerHTML = `<div style="padding:12px; text-align:center; color:var(--accent-color); font-size:0.88rem;">🔍 '${query}' 검색 중...</div>`;
       resultsBox.classList.add('show');
@@ -2890,7 +3139,7 @@
       let webMatches = [];
       if (navigator.onLine) {
         try {
-          const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=kr&limit=8&accept-language=ko`;
+          const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=kr&limit=10&accept-language=ko`;
           const res = await fetch(url);
           if (res.ok) {
             const data = await res.json();
@@ -2909,34 +3158,48 @@
         }
       }
 
-      const combined = [...localMatches, ...webMatches];
-      if (combined.length === 0) {
+      lastSearchResults = [...savedMatches, ...webMatches];
+      if (lastSearchResults.length === 0) {
         resultsBox.innerHTML = `<div style="padding:14px; text-align:center; color:#ff7b72; font-size:0.88rem;">검색 결과가 없습니다. 정확한 명칭이나 좌표(예: 35.1885, 128.0832)를 입력하세요.</div>`;
       } else {
-        renderSearchResults(combined);
+        renderSearchResults(lastSearchResults);
       }
     }
 
     function renderSearchResults(items) {
       const resultsBox = document.getElementById('navi-search-results');
-      let html = '';
+      let html = `
+        <div class="navi-dropdown-header">
+          <span>🔍 검색 결과 (${items.length}건)</span>
+          <span style="font-size:0.75rem; color:#8b949e;">항목 클릭: 안내 / [+ 저장]: 목록 보관</span>
+        </div>
+      `;
       items.forEach((item, idx) => {
         const distKm = getDistanceInKm(currentLat, currentLng, item.lat, item.lng);
         const safeName = item.name.replace(/'/g, "\\'");
         html += `
           <div class="navi-result-item" onclick="startNavigationTo(${item.lat}, ${item.lng}, '${safeName}')">
-            <div style="overflow:hidden;">
+            <div class="navi-res-info">
               <div class="navi-res-title">📍 ${item.name}</div>
-              <div class="navi-res-sub" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.sub}</div>
+              <div class="navi-res-sub">${item.sub}</div>
             </div>
-            <div class="navi-res-dist">${distKm.toFixed(2)} km</div>
+            <div class="navi-res-actions">
+              <span class="navi-res-dist">${distKm.toFixed(2)} km</span>
+              <button type="button" class="btn-navi-save-item" onclick="saveFromSearchResult(${idx}, event)">+ 저장</button>
+            </div>
           </div>
         `;
       });
       resultsBox.innerHTML = html;
     }
 
-    // 검색 결과 선택 시 자동차 내비게이션처럼 길안내 시작
+    function saveFromSearchResult(index, e) {
+      if (e) e.stopPropagation();
+      const item = lastSearchResults[index];
+      if (!item) return;
+      saveDestinationItem(item.name, item.sub, item.lat, item.lng, e);
+    }
+
     function startNavigationTo(lat, lng, destName) {
       document.getElementById('navi-search-results').classList.remove('show');
       document.getElementById('navi-search-input').value = destName;
@@ -2944,7 +3207,6 @@
       activeNaviDest = { name: destName, lat: lat, lng: lng };
       naviArrivedAlerted = false;
 
-      // 기존 수동 웨이포인트 초기화 후 검색 목적지를 최종 목적지로 동기화
       waypoints = [[lat, lng]];
       waypointMarkers.forEach(m => map.removeLayer(m));
       waypointMarkers = [];
@@ -2964,7 +3226,6 @@
         zIndexOffset: 1200
       }).addTo(map).bindPopup(`<b>목적지: ${destName}</b><br>위도: ${lat.toFixed(5)}<br>경도: ${lng.toFixed(5)}`);
 
-      // 내 위치와 목적지가 한눈에 보이도록 지도 뷰 자동 조정 (이후 중심 추적 유지)
       const bounds = L.latLngBounds([[currentLat, currentLng], [lat, lng]]);
       map.fitBounds(bounds, { padding: [60, 60], maxZoom: 16 });
 
@@ -2975,14 +3236,12 @@
       updateRemainingDistance();
     }
 
-    // 선박 이동 시마다 내비게이션誘導선·방위각·잔여거리·ETA 실시간 갱신
     function updateNavigationGuidance() {
       if (!activeNaviDest) return;
 
       const lat1 = currentLat, lng1 = currentLng;
       const lat2 = activeNaviDest.lat, lng2 = activeNaviDest.lng;
 
-      // 실시간 직선 유도선 그리기
       if (activeNaviGuideLine) map.removeLayer(activeNaviGuideLine);
       activeNaviGuideLine = L.polyline([[lat1, lng1], [lat2, lng2]], {
         color: '#00f2fe',
@@ -2996,7 +3255,6 @@
       const bearing = calculateBearing(lat1, lng1, lat2, lng2);
       const compass = getCompassDirection(bearing);
 
-      // 화살표 회전 (내 진행 방향 대비 상대 방위 또는 진북 기준 방위)
       const relativeAngle = (mapMode === 0 && currentSpeedKts >= 0.5)
         ? (bearing - currentHeading + 360) % 360
         : bearing;
@@ -3005,7 +3263,6 @@
         arrowEl.innerHTML = `<span style="display:inline-block; transform:rotate(${relativeAngle}deg);">⬆️</span>`;
       }
 
-      // 예상 도착 소요시간(ETA) 계산
       let etaText = "정지 중";
       if (currentSpeedKmh >= 0.5) {
         const hours = distKm / currentSpeedKmh;
@@ -3022,7 +3279,6 @@
         metricsEl.innerText = `방위 ${Math.round(bearing)}° ${compass} | 잔여 ${distKm.toFixed(2)}km (${distNm.toFixed(2)}NM) | ${etaText}`;
       }
 
-      // 목적지 반경 40m 이내 도착 처리
       if (distKm <= 0.04 && !naviArrivedAlerted) {
         naviArrivedAlerted = true;
         playAlertSound('safe');
@@ -3034,7 +3290,6 @@
       }
     }
 
-    // 길안내 종료
     function cancelNavigation() {
       activeNaviDest = null;
       naviArrivedAlerted = false;
@@ -3046,7 +3301,6 @@
       document.getElementById('dist-remaining').innerText = "-- km";
     }
 
-    // 검색창 외부 클릭 시 드롭다운 닫기
     document.addEventListener('click', function(e) {
       const wrapper = document.getElementById('navi-search-wrapper');
       const resultsBox = document.getElementById('navi-search-results');
@@ -3216,6 +3470,7 @@
         currentLat = actualGpsLat;
         currentLng = actualGpsLng;
         shipMarker.setLatLng([currentLat, currentLng]);
+        updateSurroundWidgets();
         updateNavigationGuidance();
         updateRemainingDistance();
         showNotification("GPS 원본 위치로 복원되었습니다.");
@@ -3234,6 +3489,7 @@
       const pos = e.target.getLatLng();
       currentLat = pos.lat;
       currentLng = pos.lng;
+      updateSurroundWidgets();
       updateNavigationGuidance();
       updateRemainingDistance();
     });
@@ -3325,6 +3581,8 @@
         currentLat = lat;
         currentLng = lng;
       }
+
+      updateSurroundWidgets();
 
       let rawKts = 0;
       if (speedMps !== null && speedMps !== undefined && !isNaN(speedMps)) {
@@ -3549,7 +3807,7 @@
       });
 
       const guide = document.getElementById('status-guide-text');
-      
+
       if (inSafe) {
         if (guide && !guide.classList.contains('offline-alert')) {
           guide.className = "guide-text safe-alert";
