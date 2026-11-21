@@ -1336,9 +1336,15 @@
           <!-- 스크립트에서 동적 로드 -->
         </select>
 
-        <button class="btn-ship-manage add" onclick="addNewShip()" title="새 선박 추가">+ 추가</button>
-        <button class="btn-ship-manage edit" onclick="renameCurrentShip()" title="선박 이름 변경">✏️ 수정</button>
-        <button class="btn-ship-manage delete" onclick="deleteCurrentShip()" title="선박 삭제">🗑️ 삭제</button>
+        <button class="btn-ship-manage" id="btn-ship-manage-unlock" onclick="unlockShipManagement()" title="비밀번호 입력 후 선박 추가·수정·삭제 잠금 해제">🔒 선박 관리</button>
+        <select id="shipManageActionSelect" onchange="handleShipManageAction()" style="display:none; border-color:#f2cc60; color:#f2cc60;" title="선박 추가·수정·삭제 작업 선택">
+          <option value="">-- 관리 작업 선택 --</option>
+          <option value="add">➕ 새 선박 추가</option>
+          <option value="edit">✏️ 선박 이름 수정</option>
+          <option value="delete">🗑️ 현재 선박 삭제</option>
+          <option value="changepw">🔑 관리 비밀번호 변경</option>
+          <option value="lock">🔒 잠금 (숨기기)</option>
+        </select>
 
         <button class="btn-op-start" id="btn-ship-start" onclick="confirmStartShipOperation()" disabled>운항 등록</button>
         <button class="btn-op-stop" id="btn-ship-stop" onclick="confirmStopShipOperation()" disabled>운항 해제</button>
@@ -1953,6 +1959,92 @@
       }
     }
 
+    const SHIP_MANAGE_PW_KEY = 'ship_manage_admin_pw';
+    const DEFAULT_SHIP_MANAGE_PW = '1234';
+    let isShipManageUnlocked = false;
+
+    function getShipManagePassword() {
+      try {
+        return localStorage.getItem(SHIP_MANAGE_PW_KEY) || DEFAULT_SHIP_MANAGE_PW;
+      } catch (e) {
+        return DEFAULT_SHIP_MANAGE_PW;
+      }
+    }
+
+    function unlockShipManagement() {
+      if (isMyShipOperating) {
+        showNotification("운항 등록 중에는 선박 관리 메뉴를 열 수 없습니다.");
+        return;
+      }
+      const inputPw = prompt("선박 관리(추가·수정·삭제) 비밀번호를 입력하세요:\n(초기 기본 비밀번호: 1234)");
+      if (inputPw === null) return;
+
+      if (inputPw.trim() === getShipManagePassword()) {
+        isShipManageUnlocked = true;
+        const unlockBtn = document.getElementById('btn-ship-manage-unlock');
+        const actionSel = document.getElementById('shipManageActionSelect');
+        if (unlockBtn) unlockBtn.style.display = 'none';
+        if (actionSel) {
+          actionSel.value = "";
+          actionSel.style.display = 'inline-block';
+        }
+      } else {
+        showNotification("비밀번호가 일치하지 않습니다.");
+      }
+    }
+
+    function lockShipManagement() {
+      isShipManageUnlocked = false;
+      const unlockBtn = document.getElementById('btn-ship-manage-unlock');
+      const actionSel = document.getElementById('shipManageActionSelect');
+      if (actionSel) {
+        actionSel.value = "";
+        actionSel.style.display = 'none';
+      }
+      if (unlockBtn) unlockBtn.style.display = 'inline-block';
+    }
+
+    function changeShipManagePassword() {
+      const currentPw = prompt("현재 관리 비밀번호를 입력하세요:");
+      if (currentPw === null) return;
+      if (currentPw.trim() !== getShipManagePassword()) {
+        showNotification("현재 비밀번호가 일치하지 않습니다.");
+        return;
+      }
+      const newPw = prompt("새로 설정할 비밀번호를 입력하세요 (4자리 이상 권장):");
+      if (!newPw || !newPw.trim()) return;
+      try {
+        localStorage.setItem(SHIP_MANAGE_PW_KEY, newPw.trim());
+        showNotification("선박 관리 비밀번호가 변경되었습니다.");
+      } catch (e) {
+        showNotification("비밀번호 저장 중 오류가 발생했습니다.");
+      }
+    }
+
+    function handleShipManageAction() {
+      const actionSel = document.getElementById('shipManageActionSelect');
+      if (!actionSel) return;
+      const action = actionSel.value;
+      actionSel.value = "";
+
+      if (!isShipManageUnlocked) {
+        lockShipManagement();
+        return;
+      }
+
+      if (action === 'add') {
+        addNewShip();
+      } else if (action === 'edit') {
+        renameCurrentShip();
+      } else if (action === 'delete') {
+        deleteCurrentShip();
+      } else if (action === 'changepw') {
+        changeShipManagePassword();
+      } else if (action === 'lock') {
+        lockShipManagement();
+      }
+    }
+
     const DEFAULT_SHIPS = [
       "제1호 관제선", "제2호 관제선", "연안여객선 1호", "유람선 1호",
       "내수면 순찰선", "인명구조선", "안전관리선", "어업지도선", "기타작업선"
@@ -2307,8 +2399,8 @@
     let tripSpeedList = [];
     let tripMaxSpeed = 0;
 
-    const STOP_THRESHOLD_SPEED = 0.1;
-    const STOP_HOLD_TIME_MS = 300000;
+const STOP_THRESHOLD_SPEED = 0.3; // GPS 미세 오차 감안 (기존 0.1)
+const STOP_HOLD_TIME_MS = 180000; // 정박 후 3분 경과 시 자동 종료 (기존 300000 = 5분)
 
     let audioCtx = null;
     let lastAlertTime = 0;
@@ -2817,6 +2909,7 @@
       }
 
       isMyShipOperating = true;
+      lockShipManagement();
       shipSelect.disabled = true;
       btnShipStart.disabled = true;
       document.getElementById('btn-ship-stop').disabled = false;
