@@ -6,7 +6,7 @@
   <!-- ============================================================= -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>남강 GPS 선박 운항 관제 시스템</title>
+  <title>전국 해양·내수면 GPS 선박 운항 관제 시스템</title>
 
   <!-- ============================================================= -->
   <!-- [HTML-2] PWA 메타 태그 및 매니페스트 -->
@@ -723,7 +723,7 @@
     }
 
     /* =============================================================
-       내비게이션 목적지 검색창 · 저장된 목적지 목록 · 길안내 HUD 스타일
+       내비게이션 목적지 검색창 · VWorld/OSM 통합 · 저장목록 · 길안내 HUD
        ============================================================= */
     .navi-search-wrapper {
       position: relative;
@@ -788,6 +788,27 @@
       border-color: #f2cc60;
       color: #ffffff;
     }
+    .btn-navi-apikey {
+      background: #21262d;
+      color: #79c0ff;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0 10px;
+      font-weight: bold;
+      font-size: 0.82rem;
+      cursor: pointer;
+      min-height: 40px;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .btn-navi-apikey:hover {
+      border-color: #79c0ff;
+      color: #ffffff;
+    }
+    .btn-navi-apikey.configured {
+      border-color: var(--accent-green);
+      color: #3fb950;
+    }
 
     /* 검색 결과 및 저장된 목적지 드롭다운 */
     .navi-search-results {
@@ -799,7 +820,7 @@
       background: rgba(13, 17, 23, 0.98);
       border: 1.5px solid var(--accent-color);
       border-radius: 10px;
-      max-height: 300px;
+      max-height: 320px;
       overflow-y: auto;
       box-shadow: 0 12px 28px rgba(0, 0, 0, 0.85);
       z-index: 2000;
@@ -817,7 +838,23 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 4px;
     }
+    .navi-source-tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      padding: 1px 6px;
+      border-radius: 4px;
+      margin-right: 5px;
+      font-weight: 800;
+      vertical-align: middle;
+    }
+    .navi-source-tag.vworld { background: #1f6beb; color: #fff; }
+    .navi-source-tag.osm { background: #30363d; color: #c9d1d9; }
+    .navi-source-tag.saved { background: #d29922; color: #0d1117; }
+    .navi-source-tag.coord { background: #2ea043; color: #fff; }
+
     .navi-result-item {
       padding: 10px 14px;
       border-bottom: 1px solid var(--border-color);
@@ -873,9 +910,7 @@
       cursor: pointer;
       white-space: nowrap;
     }
-    .btn-navi-save-item:hover {
-      opacity: 0.85;
-    }
+    .btn-navi-save-item:hover { opacity: 0.85; }
     .btn-navi-del-item {
       background: #da3633;
       color: #ffffff;
@@ -887,9 +922,7 @@
       cursor: pointer;
       white-space: nowrap;
     }
-    .btn-navi-del-item:hover {
-      opacity: 0.85;
-    }
+    .btn-navi-del-item:hover { opacity: 0.85; }
 
     /* 자동차 내비게이션 스타일 길안내 HUD 배너 */
     .navi-hud-banner {
@@ -1098,6 +1131,23 @@
       border-radius: 8px !important;
     }
 
+    /* 지도 클릭 팝업 내 빠른 저장 버튼 스타일 */
+    .popup-save-btn {
+      margin-top: 6px;
+      width: 100%;
+      background: #238636;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .popup-save-btn:hover {
+      background: #2ea043;
+    }
+
     .modal-overlay {
       display: none;
       position: fixed;
@@ -1274,7 +1324,7 @@
 <body onclick="initAudioContextOnce()">
   <!-- 헤더 -->
   <header>
-    <h1>남강 GPS 선박 운항 관제 시스템</h1>
+    <h1>전국 해양·내수면 GPS 선박 운항 관제 시스템</h1>
   </header>
 
   <!-- 선박 선택 바 -->
@@ -1416,18 +1466,20 @@
     <!-- 우측 GIS 및 지도 패널 -->
     <div class="panel data-panel" id="right-panel">
       <div class="status-display-box">
-        <div class="guide-text" id="status-guide-text">[상태] 물빛나루쉼터·망진나루 수역 연동 대기 중...</div>
+        <div class="guide-text" id="status-guide-text">[상태] 전국 해양·내수면(강·호수·바다) GPS 수역 연동 대기 중...</div>
       </div>
 
       <!-- =============================================================
-           목적지 검색창 및 저장된 목적지 목록 (주요거점 프리셋 제거됨)
+           목적지 통합 검색창 (VWorld + OSM + 근거리 우선정렬 + 저장목록)
            ============================================================= -->
       <div class="navi-search-wrapper" id="navi-search-wrapper">
         <div class="navi-search-bar">
           <input type="text" id="navi-search-input" class="navi-search-input"
-                 placeholder="목적지 명칭, 주소 또는 좌표(예: 35.1895, 128.0812) 검색..."
+                 placeholder="전국 명칭, 초성(예: ㅁㅈㄴㄹ), 자모, 주소 또는 좌표 검색..."
+                 oninput="handleDestinationInput()"
                  onkeydown="if(event.key==='Enter') executeDestinationSearch()">
           <button type="button" class="btn-navi-saved" onclick="showSavedDestinations()" title="저장한 목적지 목록 보기">⭐ 저장목록 (<span id="saved-dest-count">0</span>)</button>
+          <button type="button" class="btn-navi-apikey" id="btn-vworld-key" onclick="configureVWorldApiKey()" title="VWorld 한국 공간정보 검색 API 키 설정">🔑 API키</button>
           <button type="button" class="btn-navi-search" onclick="executeDestinationSearch()">🔍 검색</button>
         </div>
         <div id="navi-search-results" class="navi-search-results"></div>
@@ -1450,6 +1502,11 @@
 
       <div class="route-control-bar" style="flex-wrap: nowrap; overflow-x: auto; gap: 8px; justify-content: flex-start;">
         <div style="display:flex; gap:6px; align-items:center; flex-shrink: 0;">
+          <select id="waterEnvSelect" onchange="changeWaterEnvironment()" title="운항 수역 환경 선택 (경보 반경 및 계기판 자동 조정)"
+                  style="background:#0d1117; color:#00f2fe; border:1.5px solid #00f2fe; border-radius:6px; padding:4px 8px; font-size:0.8rem; font-weight:bold; min-height:36px; outline:none;">
+            <option value="inland">🏞️ 내수면 (강·호수)</option>
+            <option value="coastal">🌊 연안·바다 (해상)</option>
+          </select>
           <button class="btn-reset btn-center-mode active-tracking" id="btn-center-mode-toggle" onclick="toggleCenterMode()">중심 추적(회전)</button>
           <button class="btn-reset btn-survey-mode" id="btn-survey-mode-toggle" onclick="toggleSurveyMode()">📷 촬영·측량 모드 OFF</button>
           <button class="btn-reset btn-calibrate" id="btn-calibrate-toggle" onclick="toggleCalibrationMode()">위치 수동보정</button>
@@ -1594,7 +1651,7 @@
       // 1. 현재 위치(위도·경도) 및 시간대 기준 일출/일몰 계산
       const lat = (typeof currentLat === 'number' && !isNaN(currentLat)) ? currentLat : 35.1885;
       const lng = (typeof currentLng === 'number' && !isNaN(currentLng)) ? currentLng : 128.0832;
-      const tzOffsetHours = -now.getTimezoneOffset() / 60; // 한국(KST) = +9
+      const tzOffsetHours = -now.getTimezoneOffset() / 60;
 
       const startOfYear = new Date(now.getFullYear(), 0, 1);
       const dayOfYear = Math.floor((now - startOfYear) / 86400000) + 1;
@@ -1649,10 +1706,10 @@
 
       // 2. 현재 시각 기준 달 모양(월령·조도·위상 명칭) 계산
       const synodicMonth = 29.530588853;
-      const refNewMoonUtcMs = Date.UTC(2000, 0, 6, 18, 14, 0); // 기준 삭(2000-01-06 18:14 UTC)
+      const refNewMoonUtcMs = Date.UTC(2000, 0, 6, 18, 14, 0);
       const daysSinceNewMoon = (now.getTime() - refNewMoonUtcMs) / 86400000;
       const moonAge = ((daysSinceNewMoon % synodicMonth) + synodicMonth) % synodicMonth;
-      const phaseFraction = moonAge / synodicMonth; // 0.0(삭) ~ 0.5(망) ~ 1.0(다음 삭)
+      const phaseFraction = moonAge / synodicMonth;
       const illumination = ((1 - Math.cos(phaseFraction * 2 * Math.PI)) / 2) * 100;
 
       let moonName = "초승달";
@@ -1897,8 +1954,8 @@
     }
 
     const DEFAULT_SHIPS = [
-      "김시민 1호", "김시민 2호", "남강 3호", "남강 4호",
-      "남강 5호", "남강 6호", "인명구조선", "안전관리선", "기타작업선"
+      "제1호 관제선", "제2호 관제선", "연안여객선 1호", "유람선 1호",
+      "내수면 순찰선", "인명구조선", "안전관리선", "어업지도선", "기타작업선"
     ];
 
     let customShipsList = [];
@@ -2032,6 +2089,14 @@
       initPanelResizer();
       loadShipsList();
       loadSavedDestinations();
+      updateVWorldKeyButtonState();
+      try {
+        const savedEnv = localStorage.getItem('ship_water_env');
+        if (savedEnv && document.getElementById('waterEnvSelect')) {
+          document.getElementById('waterEnvSelect').value = savedEnv;
+          changeWaterEnvironment();
+        }
+      } catch (e) {}
       drawSpeedometer(0, 0);
       updateClock();
       updateSurroundWidgets();
@@ -2055,7 +2120,7 @@
       } else {
         if (guide && guide.classList.contains('offline-alert')) {
           guide.className = "guide-text";
-          guide.innerText = "[상태] 물빛나루쉼터·망진나루 수역 실시간 연동 완료 - 안전 운항하세요.";
+          guide.innerText = "[상태] 전국 수역 실시간 GPS 연동 완료 - 안전 운항하세요.";
         }
       }
     }
@@ -2088,13 +2153,15 @@
       ctx.stroke();
       ctx.shadowBlur = 0;
 
-      const maxSpeed = 30;
+      const maxSpeed = gaugeMaxSpeedKts;
       const startAngle = 135 * (Math.PI / 180);
       const endAngle = 405 * (Math.PI / 180);
       const totalAngle = endAngle - startAngle;
 
-      const majorTicks = 6;
-      const minorPerMajor = 5;
+      const majorTicks = (maxSpeed === 50) ? 5 : 6;
+      const minorPerMajor = (maxSpeed === 50) ? 5 : 5;
+      const tickFontSize = (maxSpeed >= 40) ? 26 : 30;
+      const textR = (maxSpeed >= 40) ? (radius - 45) : (radius - 42);
 
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -2114,15 +2181,17 @@
         ctx.moveTo(x1, y1);
         ctx.lineTo(x2, y2);
         ctx.lineWidth = 3;
-        ctx.strokeStyle = (val >= 20) ? '#ff7b72' : '#00f2fe';
+        ctx.strokeStyle = (val >= maxSpeed * 0.7) ? '#ff7b72' : '#00f2fe';
         ctx.stroke();
 
-        const textR = radius - 42;
+        const labelText = Number.isInteger(Number(val.toFixed(6)))
+          ? String(Math.round(val))
+          : Number(val.toFixed(1)).toString();
         const tx = cx + Math.cos(angle) * textR;
         const ty = cy + Math.sin(angle) * textR;
-        ctx.font = 'bold 30px sans-serif';
-        ctx.fillStyle = (val >= 20) ? '#ff7b72' : '#ffffff';
-        ctx.fillText(val.toString(), tx, ty);
+        ctx.font = `bold ${tickFontSize}px sans-serif`;
+        ctx.fillStyle = (val >= maxSpeed * 0.7) ? '#ff7b72' : '#ffffff';
+        ctx.fillText(labelText, tx, ty);
 
         if (i < majorTicks) {
           for (let j = 1; j < minorPerMajor; j++) {
@@ -2338,7 +2407,28 @@
     let currentShipName = "";
     let isMyShipOperating = false;
     const otherShipMarkers = {};
-    const PROXIMITY_WARN_DISTANCE_M = 100;
+    let PROXIMITY_WARN_DISTANCE_M = 100;
+    let currentWaterEnv = 'inland'; // 'inland'(강·호수) | 'coastal'(바다·연안)
+    let gaugeMaxSpeedKts = 30;
+
+    function changeWaterEnvironment() {
+      const sel = document.getElementById('waterEnvSelect');
+      if (!sel) return;
+      currentWaterEnv = sel.value;
+      const guide = document.getElementById('status-guide-text');
+      if (currentWaterEnv === 'coastal') {
+        PROXIMITY_WARN_DISTANCE_M = 300; // 바다는 선박 선회 반경이 크므로 300m 근접 경보
+        gaugeMaxSpeedKts = 50;           // 해상 고속선 대응 50 노트로 계기판 확장
+        if (!map.hasLayer(seaMarkLayer)) map.addLayer(seaMarkLayer);
+        if (guide) guide.innerText = "[상태] 🌊 연안·바다 모드 (근접경보 300m · 최대계측 50Kts · 해상표지 활성)";
+      } else {
+        PROXIMITY_WARN_DISTANCE_M = 100; // 강·호수는 협수로이므로 100m 근접 경보
+        gaugeMaxSpeedKts = 30;           // 내수면 운항선 대응 30 노트
+        if (guide) guide.innerText = "[상태] 🏞️ 내수면(강·호수) 모드 (근접경보 100m · 최대계측 30Kts)";
+      }
+      try { localStorage.setItem('ship_water_env', currentWaterEnv); } catch(e) {}
+      drawSpeedometer(currentSpeedKts, currentSpeedKmh);
+    }
 
     function formatHHMMSS(date) {
       if (!(date instanceof Date) || isNaN(date)) return "00:00:00";
@@ -2386,7 +2476,55 @@
       updateOnlineShipBadges();
     }
 
-    function updateOnlineShipBadges() {}
+    let latestOnlineShipsData = {};
+
+    function updateOnlineShipBadges() {
+      const onlineBadges = document.getElementById('online-ship-badges');
+      if (!onlineBadges) return;
+
+      const now = Date.now();
+      const STALE_THRESHOLD_MS = 120000; // 2분 이상 미갱신 시 통신지연 표시
+      const combined = { ...latestOnlineShipsData };
+
+      if (currentShipName) {
+        if (isMyShipOperating) {
+          combined[currentShipName] = {
+            ...(combined[currentShipName] || {}),
+            shipName: currentShipName,
+            tripStatus: isDrivingStarted ? '운항 중' : '출항 대기 중',
+            updatedAt: now
+          };
+        } else if (!combined[currentShipName]) {
+          combined[currentShipName] = {
+            shipName: currentShipName,
+            tripStatus: '선택됨(미등록)',
+            isUnregisteredLocal: true,
+            updatedAt: now
+          };
+        }
+      }
+
+      const names = Object.keys(combined);
+      if (names.length === 0) {
+        onlineBadges.innerHTML = `<span class="ship-badge my-ship">선택 안됨</span>`;
+        return;
+      }
+
+      let badgesHtml = '';
+      names.forEach(name => {
+        const info = combined[name];
+        if (!info) return;
+        const isMe = (name === currentShipName);
+        const isStale = !isMe && info.updatedAt && (now - info.updatedAt > STALE_THRESHOLD_MS);
+        const badgeClass = isMe ? "ship-badge my-ship" : "ship-badge";
+        const statusLabel = isStale
+          ? `⚠️ 통신지연`
+          : (info.tripStatus || '운항 중');
+        const staleStyle = isStale ? 'style="border-color:#f59e0b; background:rgba(245,158,11,0.2); color:#f2cc60;"' : '';
+        badgesHtml += `<span class="${badgeClass}" ${staleStyle}>🚢 ${name} (${statusLabel})</span>`;
+      });
+      onlineBadges.innerHTML = badgesHtml;
+    }
 
     function confirmStartTracking() {
       if (!shipSelect.value) {
@@ -2518,7 +2656,13 @@
       const durationStr = formatDurationText(durationSec);
 
       let avgSpeed = 0;
-      if (tripSpeedList.length > 0) {
+      const movingSamples = tripSpeedList.filter(s => s >= 0.3);
+      if (movingSamples.length > 0) {
+        const sum = movingSamples.reduce((acc, curr) => acc + curr, 0);
+        avgSpeed = sum / movingSamples.length;
+      } else if (durationSec > 0 && totalTrackDistKm > 0) {
+        avgSpeed = (totalTrackDistKm * KM_TO_NM) / (durationSec / 3600);
+      } else if (tripSpeedList.length > 0) {
         const sum = tripSpeedList.reduce((acc, curr) => acc + curr, 0);
         avgSpeed = sum / tripSpeedList.length;
       }
@@ -2731,7 +2875,7 @@
       const guide = document.getElementById('status-guide-text');
       if (guide) {
         guide.className = "guide-text";
-        guide.innerText = "[상태] 물빛나루쉼터·망진나루 수역 실시간 연동 완료 - 안전 운항하세요.";
+        guide.innerText = "[상태] 전국 수역 실시간 GPS 연동 완료 - 안전 운항하세요.";
       }
     }
 
@@ -2825,6 +2969,9 @@
 
     function updateClock() {
       const now = new Date();
+      if (now.getSeconds() % 15 === 0) {
+        updateOnlineShipBadges();
+      }
       const year = now.getFullYear();
       const month = String(now.getMonth() + 1).padStart(2, '0');
       const date = String(now.getDate()).padStart(2, '0');
@@ -2899,22 +3046,32 @@
 
     let lastGpsTime = null, lastLat = null, lastLng = null;
 
-    const baseMapLayer = L.tileLayer('https://xdworld.vworld.kr/2d/Base/service/{z}/{x}/{y}.png', { maxZoom: 18, minZoom: 10 });
-    const satelliteLayer = L.tileLayer('https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg', { maxZoom: 18, minZoom: 10 });
-    const hybridLayer = L.tileLayer('https://xdworld.vworld.kr/2d/Hybrid/service/{z}/{x}/{y}.png', { maxZoom: 18, minZoom: 10 });
+    const baseMapLayer = L.tileLayer('https://xdworld.vworld.kr/2d/Base/service/{z}/{x}/{y}.png', { maxZoom: 18, minZoom: 6 });
+    const satelliteLayer = L.tileLayer('https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg', { maxZoom: 18, minZoom: 6 });
+    const hybridLayer = L.tileLayer('https://xdworld.vworld.kr/2d/Hybrid/service/{z}/{x}/{y}.png', { maxZoom: 18, minZoom: 6 });
+    // 전국 연안·항만·등대·항로표지(부표)를 표시하는 해상 해도(OpenSeaMap) 오버레이 레이어
+    const seaMarkLayer = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      minZoom: 6,
+      attribution: '© OpenSeaMap'
+    });
 
     const map = L.map('map', {
       center: [currentLat, currentLng],
-      zoom: 16,
-      minZoom: 10,
+      zoom: 15,
+      minZoom: 6,
       maxZoom: 18,
-      layers: [baseMapLayer],
+      layers: [baseMapLayer, seaMarkLayer],
       rotate: true,
       rotateControl: false,
       bearing: 0
     });
 
-    L.control.layers({ "일반지도": baseMapLayer, "항공지도": satelliteLayer }, { "하이브리드": hybridLayer }, { position: 'topleft' }).addTo(map);
+    L.control.layers(
+      { "일반지도": baseMapLayer, "항공(위성)지도": satelliteLayer },
+      { "⚓ 해상 항로표지(등대·부표)": seaMarkLayer, "지명·도로 하이브리드": hybridLayer },
+      { position: 'topleft' }
+    ).addTo(map);
 
     function createMyShipIcon(shipName, speedKts) {
       const displayName = shipName ? `🚢 ${shipName}` : "📍 내 위치";
@@ -2935,14 +3092,16 @@
       icon: createMyShipIcon(currentShipName, currentSpeedKts),
       draggable: true,
       zIndexOffset: 1000
-    }).addTo(map).bindPopup("<b>현재 내 위치 (물빛나루쉼터·망진나루 수역)</b>");
+    }).addTo(map).bindPopup("<b>현재 내 선박 위치 (실시간 GPS)</b>");
 
     trackPolyline = L.polyline([], { color: '#ff4d4d', weight: 5, opacity: 0.85 }).addTo(map);
 
     /* =============================================================
-       내비게이션 목적지 검색 및 사용자 저장 목록 관리 시스템
+       내비게이션 통합 목적지 검색 (VWorld + OSM + 근거리 우선정렬 + 역지오코딩 저장)
        ============================================================= */
     const SAVED_DEST_STORAGE_KEY = 'ship_saved_destinations_v1';
+    const VWORLD_API_KEY_STORAGE = 'ship_vworld_search_api_key';
+
     let savedDestinations = [];
     let lastSearchResults = [];
 
@@ -2950,6 +3109,50 @@
     let activeNaviMarker = null;
     let activeNaviGuideLine = null;
     let naviArrivedAlerted = false;
+
+    function getVWorldApiKey() {
+      try {
+        return localStorage.getItem(VWORLD_API_KEY_STORAGE) || "";
+      } catch (e) {
+        return "";
+      }
+    }
+
+    function updateVWorldKeyButtonState() {
+      const btn = document.getElementById('btn-vworld-key');
+      if (!btn) return;
+      const key = getVWorldApiKey();
+      if (key) {
+        btn.classList.add('configured');
+        btn.innerText = '🔑 VWorld ON';
+      } else {
+        btn.classList.remove('configured');
+        btn.innerText = '🔑 API키';
+      }
+    }
+
+    function configureVWorldApiKey() {
+      const currentKey = getVWorldApiKey();
+      const input = prompt(
+        "국토교통부 VWorld 검색 API 키를 입력하세요.\n" +
+        "• 설정 시 국내 시설물·하천·교량·지번/도로명 검색 정확도가 대폭 향상됩니다.\n" +
+        "• 비워두고 확인을 누르면 저장된 키가 삭제됩니다.",
+        currentKey
+      );
+      if (input === null) return;
+
+      const trimmed = input.trim();
+      try {
+        if (trimmed) {
+          localStorage.setItem(VWORLD_API_KEY_STORAGE, trimmed);
+          showNotification("VWorld 검색 API 키가 등록되었습니다.");
+        } else {
+          localStorage.removeItem(VWORLD_API_KEY_STORAGE);
+          showNotification("VWorld 검색 API 키가 해제되었습니다.");
+        }
+      } catch (e) {}
+      updateVWorldKeyButtonState();
+    }
 
     function loadSavedDestinations() {
       try {
@@ -3041,7 +3244,7 @@
             <span>⭐ 저장된 목적지 목록 (0개)</span>
           </div>
           <div style="padding:16px; text-align:center; color:#8b949e; font-size:0.86rem;">
-            저장된 목적지가 없습니다.<br>목적지를 검색한 뒤 <b>[+ 저장]</b> 버튼을 눌러 추가하세요.
+            저장된 목적지가 없습니다.<br>목적지를 검색하거나 <b>지도를 직접 클릭</b>하여 목록에 추가하세요.
           </div>
         `;
         resultsBox.classList.add('show');
@@ -3094,13 +3297,258 @@
       return null;
     }
 
-    async function executeDestinationSearch() {
+    // JSONP 요청 헬퍼 (VWorld 검색 API CORS 우회용)
+    function fetchJsonp(url, timeoutMs = 6000) {
+      return new Promise((resolve, reject) => {
+        const callbackName = 'vworld_cb_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+        const script = document.createElement('script');
+        let timer = null;
+
+        window[callbackName] = function(data) {
+          clearTimeout(timer);
+          delete window[callbackName];
+          if (script.parentNode) script.parentNode.removeChild(script);
+          resolve(data);
+        };
+
+        script.onerror = function() {
+          clearTimeout(timer);
+          delete window[callbackName];
+          if (script.parentNode) script.parentNode.removeChild(script);
+          reject(new Error('JSONP 네트워크 오류'));
+        };
+
+        timer = setTimeout(() => {
+          delete window[callbackName];
+          if (script.parentNode) script.parentNode.removeChild(script);
+          reject(new Error('JSONP 시간 초과'));
+        }, timeoutMs);
+
+        const sep = url.includes('?') ? '&' : '?';
+        script.src = `${url}${sep}callback=${callbackName}`;
+        document.body.appendChild(script);
+      });
+    }
+
+    // VWorld 장소(place) + 도로명/지번 주소(address) 통합 검색
+    async function searchVWorldPlaces(query, apiKey) {
+      if (!apiKey) return [];
+      const results = [];
+      const domain = window.location.hostname || 'localhost';
+
+      const types = [
+        { type: 'place', category: '' },
+        { type: 'address', category: 'road' },
+        { type: 'address', category: 'parcel' }
+      ];
+
+      await Promise.all(types.map(async (t) => {
+        try {
+          let apiUrl = `https://api.vworld.kr/req/search?service=search&request=search&version=2.0&crs=EPSG:4326&size=15&page=1&query=${encodeURIComponent(query)}&type=${t.type}&format=json&errorformat=json&key=${encodeURIComponent(apiKey)}&domain=${encodeURIComponent(domain)}`;
+          if (t.category) apiUrl += `&category=${t.category}`;
+
+          const data = await fetchJsonp(apiUrl);
+          if (data && data.response && data.response.status === 'OK' && data.response.result && Array.isArray(data.response.result.items)) {
+            data.response.result.items.forEach(item => {
+              const lng = parseFloat(item.point.x);
+              const lat = parseFloat(item.point.y);
+              const title = item.title || (item.address && (item.address.road || item.address.parcel)) || query;
+              const sub = (item.address && (item.address.road || item.address.parcel)) || item.category || 'VWorld 검색 결과';
+              if (!isNaN(lat) && !isNaN(lng)) {
+                results.push({
+                  name: title.replace(/<[^>]*>?/gm, ''),
+                  sub: sub,
+                  lat: lat,
+                  lng: lng,
+                  source: 'vworld'
+                });
+              }
+            });
+          }
+        } catch (e) {
+          console.warn('VWorld 검색 항목 오류:', e);
+        }
+      }));
+
+      return results;
+    }
+
+    // =============================================================
+    // 한국어 초성·자모 분리 및 유사도(퍼지) 검색 엔진
+    // =============================================================
+    const CHOSUNG_LIST = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+    const JUNGSUNG_LIST = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+    const JONGSUNG_LIST = ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+
+    function extractChosung(str) {
+      let result = '';
+      for (let i = 0; i < str.length; i++) {
+        const code = str.charCodeAt(i) - 44032;
+        if (code >= 0 && code <= 11171) {
+          const choIdx = Math.floor(code / 588);
+          result += CHOSUNG_LIST[choIdx];
+        } else {
+          result += str[i];
+        }
+      }
+      return result;
+    }
+
+    function decomposeHangul(str) {
+      let result = '';
+      for (let i = 0; i < str.length; i++) {
+        const code = str.charCodeAt(i) - 44032;
+        if (code >= 0 && code <= 11171) {
+          const cho = Math.floor(code / 588);
+          const jung = Math.floor((code % 588) / 28);
+          const jong = code % 28;
+          result += CHOSUNG_LIST[cho] + JUNGSUNG_LIST[jung] + JONGSUNG_LIST[jong];
+        } else {
+          result += str[i];
+        }
+      }
+      return result;
+    }
+
+    function isJamoOnly(str) {
+      return /^[ㄱ-ㅎㅏ-ㅣ\s]+$/.test(str);
+    }
+
+    function getKoreanMatchScore(targetText, queryText) {
+      if (!targetText || !queryText) return 0;
+      const tNorm = targetText.replace(/\s+/g, '').toLowerCase();
+      const qNorm = queryText.replace(/\s+/g, '').toLowerCase();
+      if (!qNorm) return 0;
+
+      if (tNorm === qNorm) return 100;
+      if (tNorm.startsWith(qNorm)) return 90;
+      if (tNorm.includes(qNorm)) return 80;
+
+      const tClean = tNorm.replace(/[^가-힣ㄱ-ㅎㅏ-ㅣa-z0-9]/g, '');
+      const qClean = qNorm.replace(/[^가-힣ㄱ-ㅎㅏ-ㅣa-z0-9]/g, '');
+      const tCho = extractChosung(tClean);
+      const qCho = extractChosung(qClean);
+      if (isJamoOnly(qClean) && qClean.length > 0) {
+        if (tCho.startsWith(qClean)) return 82;
+        if (tCho.includes(qClean)) return 75;
+      }
+
+      const tJamo = decomposeHangul(tNorm);
+      const qJamo = decomposeHangul(qNorm);
+      if (tJamo.includes(qJamo)) return 70;
+
+      if (qCho.length >= 2 && tCho.includes(qCho)) return 60;
+
+      let jIdx = 0;
+      for (let i = 0; i < tJamo.length && jIdx < qJamo.length; i++) {
+        if (tJamo[i] === qJamo[jIdx]) jIdx++;
+      }
+      if (qJamo.length >= 2 && jIdx === qJamo.length) return 50;
+
+      return 0;
+    }
+
+    // 전국 주요 강·호수·댐·항만·연안 거점 기본 내장 데이터 (초성·자모 즉시 검색 지원)
+    const NATIONWIDE_PRESET_PLACES = [
+      // [강·하천 수역] 한강·낙동강·금강·영산강·섬진강·남강·북한강·소양강
+      { name: "한강 여의도 선착장", sub: "[강] 서울 영등포구 여의도동 한강", lat: 37.5268, lng: 126.9365 },
+      { name: "한강 잠실 선착장", sub: "[강] 서울 송파구 잠실동 한강", lat: 37.5182, lng: 127.0815 },
+      { name: "한강 반포 선착장", sub: "[강] 서울 서초구 반포동 세빛섬 인근", lat: 37.5118, lng: 126.9958 },
+      { name: "한강 뚝섬 선착장", sub: "[강] 서울 광진구 자양동 한강", lat: 37.5293, lng: 127.0699 },
+      { name: "한강 난지 선착장", sub: "[강] 서울 마포구 상암동 한강", lat: 37.5663, lng: 126.8762 },
+      { name: "아라김포여객터미널", sub: "[강/운하] 경기 김포시 고촌읍 경인아라뱃길", lat: 37.5985, lng: 126.7892 },
+      { name: "아라인천여객터미널", sub: "[강/해상] 인천 서구 오류동 경인아라뱃길", lat: 37.5582, lng: 126.6058 },
+      { name: "낙동강 화명선착장", sub: "[강] 부산 북구 화명동 낙동강 생태공원", lat: 35.2368, lng: 129.0068 },
+      { name: "낙동강 사문진나루터", sub: "[강] 대구 달성군 화원읍 낙동강", lat: 35.8152, lng: 128.4785 },
+      { name: "낙동강 강정보 선착장", sub: "[강] 대구 달성군 다사읍 디아크", lat: 35.8421, lng: 128.4628 },
+      { name: "남강 물빛나루쉼터", sub: "[강] 경남 진주시 망경동 남강 선착장", lat: 35.1885, lng: 128.0832 },
+      { name: "남강 망진나루", sub: "[강] 경남 진주시 망경동 남강 나루터", lat: 35.1881, lng: 128.0845 },
+      { name: "남강 촉석루 선착장", sub: "[강] 경남 진주시 본성동 진주성 앞", lat: 35.1903, lng: 128.0816 },
+      { name: "금강 백제보 선착장", sub: "[강] 충남 부여군 부여읍 금강", lat: 36.3185, lng: 126.9042 },
+      { name: "영산강 황포돛배 선착장", sub: "[강] 전남 나주시 영산동 영산강", lat: 34.9912, lng: 126.7158 },
+      { name: "섬진강 두꺼비나루터", sub: "[강] 전남 광양시 다압면 섬진강", lat: 35.0685, lng: 127.7214 },
+
+      // [호수·댐 수역] 소양호·충주호·대청호·안동호·진양호·의암호·청평호·합천호
+      { name: "소양강댐 선착장", sub: "[호수] 강원 춘천시 신북읍 소양호", lat: 37.9452, lng: 127.8124 },
+      { name: "청평사 선착장 (소양호)", sub: "[호수] 강원 춘천시 북산면 소양호", lat: 37.9815, lng: 127.8168 },
+      { name: "의암호 물레길 선착장", sub: "[호수] 강원 춘천시 삼천동 의암호", lat: 37.8682, lng: 127.6985 },
+      { name: "청평호 수상레저 선착장", sub: "[호수] 경기 가평군 청평면 청평호", lat: 37.7265, lng: 127.4285 },
+      { name: "남이섬 선착장 (북한강)", sub: "[호수/강] 경기 가평군 가평읍 북한강", lat: 37.8065, lng: 127.5278 },
+      { name: "충주댐 나루 선착장", sub: "[호수] 충북 충주시 종민동 충주호", lat: 36.9985, lng: 127.9912 },
+      { name: "단양 장회나루 (충주호)", sub: "[호수] 충북 단양군 단성면 충주호", lat: 36.9382, lng: 128.2215 },
+      { name: "대청댐 선착장", sub: "[호수] 대전 대덕구 미호동 대청호", lat: 36.4765, lng: 127.4812 },
+      { name: "안동댐 선착장 (안동호)", sub: "[호수] 경북 안동시 성곡동 안동호", lat: 36.5824, lng: 128.7745 },
+      { name: "합천댐 선착장 (합천호)", sub: "[호수] 경남 합천군 대병면 합천호", lat: 35.5342, lng: 128.0315 },
+      { name: "진양호 남강댐 선착장", sub: "[호수] 경남 진주시 내동면 진양호", lat: 35.1642, lng: 128.0345 },
+
+      // [바다·연안·항만 수역] 동해·서해·남해·제주 전역
+      { name: "부산항 연안여객터미널", sub: "[바다] 부산 중구 중앙동 부산항", lat: 35.1045, lng: 129.0412 },
+      { name: "해운대 미포 유람선선착장", sub: "[바다] 부산 해운대구 중동 동해남부", lat: 35.1582, lng: 129.1715 },
+      { name: "통영항 여객선터미널", sub: "[바다] 경남 통영시 서호동 한려수도", lat: 34.8415, lng: 128.4231 },
+      { name: "거제 고현항 여객터미널", sub: "[바다] 경남 거제시 고현동 거제만", lat: 34.8924, lng: 128.6215 },
+      { name: "거제 장승포 유람선터미널", sub: "[바다] 경남 거제시 장승포동 외도행", lat: 34.8645, lng: 128.7242 },
+      { name: "삼천포항 여객선터미널", sub: "[바다] 경남 사천시 서금동 사천만", lat: 34.9265, lng: 128.0712 },
+      { name: "남해 미조항", sub: "[바다] 경남 남해군 미조면 남해안", lat: 34.7124, lng: 128.0485 },
+      { name: "마산항 연안여객터미널", sub: "[바다] 경남 창원시 마산합포구 마산만", lat: 35.1956, lng: 128.5714 },
+      { name: "여수 연안여객선터미널", sub: "[바다] 전남 여수시 교동 여수항", lat: 34.7376, lng: 127.7351 },
+      { name: "완도항 연안여객선터미널", sub: "[바다] 전남 완도군 완도읍 완도항", lat: 34.3168, lng: 126.7585 },
+      { name: "목포항 연안여객선터미널", sub: "[바다] 전남 목포시 항동 목포항", lat: 34.7824, lng: 126.3845 },
+      { name: "군산항 연안여객터미널", sub: "[바다] 전북 군산시 소룡동 서해안", lat: 35.9742, lng: 126.6215 },
+      { name: "보령 대천항 연안여객터미널", sub: "[바다] 충남 보령시 신흑동 서해안", lat: 36.3268, lng: 126.5065 },
+      { name: "인천항 연안여객터미널", sub: "[바다] 인천 중구 항동7가 서해안", lat: 37.4542, lng: 126.6025 },
+      { name: "속초항 연안여객터미널", sub: "[바다] 강원 속초시 동명동 동해안", lat: 38.2095, lng: 128.5968 },
+      { name: "강릉항 여객선터미널", sub: "[바다] 강원 강릉시 견소동 울릉도행", lat: 37.7724, lng: 128.9485 },
+      { name: "포항 여객선터미널", sub: "[바다] 경북 포항시 북구 항구동 영일만", lat: 36.0512, lng: 129.3785 },
+      { name: "울릉도 도동항 여객선터미널", sub: "[바다] 경북 울릉군 울릉읍 동해", lat: 37.4832, lng: 130.9095 },
+      { name: "제주항 연안여객터미널", sub: "[바다] 제주 제주시 건입동 제주항", lat: 33.5245, lng: 126.5382 },
+      { name: "성산포항 종합여객터미널", sub: "[바다] 제주 서귀포시 성산읍 우도행", lat: 33.4735, lng: 126.9345 }
+    ];
+
+    // OpenStreetMap Nominatim 전국 범위 검색 (viewbox 제한 제거)
+    async function searchOsmNominatim(query) {
+      const results = [];
+      try {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=kr&limit=30&accept-language=ko`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          data.forEach(d => {
+            const title = d.name || d.display_name.split(',')[0];
+            results.push({
+              name: title,
+              sub: d.display_name,
+              lat: parseFloat(d.lat),
+              lng: parseFloat(d.lon),
+              source: 'osm'
+            });
+          });
+        }
+      } catch (e) {
+        console.warn("OSM 전국 검색 오류:", e);
+      }
+      return results;
+    }
+
+    let searchDebounceTimer = null;
+    function handleDestinationInput() {
+      clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(() => {
+        const q = document.getElementById('navi-search-input').value.trim();
+        if (q.length >= 1) {
+          executeDestinationSearch(true);
+        } else {
+          document.getElementById('navi-search-results').classList.remove('show');
+        }
+      }, 280);
+    }
+
+    async function executeDestinationSearch(isAutoComplete = false) {
       const inputEl = document.getElementById('navi-search-input');
       const resultsBox = document.getElementById('navi-search-results');
       const query = inputEl.value.trim();
 
       if (!query) {
-        showSavedDestinations();
+        if (!isAutoComplete) showSavedDestinations();
         return;
       }
 
@@ -3111,58 +3559,99 @@
           name: `좌표 지점 (${coord.lat.toFixed(5)}, ${coord.lng.toFixed(5)})`,
           sub: "GPS 위도/경도 좌표 직접 입력",
           lat: coord.lat,
-          lng: coord.lng
+          lng: coord.lng,
+          source: 'coord',
+          score: 100
         }];
         renderSearchResults(lastSearchResults);
         resultsBox.classList.add('show');
         return;
       }
 
-      // 2. 저장된 목적지 중 일치 항목 먼저 필터링
+      // 2. 저장된 목적지 중 자음·모음/퍼지 매칭
       const savedMatches = savedDestinations
-        .filter(item =>
-          item.name.toLowerCase().includes(query.toLowerCase()) ||
-          (item.sub && item.sub.toLowerCase().includes(query.toLowerCase()))
-        )
-        .map(item => ({
-          name: item.name,
-          sub: `[저장됨] ${item.sub}`,
-          lat: item.lat,
-          lng: item.lng,
-          isAlreadySaved: true
-        }));
+        .map(item => {
+          const score = Math.max(
+            getKoreanMatchScore(item.name, query),
+            getKoreanMatchScore(item.sub || '', query) * 0.8
+          );
+          return { ...item, source: 'saved', score };
+        })
+        .filter(item => item.score > 0);
 
-      resultsBox.innerHTML = `<div style="padding:12px; text-align:center; color:var(--accent-color); font-size:0.88rem;">🔍 '${query}' 검색 중...</div>`;
-      resultsBox.classList.add('show');
+      // 3. 전국 기본 내장 거점 중 자음·모음/퍼지 매칭
+      const presetMatches = NATIONWIDE_PRESET_PLACES
+        .map(item => {
+          const score = Math.max(
+            getKoreanMatchScore(item.name, query),
+            getKoreanMatchScore(item.sub || '', query) * 0.8
+          );
+          return { ...item, source: 'coord', score };
+        })
+        .filter(item => item.score > 0);
 
-      // 3. 온라인 지명/주소 검색 (Nominatim OpenStreetMap API)
-      let webMatches = [];
-      if (navigator.onLine) {
-        try {
-          const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=kr&limit=10&accept-language=ko`;
-          const res = await fetch(url);
-          if (res.ok) {
-            const data = await res.json();
-            webMatches = data.map(d => {
-              const title = d.name || d.display_name.split(',')[0];
-              return {
-                name: title,
-                sub: d.display_name,
-                lat: parseFloat(d.lat),
-                lng: parseFloat(d.lon)
-              };
-            });
-          }
-        } catch (e) {
-          console.warn("지명 API 검색 오류:", e);
-        }
+      const localInitial = [...savedMatches, ...presetMatches].sort((a, b) => b.score - a.score);
+      if (localInitial.length > 0) {
+        lastSearchResults = localInitial;
+        renderSearchResults(lastSearchResults);
+        resultsBox.classList.add('show');
+      } else if (!isAutoComplete) {
+        resultsBox.innerHTML = `<div style="padding:12px; text-align:center; color:var(--accent-color); font-size:0.88rem;">🔍 '${query}' 전국 통합 검색 중...</div>`;
+        resultsBox.classList.add('show');
       }
 
-      lastSearchResults = [...savedMatches, ...webMatches];
+      // 4. 자음/모음 전용 검색어가 아닐 경우 온라인(VWorld + OSM 전국) 병렬 검색 수행
+      let webMatches = [];
+      if (navigator.onLine && !isJamoOnly(query.replace(/\s+/g, ''))) {
+        const vworldKey = getVWorldApiKey();
+        const [vworldRes, osmRes] = await Promise.all([
+          searchVWorldPlaces(query, vworldKey),
+          searchOsmNominatim(query)
+        ]);
+        webMatches = [...vworldRes, ...osmRes].map(item => ({
+          ...item,
+          score: Math.max(55, getKoreanMatchScore(item.name, query))
+        }));
+      }
+
+      // 5. 중복 좌표(30m 이내) 제거 및 정확도 우선 + 근거리 보조 정렬
+      const combined = [...savedMatches, ...presetMatches];
+      webMatches.forEach(item => {
+        const isDup = combined.some(existing =>
+          existing.name === item.name && getDistanceInMeters(existing.lat, existing.lng, item.lat, item.lng) < 30
+        );
+        if (!isDup) {
+          combined.push(item);
+        }
+      });
+
+      combined.sort((a, b) => {
+        if (a.source === 'saved' && b.source !== 'saved') return -1;
+        if (a.source !== 'saved' && b.source === 'saved') return 1;
+        if (Math.abs(b.score - a.score) >= 15) return b.score - a.score;
+        const distA = getDistanceInKm(currentLat, currentLng, a.lat, a.lng);
+        const distB = getDistanceInKm(currentLat, currentLng, b.lat, b.lng);
+        return distA - distB;
+      });
+
+      lastSearchResults = combined;
       if (lastSearchResults.length === 0) {
-        resultsBox.innerHTML = `<div style="padding:14px; text-align:center; color:#ff7b72; font-size:0.88rem;">검색 결과가 없습니다. 정확한 명칭이나 좌표(예: 35.1885, 128.0832)를 입력하세요.</div>`;
+        if (!isAutoComplete) {
+          const hasKey = !!getVWorldApiKey();
+          resultsBox.innerHTML = `
+            <div style="padding:14px; text-align:center; color:#ff7b72; font-size:0.86rem; line-height:1.5;">
+              검색 결과가 없습니다.<br>
+              <span style="color:#c9d1d9; font-size:0.8rem;">
+                • 초성/자모 검색은 저장된 목록 및 기본 거점에서 즉시 지원되며, 전국 세부 지명은 완성된 글자로 검색해 보세요.<br>
+                ${hasKey ? '' : '• 상단 <b>[🔑 API키]</b>에 VWorld 키를 등록하면 전국 모든 시설물·주소 검색이 강화됩니다.'}
+              </span>
+            </div>
+          `;
+          resultsBox.classList.add('show');
+        }
       } else {
         renderSearchResults(lastSearchResults);
+        resultsBox.classList.add('show');
       }
     }
 
@@ -3170,22 +3659,33 @@
       const resultsBox = document.getElementById('navi-search-results');
       let html = `
         <div class="navi-dropdown-header">
-          <span>🔍 검색 결과 (${items.length}건)</span>
-          <span style="font-size:0.75rem; color:#8b949e;">항목 클릭: 안내 / [+ 저장]: 목록 보관</span>
+          <span>🔍 전국 검색 결과 (${items.length}건 · 정확도·거리순)</span>
+          <span style="font-size:0.75rem; color:#8b949e;">클릭: 길안내 / [+ 저장]: 목록 보관</span>
         </div>
       `;
       items.forEach((item, idx) => {
         const distKm = getDistanceInKm(currentLat, currentLng, item.lat, item.lng);
         const safeName = item.name.replace(/'/g, "\\'");
+
+        let tagHtml = '';
+        if (item.source === 'saved') tagHtml = `<span class="navi-source-tag saved">저장됨</span>`;
+        else if (item.source === 'vworld') tagHtml = `<span class="navi-source-tag vworld">VWorld</span>`;
+        else if (item.source === 'coord') tagHtml = `<span class="navi-source-tag coord">좌표</span>`;
+        else tagHtml = `<span class="navi-source-tag osm">지도</span>`;
+
+        const actionBtn = item.source === 'saved'
+          ? ''
+          : `<button type="button" class="btn-navi-save-item" onclick="saveFromSearchResult(${idx}, event)">+ 저장</button>`;
+
         html += `
           <div class="navi-result-item" onclick="startNavigationTo(${item.lat}, ${item.lng}, '${safeName}')">
             <div class="navi-res-info">
-              <div class="navi-res-title">📍 ${item.name}</div>
+              <div class="navi-res-title">${tagHtml}${item.name}</div>
               <div class="navi-res-sub">${item.sub}</div>
             </div>
             <div class="navi-res-actions">
               <span class="navi-res-dist">${distKm.toFixed(2)} km</span>
-              <button type="button" class="btn-navi-save-item" onclick="saveFromSearchResult(${idx}, event)">+ 저장</button>
+              ${actionBtn}
             </div>
           </div>
         `;
@@ -3522,20 +4022,106 @@
       }
     }
 
-    map.on('click', function(e) {
+    // 지도 클릭 시 역지오코딩(지명/주소 자동 조회) + 목적지 빠른 저장 기능
+    async function reverseGeocodePoint(lat, lng) {
+      const fallbackName = `지정 지점 (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
+      if (!navigator.onLine) {
+        return { name: fallbackName, address: `위도 ${lat.toFixed(5)}, 경도 ${lng.toFixed(5)}` };
+      }
+
+      // 1. VWorld 키가 있으면 VWorld 역지오코딩 우선 조회
+      const vworldKey = getVWorldApiKey();
+      if (vworldKey) {
+        try {
+          const domain = window.location.hostname || 'localhost';
+          const apiUrl = `https://api.vworld.kr/req/address?service=address&request=getAddress&version=2.0&crs=epsg:4326&point=${lng},${lat}&format=json&type=both&zipcode=false&simple=false&key=${encodeURIComponent(vworldKey)}&domain=${encodeURIComponent(domain)}`;
+          const data = await fetchJsonp(apiUrl, 4000);
+          if (data && data.response && data.response.status === 'OK' && Array.isArray(data.response.result) && data.response.result.length > 0) {
+            const first = data.response.result[0];
+            const fullAddr = first.text || fallbackName;
+            const shortName = first.structure
+              ? [first.structure.level2, first.structure.level4L || first.structure.level4A, first.structure.detail].filter(Boolean).join(' ')
+              : fullAddr;
+            return { name: shortName || fullAddr, address: fullAddr };
+          }
+        } catch (e) {}
+      }
+
+      // 2. OpenStreetMap Nominatim 역지오코딩 조회
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&accept-language=ko`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.display_name) {
+            const shortTitle = data.name || data.display_name.split(',')[0].trim();
+            return { name: shortTitle || fallbackName, address: data.display_name };
+          }
+        }
+      } catch (e) {}
+
+      return { name: fallbackName, address: `위도 ${lat.toFixed(5)}, 경도 ${lng.toFixed(5)}` };
+    }
+
+    function saveClickedMapPoint(lat, lng, encodedName, encodedAddr) {
+      const name = decodeURIComponent(encodedName);
+      const addr = decodeURIComponent(encodedAddr);
+      saveDestinationItem(name, addr, lat, lng);
+    }
+
+    map.on('click', async function(e) {
       if (!isCalibratedMode) {
         const lat = e.latlng.lat;
         const lng = e.latlng.lng;
+        const idx = waypoints.length + 1;
         waypoints.push([lat, lng]);
 
         const m = L.marker([lat, lng], {
-          icon: L.divIcon({ className: '', html: '<div style="background:#00f2fe; color:#000; font-weight:bold; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:12px; border:1px solid #fff;">📍</div>', iconSize: [20, 20], iconAnchor: [10, 10] })
-        }).addTo(map).bindPopup(`목적지 ${waypoints.length}`);
+          icon: L.divIcon({
+            className: '',
+            html: `<div style="background:#00f2fe; color:#000; font-weight:bold; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; font-size:12px; border:1.5px solid #fff; box-shadow:0 0 6px rgba(0,0,0,0.6);">${idx}</div>`,
+            iconSize: [22, 22],
+            iconAnchor: [11, 11]
+          })
+        }).addTo(map);
+
+        m.bindPopup(`
+          <div style="min-width:170px; line-height:1.4;">
+            <b>📍 경유/목적지 ${idx}</b><br>
+            <span style="font-size:11px; color:#555;">지명/주소 불러오는 중...</span><br>
+            <span style="font-size:11px;">(${lat.toFixed(5)}, ${lng.toFixed(5)})</span>
+          </div>
+        `).openPopup();
+
         waypointMarkers.push(m);
 
         if (routePolyline) map.removeLayer(routePolyline);
         routePolyline = L.polyline(waypoints, { color: '#00f2fe', weight: 4, dashArray: '6, 6' }).addTo(map);
+
+        if (activeNaviMarker) { map.removeLayer(activeNaviMarker); activeNaviMarker = null; }
+        activeNaviDest = { name: `지정 지점 ${idx}`, lat: lat, lng: lng };
+        naviArrivedAlerted = false;
+        document.getElementById('navi-hud-banner').classList.add('active');
+        document.getElementById('navi-hud-dest-name').innerText = `🏁 목적지: 지정 지점 ${idx} (경유 ${waypoints.length}점)`;
+        updateNavigationGuidance();
         updateRemainingDistance();
+
+        // 비동기로 해당 좌표의 지명/주소를 불러와 팝업 및 HUD 목적지명 갱신
+        const geo = await reverseGeocodePoint(lat, lng);
+        if (activeNaviDest && Math.abs(activeNaviDest.lat - lat) < 1e-6 && Math.abs(activeNaviDest.lng - lng) < 1e-6) {
+          activeNaviDest.name = geo.name;
+          const wpTag = waypoints.length > 1 ? ` (총 ${waypoints.length}개 경유지)` : '';
+          document.getElementById('navi-hud-dest-name').innerText = `🏁 목적지: ${geo.name}${wpTag}`;
+        }
+        const encName = encodeURIComponent(geo.name);
+        const encAddr = encodeURIComponent(geo.address);
+        m.setPopupContent(`
+          <div style="min-width:190px; line-height:1.45;">
+            <b>📍 ${geo.name}</b><br>
+            <span style="font-size:11px; color:#444;">${geo.address}</span><br>
+            <span style="font-size:11px; color:#666;">좌표: ${lat.toFixed(5)}, ${lng.toFixed(5)}</span>
+            <button type="button" class="popup-save-btn" onclick="saveClickedMapPoint(${lat}, ${lng}, '${encName}', '${encAddr}')">⭐ 목적지 목록에 저장</button>
+          </div>
+        `);
       }
     });
 
@@ -3544,8 +4130,14 @@
         document.getElementById('dist-remaining').innerText = "-- km";
         return;
       }
-      const target = waypoints[waypoints.length - 1];
-      const distKm = getDistanceInKm(currentLat, currentLng, target[0], target[1]);
+      let distKm = 0;
+      let prevLat = currentLat;
+      let prevLng = currentLng;
+      for (let i = 0; i < waypoints.length; i++) {
+        distKm += getDistanceInKm(prevLat, prevLng, waypoints[i][0], waypoints[i][1]);
+        prevLat = waypoints[i][0];
+        prevLng = waypoints[i][1];
+      }
       const distNm = distKm * KM_TO_NM;
       document.getElementById('dist-remaining').innerText = `${distKm.toFixed(2)} km (${distNm.toFixed(2)} NM)`;
 
@@ -3634,7 +4226,7 @@
 
       const guide = document.getElementById('status-guide-text');
       if (guide && !guide.classList.contains('warning-alert') && !guide.classList.contains('safe-alert') && !guide.classList.contains('offline-alert')) {
-        guide.innerText = "[상태] 물빛나루쉼터·망진나루 수역 연동 완료 - 실시간 안전 운항 중";
+        guide.innerText = "[상태] 전국 수역 실시간 GPS 연동 완료 - 안전 운항 중";
       }
 
       if (isFirstGps) {
@@ -3713,9 +4305,9 @@
 
       shipsRefListener = ref.on('value', (snapshot) => {
         const data = snapshot.val() || {};
-        const onlineBadges = document.getElementById('online-ship-badges');
-        let badgesHtml = '';
-        let activeCount = 0;
+        latestOnlineShipsData = data;
+        const now = Date.now();
+        const STALE_THRESHOLD_MS = 120000;
 
         Object.keys(otherShipMarkers).forEach(name => {
           if (!data[name]) {
@@ -3727,20 +4319,18 @@
         Object.keys(data).forEach(name => {
           const shipInfo = data[name];
           if (!shipInfo) return;
-          activeCount++;
 
           const isMe = (name === currentShipName);
-          const badgeClass = isMe ? "ship-badge my-ship" : "ship-badge";
-          badgesHtml += `<span class="${badgeClass}">🚢 ${name} (${shipInfo.tripStatus || '운항 중'})</span>`;
-
           if (!isMe) {
             const pos = [shipInfo.lat || 35.1885, shipInfo.lng || 128.0832];
             const sKts = shipInfo.speedKts || 0;
+            const isStale = shipInfo.updatedAt && (now - shipInfo.updatedAt > STALE_THRESHOLD_MS);
+            const staleTag = isStale ? `<div style="color:#ff7b72; font-size:0.75em;">⚠️ 통신지연</div>` : '';
             const otherIcon = L.divIcon({
               className: '',
-              html: `<div class="other-ship-icon"><div class="other-ship-badge">🚢 ${name}<br>${sKts.toFixed(1)} Kts</div><div class="other-ship-symbol">🛥️</div></div>`,
-              iconSize: [140, 70],
-              iconAnchor: [70, 50]
+              html: `<div class="other-ship-icon"><div class="other-ship-badge" style="${isStale ? 'border-color:#f59e0b; opacity:0.85;' : ''}">🚢 ${name}<br>${sKts.toFixed(1)} Kts${staleTag}</div><div class="other-ship-symbol">🛥️</div></div>`,
+              iconSize: [140, 78],
+              iconAnchor: [70, 54]
             });
 
             if (otherShipMarkers[name]) {
@@ -3753,10 +4343,7 @@
           }
         });
 
-        if (activeCount === 0) {
-          badgesHtml = `<span class="ship-badge my-ship">온라인 선박 없음</span>`;
-        }
-        if (onlineBadges) onlineBadges.innerHTML = badgesHtml;
+        updateOnlineShipBadges();
       });
     }
 
@@ -3825,7 +4412,7 @@
       } else {
         if (guide && guide.classList.contains('warning-alert')) {
           guide.className = "guide-text";
-          guide.innerText = "[상태] 물빛나루쉼터·망진나루 수역 실시간 연동 완료 - 안전 운항하세요.";
+          guide.innerText = "[상태] 전국 수역 실시간 GPS 연동 완료 - 안전 운항하세요.";
         }
       }
     }
@@ -3947,16 +4534,19 @@
         if (!modalMap) {
           modalMap = L.map('modal-map', { zoomControl: false, attributionControl: false }).setView([35.1885, 128.0832], 15);
           L.tileLayer('https://xdworld.vworld.kr/2d/Base/service/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(modalMap);
-        } else {
-          modalMap.invalidateSize();
         }
+        modalMap.invalidateSize({ animate: false });
 
-        if (modalPolyline) modalMap.removeLayer(modalPolyline);
-        if (log.path && log.path.length > 0) {
-          modalPolyline = L.polyline(log.path, { color: '#ff4d4d', weight: 4 }).addTo(modalMap);
-          modalMap.fitBounds(modalPolyline.getBounds(), { padding: [20, 20] });
-        }
-      }, 150);
+        requestAnimationFrame(() => {
+          if (modalPolyline) modalMap.removeLayer(modalPolyline);
+          if (log.path && log.path.length > 0) {
+            modalPolyline = L.polyline(log.path, { color: '#ff4d4d', weight: 4 }).addTo(modalMap);
+            modalMap.fitBounds(modalPolyline.getBounds(), { padding: [20, 20], animate: false });
+          } else {
+            modalMap.setView([35.1885, 128.0832], 15);
+          }
+        });
+      }, 180);
     }
 
     function closeModal() {
@@ -3973,6 +4563,11 @@
       showNotification("운항 기록이 삭제되었습니다.");
     }
 
+    function escapeCsvField(val) {
+      const str = (val === null || val === undefined) ? '' : String(val);
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+
     function exportLogsToCSV() {
       if (tripLogs.length === 0) {
         showNotification("내보낼 운항 기록이 없습니다.");
@@ -3980,13 +4575,17 @@
       }
       let csv = '\uFEFF고유ID,선박명,운항일자,출항시각,입항시각,소요시간,거리(KM),평균속도(Kts),최고속도(Kts)\n';
       tripLogs.forEach(l => {
-        csv += `${l.id},${l.shipName},${l.date},${l.startTime},${l.endTime},${l.duration},${l.distanceKm},${l.avgSpeedKts},${l.maxSpeedKts}\n`;
+        const row = [
+          l.id, l.shipName, l.date, l.startTime, l.endTime,
+          l.duration, l.distanceKm, l.avgSpeedKts, l.maxSpeedKts
+        ].map(escapeCsvField).join(',');
+        csv += row + '\n';
       });
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `남강선박_운항기록_${getKoreanDateString()}.csv`;
+      a.download = `선박_운항기록_${currentShipName || "전체"}_${getKoreanDateString()}.csv`;
       a.click();
       URL.revokeObjectURL(url);
     }
@@ -3999,7 +4598,7 @@
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(tripLogs, null, 2));
       const a = document.createElement('a');
       a.href = dataStr;
-      a.download = `남강선박_백업_${getKoreanDateString()}.json`;
+      a.download = `선박_운항백업_${getKoreanDateString()}.json`;
       a.click();
     }
 
