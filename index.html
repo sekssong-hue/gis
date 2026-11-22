@@ -3244,21 +3244,25 @@
 
     let lastGpsTime = null, lastLat = null, lastLng = null;
 
-    const baseMapLayer = L.tileLayer('https://xdworld.vworld.kr/2d/Base/service/{z}/{x}/{y}.png', { maxZoom: 18, minZoom: 6 });
-    const satelliteLayer = L.tileLayer('https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg', { maxZoom: 18, minZoom: 6 });
-    const hybridLayer = L.tileLayer('https://xdworld.vworld.kr/2d/Hybrid/service/{z}/{x}/{y}.png', { maxZoom: 18, minZoom: 6 });
+    const baseMapLayer = L.tileLayer('https://xdworld.vworld.kr/2d/Base/service/{z}/{x}/{y}.png', { maxNativeZoom: 18, maxZoom: 21, minZoom: 5 });
+    const satelliteLayer = L.tileLayer('https://xdworld.vworld.kr/2d/Satellite/service/{z}/{x}/{y}.jpeg', { maxNativeZoom: 18, maxZoom: 21, minZoom: 5 });
+    const hybridLayer = L.tileLayer('https://xdworld.vworld.kr/2d/Hybrid/service/{z}/{x}/{y}.png', { maxNativeZoom: 18, maxZoom: 21, minZoom: 5 });
     // 전국 연안·항만·등대·항로표지(부표)를 표시하는 해상 해도(OpenSeaMap) 오버레이 레이어
     const seaMarkLayer = L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
-      maxZoom: 18,
-      minZoom: 6,
+      maxNativeZoom: 18,
+      maxZoom: 21,
+      minZoom: 5,
       attribution: '© OpenSeaMap'
     });
 
     const map = L.map('map', {
       center: [currentLat, currentLng],
       zoom: 15,
-      minZoom: 6,
-      maxZoom: 18,
+      minZoom: 5,
+      maxZoom: 21,
+      zoomSnap: 0.25,
+      zoomDelta: 0.25,
+      wheelPxPerZoomLevel: 140,
       layers: [baseMapLayer, seaMarkLayer],
       rotate: true,
       rotateControl: false,
