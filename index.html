@@ -1290,6 +1290,56 @@
     }
     .pwa-btn-close { background: transparent; color: var(--text-sub); border: none; padding: 6px; font-size: 1rem; cursor: pointer; }
 
+    /* 우측 패널 상단 접기/펴기 토글 바 및 접이식 영역 */
+    .right-collapse-bar {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 4px 8px;
+      background: rgba(0, 242, 254, 0.06);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
+    .btn-right-collapse {
+      background: #21262d;
+      color: var(--accent-color);
+      border: 1px solid var(--accent-color);
+      border-radius: 6px;
+      padding: 5px 12px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      cursor: pointer;
+      min-height: 34px;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .btn-right-collapse:hover {
+      background: rgba(0, 242, 254, 0.18);
+    }
+    .right-collapse-hint {
+      font-size: 0.78rem;
+      color: var(--text-sub);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .right-collapsible-section {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .data-panel.collapsed-top .right-collapsible-section {
+      display: none;
+    }
+    .data-panel.collapsed-top #map {
+      min-height: 460px;
+    }
+
     @media (max-width: 900px) {
       html, body {
         height: auto;
@@ -1471,6 +1521,14 @@
 
     <!-- 우측 GIS 및 지도 패널 -->
     <div class="panel data-panel" id="right-panel">
+      <div class="right-collapse-bar" id="right-top-collapse-bar">
+        <button type="button" class="btn-right-collapse" id="btn-toggle-right-top" onclick="toggleRightTopSections()">
+          🔼 상단 패널 접기 (지도 확대)
+        </button>
+        <span class="right-collapse-hint" id="right-collapse-hint">상태 · 검색 · 제어 · 계측 표시 중</span>
+      </div>
+
+      <div class="right-collapsible-section" id="right-collapsible-section">
       <div class="status-display-box">
         <div class="guide-text" id="status-guide-text">[상태] 전국 해양·내수면(강·호수·바다) GPS 수역 연동 대기 중...</div>
       </div>
@@ -1559,6 +1617,8 @@
           <div class="info-label">목적지 잔여거리</div>
           <div class="info-value" id="dist-remaining">-- km</div>
         </div>
+      </div>
+
       </div>
 
       <div id="map">
@@ -1861,6 +1921,50 @@
       const slider = document.getElementById('gauge-size-slider');
       const current = slider ? parseInt(slider.value, 10) : 260;
       setSpeedometerSize(current + delta);
+    }
+
+    const RIGHT_PANEL_COLLAPSED_KEY = 'ship_right_panel_collapsed';
+
+    function applyRightPanelCollapse(isCollapsed) {
+      const panel = document.getElementById('right-panel');
+      const btn = document.getElementById('btn-toggle-right-top');
+      const hint = document.getElementById('right-collapse-hint');
+      const resultsBox = document.getElementById('navi-search-results');
+
+      if (!panel || !btn) return;
+
+      if (isCollapsed) {
+        panel.classList.add('collapsed-top');
+        btn.innerText = '🔽 상단 패널 펼치기 (상태·검색·계측)';
+        if (hint) hint.innerText = '상단 패널 접힘 (지도 확대 중)';
+        if (resultsBox) resultsBox.classList.remove('show');
+      } else {
+        panel.classList.remove('collapsed-top');
+        btn.innerText = '🔼 상단 패널 접기 (지도 확대)';
+        if (hint) hint.innerText = '상태 · 검색 · 제어 · 계측 표시 중';
+      }
+
+      if (typeof map !== 'undefined' && map) {
+        setTimeout(() => map.invalidateSize({ animate: false }), 60);
+      }
+    }
+
+    function toggleRightTopSections() {
+      const panel = document.getElementById('right-panel');
+      const nextState = !(panel && panel.classList.contains('collapsed-top'));
+      applyRightPanelCollapse(nextState);
+      try {
+        localStorage.setItem(RIGHT_PANEL_COLLAPSED_KEY, nextState ? '1' : '0');
+      } catch (e) {}
+    }
+
+    function initRightPanelCollapse() {
+      try {
+        const saved = localStorage.getItem(RIGHT_PANEL_COLLAPSED_KEY);
+        applyRightPanelCollapse(saved === '1');
+      } catch (e) {
+        applyRightPanelCollapse(false);
+      }
     }
 
     function initLayoutPreferences() {
@@ -2179,6 +2283,7 @@
     window.addEventListener('DOMContentLoaded', () => {
       initLayoutPreferences();
       initPanelResizer();
+      initRightPanelCollapse();
       loadShipsList();
       loadSavedDestinations();
       updateVWorldKeyButtonState();
@@ -2399,8 +2504,8 @@
     let tripSpeedList = [];
     let tripMaxSpeed = 0;
 
-const STOP_THRESHOLD_SPEED = 0.3; // GPS 미세 오차 감안 (기존 0.1)
-const STOP_HOLD_TIME_MS = 180000; // 정박 후 3분 경과 시 자동 종료 (기존 300000 = 5분)
+    const STOP_THRESHOLD_SPEED = 0.1;
+    const STOP_HOLD_TIME_MS = 300000;
 
     let audioCtx = null;
     let lastAlertTime = 0;
