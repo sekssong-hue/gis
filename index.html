@@ -815,9 +815,7 @@
       border-radius: 6px;
     }
 
-    /* =============================================================
-       내비게이션 목적지 검색창 · VWorld/OSM 통합 · 저장목록 · 길안내 HUD
-       ============================================================= */
+    /* 내비게이션 목적지 검색창 · VWorld/OSM 통합 · 저장목록 · 길안내 HUD */
     .navi-search-wrapper {
       position: relative;
       width: 100%;
@@ -1836,6 +1834,107 @@
     let isSurveyMode = false;
     let isCalibratedMode = false, isFirstGps = true;
     let showConfirmAlerts = true;
+
+    /* =============================================================
+       GPS 좌표·속도 기반 자동 출항 시작 및 자동 도착·종료 설정
+       ============================================================= */
+    // 현장 선착장/도착지 좌표와 자동 판정 기준값입니다 (필요 시 현장에 맞게 숫자를 조정하세요)
+    const AUTO_VOYAGE_CONFIG = {
+      departurePoint: { lat: 35.1885, lng: 128.0832 }, // 출발 기준 지점 위도·경도
+      arrivalPoint:   { lat: 35.1885, lng: 128.0832 }, // 도착 기준 지점 위도·경도 (회항 시 출발지와 동일하거나 별도 지정)
+      departureLeaveRadiusM: 45, // 대기 중 이 거리(m) 이상 벗어나면 출항 후보로 판정
+      arrivalEnterRadiusM:   35, // 운항 중 이 거리(m) 이내 진입 시 도착 후보로 판정
+      minMoveSpeedKts:       0.8, // 자동 출항 인정 최소 속도 (약 1.5 km/h)
+      maxStopSpeedKts:       1.3, // 자동 도착/정박 인정 최대 속도 (약 2.4 km/h)
+      confirmCount:          3,   // GPS 오차 방지를 위한 연속 확인 횟수
+      cooldownMs:            25000 // 자동 종료 직후 즉시 재출항 오인식 방지 대기 시간(ms)
+    };
+
+    // GPS 자동 감지 카운터 및 쿨다운 상태 변수입니다
+    let autoStartMatchCount = 0;
+    let autoEndMatchCount = 0;
+    let lastAutoEndAt = 0;
+
+    // GPS 좌표·속도·정박 상태를 분석해 출항 시작/도착 종료 버튼을 누르지 않았을 때도 자동 처리합니다
+    function evaluateAutoVoyageByGps(lat, lng, speedKts) {
+      // 선박이 선택되지 않았거나 운항 등록이 안 된 상태에서는 자동 출항/종료를 실행하지 않습니다
+      if (!currentShipName || !isMyShipOperating) {
+        autoStartMatchCount = 0;
+        autoEndMatchCount = 0;
+        return;
+      }
+
+      const now = Date.now();
+      const guide = document.getElementById('status-guide-text');
+
+      // [1] 출항 시작 버튼을 깜빡하고 누르지 않은 경우: 대기 중 기준점 이탈 + 이동 감지 시 자동 출항
+      if (!isDrivingStarted && !hasSaved) {
+        autoEndMatchCount = 0;
+
+        // 자동 종료 직후 쿨다운 기간 동안은 재출항 자동 감지를 잠시 보류합니다
+        if (now - lastAutoEndAt < AUTO_VOYAGE_CONFIG.cooldownMs) {
+          autoStartMatchCount = 0;
+          return;
+        }
+
+        const distFromStartM = getDistanceInMeters(
+          lat,
+          lng,
+          AUTO_VOYAGE_CONFIG.departurePoint.lat,
+          AUTO_VOYAGE_CONFIG.departurePoint.lng
+        );
+
+        const isLeftDeparture = distFromStartM >= AUTO_VOYAGE_CONFIG.departureLeaveRadiusM;
+        const isMovingVessel = speedKts >= AUTO_VOYAGE_CONFIG.minMoveSpeedKts;
+
+        if (isLeftDeparture && isMovingVessel) {
+          autoStartMatchCount += 1;
+          if (guide && !guide.classList.contains('warning-alert') && !guide.classList.contains('offline-alert')) {
+            guide.innerText = `[자동출항 감지 중] 기준점 이탈(${Math.round(distFromStartM)}m) · 이동 확인 (${autoStartMatchCount}/${AUTO_VOYAGE_CONFIG.confirmCount}회)`;
+          }
+
+          if (autoStartMatchCount >= AUTO_VOYAGE_CONFIG.confirmCount) {
+            autoStartMatchCount = 0;
+            startTracking(); // 기존 출항 시작 로직을 즉시 실행합니다
+            showNotification(`[GPS 자동 출항시작] [${currentShipName}] 이동 좌표가 감지되어 자동으로 출항을 시작했습니다.`);
+          }
+        } else {
+          autoStartMatchCount = 0;
+        }
+        return;
+      }
+
+      // [2] 도착 및 종료 버튼을 깜빡하고 누르지 않은 경우: 운항 중 도착 지점 진입 + 저속/정박 감지 시 자동 도착·종료
+      if (isDrivingStarted && !hasSaved && !isSurveyMode) {
+        autoStartMatchCount = 0;
+
+        const distToArrivalM = getDistanceInMeters(
+          lat,
+          lng,
+          AUTO_VOYAGE_CONFIG.arrivalPoint.lat,
+          AUTO_VOYAGE_CONFIG.arrivalPoint.lng
+        );
+
+        const isInArrivalZone = distToArrivalM <= AUTO_VOYAGE_CONFIG.arrivalEnterRadiusM;
+        const isStoppedOrSlow = speedKts <= AUTO_VOYAGE_CONFIG.maxStopSpeedKts;
+
+        if (isInArrivalZone && isStoppedOrSlow) {
+          autoEndMatchCount += 1;
+          if (guide && !guide.classList.contains('warning-alert') && !guide.classList.contains('offline-alert')) {
+            guide.innerText = `[자동도착 감지 중] 도착권 진입(${Math.round(distToArrivalM)}m) · 정박/저속 확인 (${autoEndMatchCount}/${AUTO_VOYAGE_CONFIG.confirmCount}회)`;
+          }
+
+          if (autoEndMatchCount >= AUTO_VOYAGE_CONFIG.confirmCount) {
+            autoEndMatchCount = 0;
+            lastAutoEndAt = Date.now();
+            stopAndSaveTracking(false); // 기존 도착 종료 및 저장 로직을 즉시 실행합니다
+            showNotification(`[GPS 자동 도착 및 종료] [${currentShipName}] 도착 좌표 및 정박 상태가 감지되어 자동으로 운항을 종료·저장했습니다.`);
+          }
+        } else {
+          autoEndMatchCount = 0;
+        }
+      }
+    }
 
     /* =============================================================
        낮(라이트) / 밤(다크) 시안성 테마 관리
@@ -3005,9 +3104,13 @@
 
     // 궤적·속도 통계를 초기화하고 트립 기록 및 화면 켜짐 유지를 시작합니다
     function startTracking() {
+      if (isDrivingStarted) return;
+
       resetTrack();
       tripSpeedList = [];
       tripMaxSpeed = 0;
+      autoStartMatchCount = 0;
+      autoEndMatchCount = 0;
 
       isDrivingStarted = true;
       hasSaved = false;
@@ -3027,6 +3130,7 @@
       btnStart.disabled = true;
       btnStopSave.disabled = false;
       locationBadge.style.display = 'block';
+      updateOnlineShipBadges();
 
       if (isFirebaseReady && currentShipName) {
         firebase.database().ref('ships/' + currentShipName).update({
@@ -3174,10 +3278,13 @@
 
       hasSaved = true;
       isDrivingStarted = false;
+      autoStartMatchCount = 0;
+      autoEndMatchCount = 0;
 
       btnStopSave.disabled = true;
       btnStart.disabled = !isMyShipOperating;
       locationBadge.style.display = 'none';
+      updateOnlineShipBadges();
 
       if (isFirebaseReady && currentShipName) {
         const endTimeStr = document.getElementById('end-time-input').value;
@@ -3322,6 +3429,9 @@
         clearTimeout(autoStopTimer);
         autoStopTimer = null;
       }
+
+      autoStartMatchCount = 0;
+      autoEndMatchCount = 0;
 
       if (forceStopListener && currentShipName && isFirebaseReady) {
         firebase.database().ref('ships/' + currentShipName).off('value', forceStopListener);
@@ -3580,9 +3690,7 @@
 
     trackPolyline = L.polyline([], { color: '#dc2626', weight: 5, opacity: 0.9 }).addTo(map);
 
-    /* =============================================================
-       내비게이션 통합 목적지 검색 (VWorld + OSM + 근거리 우선정렬 + 역지오코딩 저장)
-       ============================================================= */
+    // 내비게이션 통합 목적지 검색 · 저장목록 · 길안내 상태 변수입니다
     const SAVED_DEST_STORAGE_KEY = 'ship_saved_destinations_v1';
     const VWORLD_API_KEY_STORAGE = 'ship_vworld_search_api_key';
 
@@ -4656,10 +4764,11 @@
       }
     }
 
-    // 새 GPS 위치 수신 시 속도·방위·트립 궤적·지도 중심/회전·길안내·충돌경보·서버 송출을 갱신합니다
+    // 새 GPS 위치 수신 시 속도·방위·트립 궤적·지도 중심/회전·자동 출항/도착·길안내·충돌경보·서버 송출을 갱신합니다
     function handlePositionUpdate(position) {
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
+      const accuracyM = position.coords.accuracy || 999;
       const currentTime = (position.timestamp && position.timestamp > 1000000000) ? position.timestamp : Date.now();
       let speedMps = position.coords.speed;
       const heading = position.coords.heading;
@@ -4709,6 +4818,11 @@
         speedDisplay.innerText = `${currentSpeedKmh.toFixed(1)} km/h (${currentSpeedKts.toFixed(1)} Kts)`;
       }
       drawSpeedometer(currentSpeedKts, currentSpeedKmh);
+
+      // GPS 오차가 극단적으로 크지 않을 때 자동 출항 시작 및 자동 도착·종료 좌표를 분석합니다
+      if (accuracyM <= 120) {
+        evaluateAutoVoyageByGps(currentLat, currentLng, currentSpeedKts);
+      }
 
       if (isDrivingStarted) {
         tripSpeedList.push(currentSpeedKts);
